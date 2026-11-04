@@ -120,6 +120,23 @@
   .hint b{color:#fff}
   .hint button{margin-left:auto;color:#fff;font-weight:700;font-size:.85rem;padding:2px 4px}
 
+  /* Pairing */
+  .pairbar{display:none;width:100%;margin-top:14px;padding:13px 14px;border-radius:16px;background:var(--wine-soft);color:var(--wine-deep);font-weight:700;font-size:.9rem;text-align:left;align-items:center;gap:10px}
+  .pairbar.show{display:flex}
+  .pairbar svg{width:22px;height:22px;flex:none}
+  .pair{margin-bottom:22px;padding:16px;border-radius:18px;background:#fff;border:1.5px solid var(--line)}
+  .pair h4{font-size:1rem;font-weight:700;margin-bottom:4px}
+  .pair p{font-size:.84rem;color:var(--muted);margin-bottom:12px}
+  .pair .pst{font-weight:600;color:var(--wine-deep);margin:8px 0 0;min-height:1.2em}
+  .pair .pst.ok{color:#2F6B00}
+  .pair .code{font-family:ui-monospace,Menlo,monospace;font-size:1.05rem;font-weight:700;letter-spacing:.02em;padding:12px;border-radius:12px;background:var(--paper);text-align:center;margin-bottom:10px;word-break:break-all;user-select:all;-webkit-user-select:all}
+  .pair .btn{width:100%;flex:none}
+  .pair .join{display:flex;gap:8px;margin-top:12px}
+  .pair .join input{flex:1;min-width:0;font:inherit;padding:12px 14px;border-radius:14px;border:1.5px solid var(--line);background:#fff;color:var(--ink)}
+  .pair .join .btn{width:auto;padding:0 16px}
+  .pair .lbl{font-size:.85rem;font-weight:600;color:var(--muted);margin-top:14px;display:block}
+  .pair [hidden]{display:none!important}
+
   /* Celebration */
   .confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:30}
   .confetti i{position:absolute;top:-20px;width:10px;height:9px;animation:fall 1.8s ease-in forwards}
@@ -239,6 +256,7 @@
     </svg>
   </div>
   <p class="status" id="status" aria-live="polite"></p>
+  <button type="button" class="pairbar" id="pairBar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="7" height="14" rx="2"/><rect x="14" y="6" width="7" height="14" rx="2"/><path d="M10 11h4"/></svg><span id="pairBarTxt"></span></button>
   <p class="dateline" id="dateline"></p>
   <p class="quote" id="quote"></p>
   <button type="button" class="backtoday" id="backToday"></button>
@@ -263,6 +281,20 @@
 <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
   <div class="grab"></div>
   <h3 id="sheetTitle"></h3>
+  <div class="pair" id="pair">
+    <h4 id="pairTitle"></h4>
+    <div id="pairOff">
+      <p id="pairHelp"></p>
+      <button type="button" class="btn primary" id="pairCreate"></button>
+      <label class="lbl" for="pairInput" id="pairInLabel"></label>
+      <div class="join"><input id="pairInput" autocapitalize="none" autocomplete="off" autocorrect="off" spellcheck="false" inputmode="text"><button type="button" class="btn ghost" id="pairJoin"></button></div>
+    </div>
+    <div id="pairOn" hidden>
+      <div class="code" id="pairCode"></div>
+      <button type="button" class="btn primary" id="pairShare"></button>
+    </div>
+    <p class="pst" id="pairStatus" aria-live="polite"></p>
+  </div>
   <div class="field">
     <label for="startDate" id="startLabel"></label>
     <input type="date" id="startDate">
@@ -326,7 +358,12 @@
       settings: "Ajustes", startLabel: "Fecha en que empiezan los 90 días",
       startHelp: "Si la cambias, los días ya marcados se mantienen.",
       save: "Guardar", close: "Cerrar",
-      reset: "Empezar de cero", confirm: "Se borra todo lo marcado de Hannah y de Carlos en este teléfono. ¿Seguro?",
+      reset: "Empezar de cero", confirm: "Se borra todo lo marcado de Hannah y de Carlos (también en el otro teléfono si están conectados). ¿Seguro?",
+      pairTitle: "Conectar los dos teléfonos", pairHelp: "Uno crea el código y se lo manda al otro. Así el corazón se llena con lo de los dos.",
+      pairCreate: "Crear código", pairInLabel: "¿Ya tienes el código? Escríbelo aquí", pairJoin: "Conectar", pairShare: "Enviar el código",
+      pairBar: "Conecten sus dos teléfonos para llenar el corazón juntos",
+      shareText: (c, u) => `Nuestro código para la app de los 90 días: ${c}\nÁbrela aquí: ${u}`, copied: "Código copiado",
+      st: { on: "Conectados ✓ Todo se guarda en los dos teléfonos.", off: "Sin internet. Lo que marques se sube solo cuando vuelva.", wait: "Conectando…", bad: "Ese código no sirve. Revísalo e intenta de nuevo.", net: "Para conectar se necesita internet.", err: "No se pudo conectar. Intenta otra vez en un rato." },
       yes: "Sí, borrar", no: "Cancelar",
       gear: "Ajustes", people: "¿Quién está marcando?",
       tzLabel: (n) => `Zona horaria de ${n}`, tzAuto: (c) => `Automática${c ? " · " + c : ""}`,
@@ -362,7 +399,12 @@
       settings: "Settings", startLabel: "Start date of the 90 days",
       startHelp: "If you change it, the days you already marked stay.",
       save: "Save", close: "Close",
-      reset: "Start over", confirm: "This erases everything marked for Hannah and Carlos on this phone. Are you sure?",
+      reset: "Start over", confirm: "This erases everything marked for Hannah and Carlos (on the other phone too, if you're connected). Are you sure?",
+      pairTitle: "Connect both phones", pairHelp: "One of you creates the code and sends it to the other. That way the heart fills with what you both do.",
+      pairCreate: "Create code", pairInLabel: "Already have the code? Type it here", pairJoin: "Connect", pairShare: "Send the code",
+      pairBar: "Connect both phones to fill the heart together",
+      shareText: (c, u) => `Our code for the 90-day app: ${c}\nOpen it here: ${u}`, copied: "Code copied",
+      st: { on: "Connected ✓ Everything is saved on both phones.", off: "No internet. What you check off uploads when it's back.", wait: "Connecting…", bad: "That code doesn't work. Check it and try again.", net: "You need internet to connect.", err: "Couldn't connect. Try again in a little while." },
       yes: "Yes, erase", no: "Cancel",
       gear: "Settings", people: "Who is checking in?",
       tzLabel: (n) => `${n}'s time zone`, tzAuto: (c) => `Automatic${c ? " · " + c : ""}`,
@@ -398,7 +440,12 @@
       settings: "Einstellungen", startLabel: "Starttag der 90 Tage",
       startHelp: "Wenn du ihn änderst, bleiben die markierten Tage erhalten.",
       save: "Speichern", close: "Schließen",
-      reset: "Von vorne beginnen", confirm: "Damit wird alles gelöscht, was Hannah und Carlos auf diesem Handy markiert haben. Wirklich?",
+      reset: "Von vorne beginnen", confirm: "Damit wird alles gelöscht, was Hannah und Carlos markiert haben (auch auf dem anderen Handy, wenn ihr verbunden seid). Wirklich?",
+      pairTitle: "Beide Handys verbinden", pairHelp: "Einer erstellt den Code und schickt ihn dem anderen. So füllt sich das Herz mit dem, was ihr beide macht.",
+      pairCreate: "Code erstellen", pairInLabel: "Schon einen Code? Hier eingeben", pairJoin: "Verbinden", pairShare: "Code senden",
+      pairBar: "Verbindet eure Handys, um das Herz gemeinsam zu füllen",
+      shareText: (c, u) => `Unser Code für die 90-Tage-App: ${c}\nHier öffnen: ${u}`, copied: "Code kopiert",
+      st: { on: "Verbunden ✓ Alles wird auf beiden Handys gespeichert.", off: "Kein Internet. Was du abhakst, wird hochgeladen, sobald es wieder da ist.", wait: "Verbinde…", bad: "Der Code funktioniert nicht. Prüf ihn und versuch es nochmal.", net: "Zum Verbinden braucht man Internet.", err: "Verbindung hat nicht geklappt. Versuch es später nochmal." },
       yes: "Ja, löschen", no: "Abbrechen",
       gear: "Einstellungen", people: "Wer hakt gerade ab?",
       tzLabel: (n) => `Zeitzone von ${n}`, tzAuto: (c) => `Automatisch${c ? " · " + c : ""}`,
@@ -471,7 +518,13 @@
     if (p === S.person) return deviceTz();
     return S.tzSeen[p] || deviceTz();
   }
-  function noteDevice(){ if (S.tz[S.person] === "auto") S.tzSeen[S.person] = deviceTz(); }
+  function noteDevice(){
+    if (S.tz[S.person] !== "auto") return false;
+    const z = deviceTz(); if (S.tzSeen[S.person] === z) return false;
+    S.tzSeen[S.person] = z; return true;
+  }
+  // Bridge to the sync module (Firebase). Does nothing until it has loaded.
+  const sync = (fn, ...a) => { try { const H = window.HCSync; if (H && typeof H[fn] === "function") H[fn](...a); } catch(e) {} };
   const todayKey = (p = S.person) => keyInTz(tzOf(p));
   const cityOf = (z) => (t().tzZones[z]) || String(z).split("/").pop().replace(/_/g, " ");
   noteDevice();
@@ -683,6 +736,13 @@
     $("tzLabelH").textContent = L.tzLabel("Hannah");
     $("tzLabelC").textContent = L.tzLabel("Carlos");
     $("tzHelp").textContent = L.tzHelp;
+    $("pairTitle").textContent = L.pairTitle;
+    $("pairHelp").textContent = L.pairHelp;
+    $("pairCreate").textContent = L.pairCreate;
+    $("pairInLabel").textContent = L.pairInLabel;
+    $("pairJoin").textContent = L.pairJoin;
+    $("pairShare").textContent = L.pairShare;
+    renderPair();
     $("saveSettings").textContent = L.save;
     $("closeSettings").textContent = L.close;
     $("resetBtn").textContent = L.reset;
@@ -690,6 +750,53 @@
     $("confirmYes").textContent = L.yes;
     $("confirmNo").textContent = L.no;
   }
+
+  /* ---------- Pairing (two phones) ---------- */
+  let pairState = "", pairMsg = "";
+  const pairCode = () => { try { return localStorage.getItem(KEY + ":code") || ""; } catch(e) { return ""; } };
+  function renderPair(){
+    const L = t(), code = pairCode();
+    $("pairBarTxt").textContent = L.pairBar;
+    $("pairBar").classList.toggle("show", !code);
+    $("pairOff").hidden = !!code;
+    $("pairOn").hidden = !code;
+    $("pairCode").textContent = code;
+    const st = $("pairStatus");
+    const key = pairMsg || (code ? pairState : "");
+    st.textContent = key && L.st[key] ? L.st[key] : "";
+    st.classList.toggle("ok", key === "on");
+  }
+  // Called by the sync module
+  window.HC = {
+    KEY,
+    S: () => S,
+    status(s){ pairState = s; if (s === "on" || s === "off" || s === "wait") pairMsg = ""; renderPair(); },
+    message(s){ pairMsg = s; renderPair(); },
+    paired(){ pairMsg = ""; $("pairInput").value = ""; renderPair(); },
+    prefill(c){ $("pairInput").value = c; },
+    apply(r){
+      if (!r || typeof r !== "object") return;
+      if (typeof r.start === "string" && /^\d{4}-\d{2}-\d{2}$/.test(r.start)) S.start = r.start;
+      for (const p of ["hannah","carlos"]) {
+        if (r.tz && (r.tz[p] === "auto" || validTz(r.tz[p]))) S.tz[p] = r.tz[p];
+        if (r.tzSeen && validTz(r.tzSeen[p])) S.tzSeen[p] = r.tzSeen[p];
+        const src = r.data && r.data[p];
+        const clean = {};
+        if (src && typeof src === "object") for (const k in src) {
+          if (/^\d{4}-\d{2}-\d{2}$/.test(k) && Array.isArray(src[k]) && src[k].length === HABITS) clean[k] = src[k].map(Boolean);
+        }
+        S.data[p] = clean;
+      }
+      // Tell the other phone which zone this phone is in, if it doesn't know yet
+      const me = S.person;
+      const tell = S.tz[me] === "auto" && (!r.tzSeen || r.tzSeen[me] !== deviceTz());
+      noteDevice();
+      save();
+      if (tell) sync("meta");
+      if (!$("sheet").classList.contains("open")) renderAll(true);
+      else { renderTop(); renderPeople(); renderHeart(true); renderList(); renderJourney(); }
+    }
+  };
 
   function renderAll(animate){
     renderTop(); renderPeople(); renderHeart(animate); renderList(); renderJourney(); renderHint(); renderSheetText();
@@ -720,7 +827,7 @@
     const i = Number(b.dataset.i), m = marks(S.person, viewKey).slice();
     m[i] = !m[i];
     S.data[S.person][viewKey] = m;
-    save();
+    save(); sync("mark", S.person, viewKey, m);
     b.setAttribute("aria-pressed", String(m[i]));
     renderPeople(); renderHeart(true); renderJourney();
     if (m[i]) {
@@ -737,7 +844,7 @@
   }));
 
   document.querySelectorAll(".person").forEach(b => b.addEventListener("click", () => {
-    S.person = b.dataset.person; noteDevice(); save(); viewKey = todayKey(); lastCount = null; renderAll(false);
+    S.person = b.dataset.person; if (noteDevice()) sync("meta"); save(); viewKey = todayKey(); lastCount = null; renderAll(false);
   }));
 
   $("grid").addEventListener("click", (e) => {
@@ -790,19 +897,19 @@
       const z = $(id).value;
       if (z === "auto" || validTz(z)) S.tz[p] = z;
     }
-    noteDevice(); save();
+    noteDevice(); save(); sync("meta");
     closeSheet(); viewKey = todayKey(); renderAll(false);
   });
   $("resetBtn").addEventListener("click", () => $("confirm").classList.add("show"));
   $("confirmNo").addEventListener("click", () => $("confirm").classList.remove("show"));
   $("confirmYes").addEventListener("click", () => {
-    S.data = { hannah: {}, carlos: {} }; S.start = todayKey(); save();
+    S.data = { hannah: {}, carlos: {} }; S.start = todayKey(); save(); sync("reset");
     closeSheet(); viewKey = todayKey(); lastCount = null; renderAll(false);
   });
 
   // New day while the app stays open
   document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible") { noteDevice(); save(); viewKey = todayKey(); lastCount = null; renderAll(false); showWelcome(false); }
+    if (document.visibilityState === "visible") { if (noteDevice()) sync("meta"); save(); viewKey = todayKey(); lastCount = null; renderAll(false); showWelcome(false); }
   });
   // Catch midnight (in each person's own zone) while the app stays open
   let lastToday = todayKey();
@@ -814,6 +921,26 @@
     if (wasToday) viewKey = now;
     lastCount = null; renderAll(false); showWelcome(false);
   }, 60000);
+
+  $("pairBar").addEventListener("click", openSheet);
+  $("pairCreate").addEventListener("click", () => {
+    if (!window.HCSync) { pairMsg = navigator.onLine ? "err" : "net"; renderPair(); return; }
+    pairMsg = "wait"; renderPair(); window.HCSync.create();
+  });
+  $("pairJoin").addEventListener("click", () => {
+    const v = $("pairInput").value;
+    if (!v.trim()) { $("pairInput").focus(); return; }
+    if (!window.HCSync) { pairMsg = navigator.onLine ? "err" : "net"; renderPair(); return; }
+    pairMsg = "wait"; renderPair(); window.HCSync.join(v);
+  });
+  $("pairInput").addEventListener("keydown", (e) => { if (e.key === "Enter") $("pairJoin").click(); });
+  $("pairShare").addEventListener("click", async () => {
+    const L = t(), code = pairCode(); if (!code) return;
+    const url = location.origin + location.pathname + "#c=" + code;
+    const text = L.shareText(code, url);
+    try { if (navigator.share) { await navigator.share({ text }); return; } } catch(e) { if (e && e.name === "AbortError") return; }
+    try { await navigator.clipboard.writeText(text); toast(L.copied, "#B5122B", heartIcon, false); } catch(e) {}
+  });
 
   $("wBtn").addEventListener("click", hideWelcome);
   $("welcome").addEventListener("click", (e) => { if (e.target === $("welcome")) hideWelcome(); });
@@ -827,6 +954,100 @@
     window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
   }
 })();
+</script>
+<script type="module">
+/* Sync between the two phones (Firebase Firestore, free plan).
+   Each couple has one document named after its secret code. */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { initializeFirestore, getFirestore, persistentLocalCache, persistentMultipleTabManager, doc, getDocFromServer, setDoc, updateDoc, onSnapshot, FieldPath, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const H = window.HC;
+if (H) {
+  const app = initializeApp({
+    apiKey: "AIzaSyB_BUu6ey88OXAo6KTWm0Q3HF1uL9WJCbQ",
+    authDomain: "nuestros-90-dias.firebaseapp.com",
+    projectId: "nuestros-90-dias",
+    storageBucket: "nuestros-90-dias.firebasestorage.app",
+    messagingSenderId: "420233303737",
+    appId: "1:420233303737:web:27829caf35659171542d68"
+  });
+  let db;
+  try { db = initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) }); }
+  catch (e) { db = getFirestore(app); }
+
+  const CK = H.KEY + ":code";
+  const getCode = () => { try { return localStorage.getItem(CK) || ""; } catch (e) { return ""; } };
+  const setCode = (c) => { try { localStorage.setItem(CK, c); } catch (e) {} };
+  const WORDS = ["cereza","luna","sol","rio","mar","nube","flor","roca","lago","monte","brisa","perla","coco","mango","lima","kiwi","pino","nido","faro","isla","ola","miel","cafe","trigo","menta","rosa","lirio","rayo","cielo","nieve","palma","coral"];
+  const VALID = /^[a-z0-9-]{20,64}$/;
+  function newCode(){
+    const r = new Uint32Array(5); crypto.getRandomValues(r);
+    const w = (i) => WORDS[r[i] % WORDS.length], n = (i) => String(r[i] % 10000).padStart(4, "0");
+    return `${w(0)}-${w(1)}-${n(2)}-${w(3)}-${n(4)}`;
+  }
+  const norm = (v) => String(v || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim()
+    .replace(/[\s_.,·]+/g, "-").replace(/[^a-z0-9-]/g, "").replace(/-+/g, "-").replace(/^-|-$/g, "");
+  const withTimeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), ms))]);
+
+  let ref = null, unsub = null, lastFromCache = true;
+  function status(){
+    if (!ref) return;
+    H.status(!navigator.onLine ? "off" : lastFromCache ? "wait" : "on");
+  }
+  function connect(code){
+    ref = doc(db, "couples", code);
+    if (unsub) unsub();
+    H.status(navigator.onLine ? "wait" : "off");
+    unsub = onSnapshot(ref, { includeMetadataChanges: true }, (snap) => {
+      lastFromCache = snap.metadata.fromCache;
+      if (snap.exists()) H.apply(snap.data());
+      status();
+    }, () => H.status("err"));
+  }
+  addEventListener("online", status);
+  addEventListener("offline", status);
+
+  const payload = () => { const S = H.S(); return { start: S.start, tz: S.tz, tzSeen: S.tzSeen }; };
+
+  window.HCSync = {
+    async create(){
+      if (!navigator.onLine) { H.message("net"); return; }
+      const code = newCode(), S = H.S();
+      try {
+        await withTimeout(setDoc(doc(db, "couples", code), { ...payload(), data: S.data, updated: serverTimestamp() }), 12000);
+        setCode(code); H.paired(); connect(code);
+      } catch (e) { H.message("err"); }
+    },
+    async join(raw){
+      const code = norm(raw);
+      if (!VALID.test(code)) { H.message("bad"); return; }
+      if (!navigator.onLine) { H.message("net"); return; }
+      try {
+        const r = doc(db, "couples", code);
+        const snap = await withTimeout(getDocFromServer(r), 12000);
+        if (!snap.exists()) { H.message("bad"); return; }
+        // Upload what this phone marked that the other phone doesn't have yet
+        const remote = snap.data() || {}, S = H.S(), args = [];
+        for (const p of ["hannah", "carlos"]) for (const k in S.data[p]) {
+          const has = remote.data && remote.data[p] && Object.prototype.hasOwnProperty.call(remote.data[p], k);
+          if (!has && S.data[p][k].some(Boolean)) args.push(new FieldPath("data", p, k), S.data[p][k]);
+        }
+        if (args.length) await withTimeout(updateDoc(r, ...args, "updated", serverTimestamp()), 12000);
+        setCode(code); H.paired(); connect(code);
+      } catch (e) { H.message(navigator.onLine ? "err" : "net"); }
+    },
+    mark(p, k, m){ if (ref) updateDoc(ref, new FieldPath("data", p, k), m, "updated", serverTimestamp()).catch(() => {}); },
+    meta(){ if (ref) updateDoc(ref, { ...payload(), updated: serverTimestamp() }).catch(() => {}); },
+    reset(){ if (ref) updateDoc(ref, { ...payload(), data: { hannah: {}, carlos: {} }, updated: serverTimestamp() }).catch(() => {}); }
+  };
+
+  // A shared link (…#c=code) connects this phone automatically
+  const m = location.hash.match(/c=([A-Za-z0-9-]+)/);
+  if (m) { try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {} }
+  const saved = getCode();
+  if (saved) connect(saved);
+  else if (m) { H.prefill(m[1]); window.HCSync.join(m[1]); }
+}
 </script>
 </body>
 </html>

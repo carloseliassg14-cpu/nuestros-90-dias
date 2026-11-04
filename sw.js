@@ -1,4 +1,4 @@
-const CACHE = "hc90-v5";
+const CACHE = "hc90-v6";
 const CORE = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png"];
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(CORE)).then(() => self.skipWaiting()));
@@ -18,8 +18,8 @@ self.addEventListener("fetch", (e) => {
     );
     return;
   }
-  // Fonts: cache first
-  if (url.hostname.includes("fonts.googleapis.com") || url.hostname.includes("fonts.gstatic.com")) {
+  // Fonts and the Firebase library: cache first
+  if (url.hostname.includes("fonts.googleapis.com") || url.hostname.includes("fonts.gstatic.com") || (url.hostname === "www.gstatic.com" && url.pathname.startsWith("/firebasejs/"))) {
     e.respondWith(caches.match(req).then((r) => r || fetch(req).then((res) => { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(req, copy)); return res; })));
   }
 });

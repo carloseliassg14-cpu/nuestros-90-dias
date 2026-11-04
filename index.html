@@ -1,0 +1,832 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Hannah &amp; Carlos · 90</title>
+<meta name="description" content="Nuestros 90 días: 7 hábitos diarios para Hannah y Carlos.">
+<meta name="theme-color" content="#6E0A18">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="H &amp; C">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gloock&family=Albert+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --wine:#B5122B;
+    --wine-deep:#6E0A18;
+    --wine-soft:#F6E0E3;
+    --paper:#FAF7F6;
+    --card:#FFFFFF;
+    --ink:#1C1716;
+    --muted:#6E6764;
+    --line:#ECE6E3;
+    --gold:#C9A15B;
+    --display:"Gloock", Georgia, serif;
+    --text:"Albert Sans", -apple-system, "Helvetica Neue", Arial, sans-serif;
+    --safe-top:env(safe-area-inset-top, 0px);
+    --safe-bottom:env(safe-area-inset-bottom, 0px);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{background:var(--paper)}
+  body{font-family:var(--text);color:var(--ink);font-size:17px;line-height:1.4;-webkit-font-smoothing:antialiased;min-height:100dvh}
+  button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+  :focus-visible{outline:3px solid var(--gold);outline-offset:3px;border-radius:12px}
+  .app{max-width:480px;margin:0 auto;padding:calc(var(--safe-top) + 14px) 18px calc(var(--safe-bottom) + 28px)}
+
+  /* Top bar */
+  .bar{display:flex;align-items:center;justify-content:space-between;gap:10px;height:44px}
+  .daycount{font-family:var(--display);font-size:1.15rem;color:var(--wine-deep);letter-spacing:.01em}
+  .daycount small{font-family:var(--text);font-size:.8rem;color:var(--muted);margin-left:6px;font-weight:500}
+  .langs{display:flex;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:3px}
+  .langs button{min-width:40px;height:32px;border-radius:999px;font-size:.8rem;font-weight:700;color:var(--muted);letter-spacing:.02em}
+  .langs button[aria-pressed="true"]{background:var(--wine);color:#fff}
+  .gear{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:var(--wine-deep)}
+  .gear svg{width:22px;height:22px}
+
+  /* People */
+  .people{margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .person{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:16px;background:var(--card);border:1.5px solid var(--line);text-align:left;transition:border-color .2s, background .2s}
+  .person[aria-pressed="true"]{border-color:var(--wine);background:#fff}
+  .person .mini{width:30px;height:28px;flex:none}
+  .person b{display:block;font-weight:700;font-size:1rem}
+  .person span{font-size:.8rem;color:var(--muted)}
+
+  /* Heart */
+  .stage{position:relative;margin:22px auto 6px;width:min(78vw,300px);aspect-ratio:1/0.92}
+  .stage svg{width:100%;height:100%;display:block;overflow:visible}
+  .heart-outline{fill:none;stroke:var(--wine);stroke-width:2.2}
+  .heart-bg{fill:#F2EDEB}
+  .liquid{transition:transform .9s cubic-bezier(.2,.8,.2,1)}
+  .wave{animation:wave 5s linear infinite}
+  .wave.back{animation-duration:7.5s;animation-direction:reverse;opacity:.55}
+  @keyframes wave{from{transform:translateX(0)}to{transform:translateX(-200px)}}
+  .sn{font-family:var(--display);font-size:62px}
+  .so{font-family:var(--text);font-size:12.5px;font-weight:600;letter-spacing:.04em}
+  .sn.dark{fill:var(--wine-deep)} .so.dark{fill:var(--muted)}
+  .sn.light{fill:#fff} .so.light{fill:#FFE3E7}
+  .stage.full .heart-outline{stroke:var(--gold);stroke-width:3}
+  .stage.pop svg{animation:pop .7s ease}
+  @keyframes pop{0%{transform:scale(1)}30%{transform:scale(1.07)}60%{transform:scale(.97)}100%{transform:scale(1)}}
+  .status{text-align:center;font-weight:600;color:var(--wine-deep);min-height:1.5em}
+  .status.done{color:var(--wine)}
+  .dateline{text-align:center;font-size:.85rem;color:var(--muted);margin-top:2px}
+  .backtoday{display:none;margin:8px auto 0;font-size:.85rem;font-weight:700;color:var(--wine);text-decoration:underline;text-underline-offset:4px}
+  .backtoday.show{display:block}
+
+  /* Habits */
+  .list{list-style:none;margin-top:22px;display:grid;gap:10px}
+  .habit{width:100%;display:grid;grid-template-columns:44px 1fr 36px;align-items:center;gap:14px;padding:14px 14px 14px 12px;border-radius:18px;background:var(--card);border:1.5px solid var(--line);text-align:left;transition:background .25s, border-color .25s, transform .12s}
+  .habit:active{transform:scale(.985)}
+  .habit .ico{width:44px;height:44px;border-radius:13px;background:var(--cs);color:var(--c);display:grid;place-items:center;transition:background .25s,color .25s}
+  .habit .ico svg{width:24px;height:24px}
+  .habit .t{font-weight:600;font-size:1.02rem;line-height:1.25}
+  .habit .d{display:block;font-size:.84rem;color:var(--muted);margin-top:3px;line-height:1.35}
+  .check{width:34px;height:34px;border-radius:50%;border:2px solid #D8D0CD;display:grid;place-items:center;transition:background .25s,border-color .25s}
+  .check svg{width:18px;height:18px;stroke:#fff;stroke-width:3;fill:none;opacity:0;transform:scale(.5);transition:opacity .2s, transform .25s}
+  .habit[aria-pressed="true"]{background:var(--c);border-color:var(--c)}
+  .habit[aria-pressed="true"] .t{color:#fff}
+  .habit[aria-pressed="true"] .d{color:rgba(255,255,255,.82)}
+  .habit[aria-pressed="true"] .ico{background:rgba(255,255,255,.16);color:#fff}
+  .habit[aria-pressed="true"] .check{background:rgba(0,0,0,.2);border-color:#fff}
+  .habit[aria-pressed="true"] .check svg{opacity:1;transform:scale(1)}
+
+  /* 90 days */
+  .journey{margin-top:30px;background:var(--card);border:1.5px solid var(--line);border-radius:22px;padding:18px 16px 16px}
+  .journey h2{font-family:var(--display);font-weight:400;font-size:1.45rem;color:var(--wine-deep)}
+  .stats{display:flex;gap:18px;margin:6px 0 14px;font-size:.88rem;color:var(--muted)}
+  .stats b{color:var(--ink);font-weight:700}
+  .grid{display:grid;grid-template-columns:repeat(10,1fr);gap:6px}
+  .day{aspect-ratio:1;border-radius:50%;display:grid;place-items:center;position:relative}
+  .day svg{width:100%;height:100%}
+  .day .h{fill:none;stroke:#DDD5D2;stroke-width:2}
+  .day.part .h{fill:var(--wine-soft);stroke:#E3A9B1}
+  .day.full .h{fill:var(--wine);stroke:var(--wine)}
+  .day.future{opacity:.35;pointer-events:none}
+  .day.today::after{content:"";position:absolute;bottom:-5px;width:5px;height:5px;border-radius:50%;background:var(--gold)}
+  .day.sel{outline:2px solid var(--gold);outline-offset:1px}
+  .legend{display:flex;gap:16px;margin-top:14px;font-size:.78rem;color:var(--muted);align-items:center;flex-wrap:wrap}
+  .legend i{display:inline-block;width:12px;height:11px;margin-right:6px;vertical-align:-1px}
+
+  /* Install hint */
+  .hint{margin-top:18px;display:none;gap:12px;align-items:flex-start;padding:14px;border-radius:16px;background:var(--wine-deep);color:#FBE9EB;font-size:.88rem}
+  .hint.show{display:flex}
+  .hint svg{width:22px;height:22px;flex:none;margin-top:1px}
+  .hint b{color:#fff}
+  .hint button{margin-left:auto;color:#fff;font-weight:700;font-size:.85rem;padding:2px 4px}
+
+  /* Celebration */
+  .confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:30}
+  .confetti i{position:absolute;top:-20px;width:10px;height:9px;animation:fall 1.8s ease-in forwards}
+  @keyframes fall{to{transform:translateY(110vh) rotate(540deg);opacity:.2}}
+
+  /* Sheet */
+  .scrim{position:fixed;inset:0;background:rgba(31,20,24,.45);opacity:0;pointer-events:none;transition:opacity .25s;z-index:40}
+  .scrim.open{opacity:1;pointer-events:auto}
+  .sheet{position:fixed;left:0;right:0;bottom:0;max-width:480px;margin:0 auto;background:var(--paper);border-radius:24px 24px 0 0;padding:10px 20px calc(var(--safe-bottom) + 24px);transform:translateY(105%);visibility:hidden;transition:transform .3s cubic-bezier(.2,.8,.2,1),visibility 0s linear .3s;z-index:41;max-height:88vh;max-height:88dvh;overflow-y:auto;overscroll-behavior:contain}
+  .sheet.open{transform:none;visibility:visible;transition:transform .3s cubic-bezier(.2,.8,.2,1)}
+  .grab{width:40px;height:5px;border-radius:3px;background:#D8D0CD;margin:0 auto 16px}
+  .sheet h3{font-family:var(--display);font-weight:400;font-size:1.5rem;color:var(--wine-deep);margin-bottom:14px}
+  .field{display:grid;gap:6px;margin-bottom:16px}
+  .field label{font-size:.85rem;font-weight:600;color:var(--muted)}
+  .field input,.field select{font:inherit;padding:12px 14px;border-radius:14px;border:1.5px solid var(--line);background:#fff;color:var(--ink);width:100%}
+  .field p{font-size:.8rem;color:var(--muted)}
+  .row{display:flex;gap:10px}
+  .btn{flex:1;height:50px;border-radius:14px;font-weight:700}
+  .btn.primary{background:var(--wine);color:#fff}
+  .btn.ghost{border:1.5px solid var(--line);background:#fff}
+  .btn.danger{color:#9E0F25;border:1.5px solid #EBC3C8;background:#fff}
+  .confirm{display:none;margin-top:10px;padding:12px;border-radius:14px;background:#fff;border:1.5px solid #EBC3C8;font-size:.88rem}
+  .confirm.show{display:block}
+  .confirm .row{margin-top:10px}
+
+
+  /* Daily message */
+  .quote{margin:14px auto 0;max-width:34ch;text-align:center;font-family:var(--display);font-size:1.08rem;line-height:1.35;color:var(--wine-deep)}
+  .quote::before{content:"“"}.quote::after{content:"”"}
+
+  /* Welcome */
+  .welcome{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;justify-content:center;padding:calc(var(--safe-top) + 40px) 28px calc(var(--safe-bottom) + 40px);
+    background:radial-gradient(120% 80% at 50% 0%, #D21F3C 0%, #B5122B 45%, #6E0A18 100%);color:#fff;opacity:0;pointer-events:none;transition:opacity .45s}
+  .welcome.show{opacity:1;pointer-events:auto}
+  .welcome .w-in{max-width:420px;margin:0 auto;width:100%}
+  .welcome .w-heart{width:56px;height:52px;margin-bottom:28px}
+  .welcome .w-day{font-size:.95rem;font-weight:600;color:#FFD9DF;letter-spacing:.02em}
+  .welcome .w-hi{margin-top:6px;font-size:1.05rem;color:#FFE9EC}
+  .welcome .w-msg{margin-top:22px;font-family:var(--display);font-size:clamp(1.9rem,8vw,2.5rem);line-height:1.12}
+  .welcome .w-btn{margin-top:40px;width:100%;height:56px;border-radius:16px;background:#fff;color:var(--wine-deep);font-weight:700;font-size:1.05rem}
+  .welcome.show .w-msg{animation:rise .7s .15s both cubic-bezier(.2,.8,.2,1)}
+  @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+  /* Toast */
+  .toast{position:fixed;left:50%;bottom:calc(var(--safe-bottom) + 18px);z-index:45;width:min(440px,calc(100% - 32px));transform:translate(-50%,140%);
+    background:var(--tc,#B5122B);color:#fff;border-radius:18px;padding:14px 16px;display:flex;gap:12px;align-items:center;font-weight:600;font-size:.98rem;line-height:1.3;
+    box-shadow:0 14px 30px -12px rgba(0,0,0,.45);transition:transform .35s cubic-bezier(.2,.8,.2,1)}
+  .toast.show{transform:translate(-50%,0)}
+  .toast.big{border:2px solid var(--gold)}
+  .toast .ti{width:34px;height:34px;flex:none;border-radius:11px;background:rgba(255,255,255,.18);display:grid;place-items:center}
+  .toast .ti svg{width:20px;height:20px}
+
+  @media (prefers-reduced-motion: reduce){
+    .welcome.show .w-msg{animation:none}
+    .toast,.welcome{transition:none}
+    .wave{animation:none}
+    .liquid,.habit,.check svg,.sheet,.scrim{transition:none}
+    .stage.pop svg{animation:none}
+    .confetti{display:none}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="bar">
+    <div class="daycount" id="daycount" aria-live="polite"></div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <div class="langs" role="group" aria-label="Idioma / Sprache / Language">
+        <button type="button" data-lang="es" aria-pressed="false">ES</button>
+        <button type="button" data-lang="en" aria-pressed="false">EN</button>
+        <button type="button" data-lang="de" aria-pressed="false">DE</button>
+      </div>
+      <button class="gear" type="button" id="openSettings" aria-label="Ajustes">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="people" role="group" id="people">
+    <button type="button" class="person" data-person="hannah" aria-pressed="false">
+      <svg class="mini" viewBox="0 0 100 92" aria-hidden="true"><defs><clipPath id="mh"><path d="M50 88C20 66 3 49 3 29 3 14 15 3 29 3c9 0 16 5 21 12C55 8 62 3 71 3c14 0 26 11 26 26 0 20-17 37-47 59z"/></clipPath></defs><path d="M50 88C20 66 3 49 3 29 3 14 15 3 29 3c9 0 16 5 21 12C55 8 62 3 71 3c14 0 26 11 26 26 0 20-17 37-47 59z" fill="#F2EDEB"/><rect class="mini-fill" clip-path="url(#mh)" x="0" y="92" width="100" height="92" fill="#B5122B"/><path d="M50 88C20 66 3 49 3 29 3 14 15 3 29 3c9 0 16 5 21 12C55 8 62 3 71 3c14 0 26 11 26 26 0 20-17 37-47 59z" fill="none" stroke="#B5122B" stroke-width="5"/></svg>
+      <span><b>Hannah</b><span class="mini-txt"></span></span>
+    </button>
+    <button type="button" class="person" data-person="carlos" aria-pressed="false">
+      <svg class="mini" viewBox="0 0 100 92" aria-hidden="true"><defs><clipPath id="mc"><path d="M50 88C20 66 3 49 3 29 3 14 15 3 29 3c9 0 16 5 21 12C55 8 62 3 71 3c14 0 26 11 26 26 0 20-17 37-47 59z"/></clipPath></defs><path d="M50 88C20 66 3 49 3 29 3 14 15 3 29 3c9 0 16 5 21 12C55 8 62 3 71 3c14 0 26 11 26 26 0 20-17 37-47 59z" fill="#F2EDEB"/><rect class="mini-fill" clip-path="url(#mc)" x="0" y="92" width="100" height="92" fill="#B5122B"/><path d="M50 88C20 66 3 49 3 29 3 14 15 3 29 3c9 0 16 5 21 12C55 8 62 3 71 3c14 0 26 11 26 26 0 20-17 37-47 59z" fill="none" stroke="#B5122B" stroke-width="5"/></svg>
+      <span><b>Carlos</b><span class="mini-txt"></span></span>
+    </button>
+  </div>
+
+  <div class="stage" id="stage">
+    <svg viewBox="0 0 200 184" role="img" id="heartSvg">
+      <defs>
+        <clipPath id="heartClip"><path d="M100 178C42 136 6 102 6 60 6 30 29 7 58 7c18 0 32 9 42 23C110 16 124 7 142 7c29 0 52 23 52 53 0 42-36 76-94 118z"/></clipPath>
+        <linearGradient id="wineGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#D21F3C"/>
+          <stop offset="1" stop-color="#7A0A1C"/>
+        </linearGradient>
+        <clipPath id="liqClip"><rect id="liqRect" x="0" y="184" width="200" height="220"/></clipPath>
+      </defs>
+      <path class="heart-bg" d="M100 178C42 136 6 102 6 60 6 30 29 7 58 7c18 0 32 9 42 23C110 16 124 7 142 7c29 0 52 23 52 53 0 42-36 76-94 118z"/>
+      <g clip-path="url(#heartClip)">
+        <g class="liquid" id="liquid" style="transform:translateY(184px)">
+          <g class="wave back"><path d="M0 8 Q25 0 50 8 T100 8 T150 8 T200 8 T250 8 T300 8 T350 8 T400 8 V200 H0z" fill="#E0566A"/></g>
+          <g class="wave"><path d="M0 10 Q25 2 50 10 T100 10 T150 10 T200 10 T250 10 T300 10 T350 10 T400 10 V200 H0z" fill="url(#wineGrad)"/></g>
+        </g>
+      </g>
+      <path class="heart-outline" d="M100 178C42 136 6 102 6 60 6 30 29 7 58 7c18 0 32 9 42 23C110 16 124 7 142 7c29 0 52 23 52 53 0 42-36 76-94 118z"/>
+      <g class="sc" aria-hidden="true">
+        <text class="sn dark" x="100" y="100" text-anchor="middle">0</text>
+        <text class="so dark" x="100" y="121" text-anchor="middle"></text>
+        <g clip-path="url(#liqClip)">
+          <text class="sn light" x="100" y="100" text-anchor="middle">0</text>
+          <text class="so light" x="100" y="121" text-anchor="middle"></text>
+        </g>
+      </g>
+    </svg>
+  </div>
+  <p class="status" id="status" aria-live="polite"></p>
+  <p class="dateline" id="dateline"></p>
+  <p class="quote" id="quote"></p>
+  <button type="button" class="backtoday" id="backToday"></button>
+
+  <ul class="list" id="list"></ul>
+
+  <div class="hint" id="hint" role="note">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5"/><path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg>
+    <span id="hintText"></span>
+    <button type="button" id="hintClose"></button>
+  </div>
+
+  <section class="journey" aria-labelledby="jt">
+    <h2 id="jt"></h2>
+    <div class="stats"><span id="statDone"></span><span id="statStreak"></span></div>
+    <div class="grid" id="grid"></div>
+    <div class="legend" id="legend"></div>
+  </section>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+  <div class="grab"></div>
+  <h3 id="sheetTitle"></h3>
+  <div class="field">
+    <label for="startDate" id="startLabel"></label>
+    <input type="date" id="startDate">
+    <p id="startHelp"></p>
+  </div>
+  <div class="field">
+    <label for="tzHannah" id="tzLabelH"></label>
+    <select id="tzHannah"></select>
+  </div>
+  <div class="field">
+    <label for="tzCarlos" id="tzLabelC"></label>
+    <select id="tzCarlos"></select>
+    <p id="tzHelp"></p>
+  </div>
+  <div class="row"><button type="button" class="btn primary" id="saveSettings"></button><button type="button" class="btn ghost" id="closeSettings"></button></div>
+  <div style="margin-top:22px"><button type="button" class="btn danger" style="width:100%" id="resetBtn"></button></div>
+  <div class="confirm" id="confirm">
+    <span id="confirmText"></span>
+    <div class="row"><button type="button" class="btn danger" id="confirmYes"></button><button type="button" class="btn ghost" id="confirmNo"></button></div>
+  </div>
+</div>
+
+<div class="confetti" id="confetti" aria-hidden="true"></div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"><span class="ti" id="toastIco" aria-hidden="true"></span><span id="toastTxt"></span></div>
+
+<div class="welcome" id="welcome" role="dialog" aria-modal="true" aria-labelledby="wMsg">
+  <div class="w-in">
+    <svg class="w-heart" viewBox="0 0 100 92" aria-hidden="true"><path d="M50 88C20 66 3 49 3 29 3 14 15 3 29 3c9 0 16 5 21 12C55 8 62 3 71 3c14 0 26 11 26 26 0 20-17 37-47 59z" fill="#fff"/></svg>
+    <div class="w-day" id="wDay"></div>
+    <div class="w-hi" id="wHi"></div>
+    <p class="w-msg" id="wMsg"></p>
+    <button type="button" class="w-btn" id="wBtn"></button>
+  </div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+  const DAYS = 90, HABITS = 7, KEY = "hc90:v1";
+
+  /* ---------- Text in three languages ---------- */
+  const T = {
+    es: {
+      locale: "es-419",
+      day: (n) => `Día ${n}`, of90: "de 90",
+      before: "Empieza pronto", after: "¡Lo lograron!",
+      outOf: (n) => `de ${n}`,
+      left: (n) => n === 1 ? "Falta 1 para llenar el corazón" : `Faltan ${n} para llenar el corazón`,
+      none: "Toca cada cosa cuando la termines",
+      full: "¡Corazón lleno! Día completo para los dos 🍒",
+      mine: (n, o) => `Tu mitad está lista. ${n === 1 ? "Falta 1" : `Faltan ${n}`} de ${o}.`,
+      today: "Hoy", back: "Volver a hoy",
+      done: (n) => `${n} de 7 hoy`,
+      journey: "Nuestros 90 días",
+      statDone: (n) => `<b>${n}</b> ${n === 1 ? "corazón lleno" : "corazones llenos"}`,
+      streak: (n) => `Racha: <b>${n}</b> ${n === 1 ? "día" : "días"}`,
+      legFull: "Lleno (los dos)", legPart: "A medias", legNone: "Sin marcar",
+      hint: "Para tenerla como app: toca <b>Compartir</b> y luego <b>Agregar a inicio</b>.",
+      hintOk: "Listo",
+      settings: "Ajustes", startLabel: "Fecha en que empiezan los 90 días",
+      startHelp: "Si la cambias, los días ya marcados se mantienen.",
+      save: "Guardar", close: "Cerrar",
+      reset: "Empezar de cero", confirm: "Se borra todo lo marcado de Hannah y de Carlos en este teléfono. ¿Seguro?",
+      yes: "Sí, borrar", no: "Cancelar",
+      gear: "Ajustes", people: "¿Quién está marcando?",
+      tzLabel: (n) => `Zona horaria de ${n}`, tzAuto: (c) => `Automática${c ? " · " + c : ""}`,
+      tzHelp: "Cada uno marca según su propia hora. El día de cada uno cambia a su medianoche.",
+      tzMore: "Todas las zonas", tzZones: {"Europe/Berlin":"Alemania","America/Costa_Rica":"Costa Rica","America/New_York":"Nueva York","America/Mexico_City":"México","America/Panama":"Panamá","Europe/Madrid":"España","Europe/London":"Londres","America/Los_Angeles":"Los Ángeles"},
+      habits: [
+        ["Leer 5 páginas o más", "De tu libro actual"],
+        ["Diario de gratitud", "Escribe lo que agradeces hoy"],
+        ["Moverse y estirar", "2 estiramientos · 10 sentadillas · 10 flexiones · 10 abdominales"],
+        [(w) => w ? "10,000 pasos" : "7,000 pasos", (w) => w ? "Meta de fin de semana" : "Meta de lunes a viernes"],
+        ["2 litros de agua", "Como mínimo, durante el día"],
+        ["Creatina", "Tu dosis de hoy"],
+        ["Duolingo", "Tu lección de hoy"]
+      ]
+    },
+    en: {
+      locale: "en-US",
+      day: (n) => `Day ${n}`, of90: "of 90",
+      before: "Starting soon", after: "You did it!",
+      outOf: (n) => `of ${n}`,
+      left: (n) => n === 1 ? "1 more to fill the heart" : `${n} more to fill the heart`,
+      none: "Tap each one when you finish it",
+      full: "Heart full! A complete day for both of you 🍒",
+      mine: (n, o) => `Your half is done. ${n} more from ${o}.`,
+      today: "Today", back: "Back to today",
+      done: (n) => `${n} of 7 today`,
+      journey: "Our 90 days",
+      statDone: (n) => `<b>${n}</b> ${n === 1 ? "full heart" : "full hearts"}`,
+      streak: (n) => `Streak: <b>${n}</b> ${n === 1 ? "day" : "days"}`,
+      legFull: "Full (both)", legPart: "Partial", legNone: "Not marked",
+      hint: "To use it as an app: tap <b>Share</b>, then <b>Add to Home Screen</b>.",
+      hintOk: "Got it",
+      settings: "Settings", startLabel: "Start date of the 90 days",
+      startHelp: "If you change it, the days you already marked stay.",
+      save: "Save", close: "Close",
+      reset: "Start over", confirm: "This erases everything marked for Hannah and Carlos on this phone. Are you sure?",
+      yes: "Yes, erase", no: "Cancel",
+      gear: "Settings", people: "Who is checking in?",
+      tzLabel: (n) => `${n}'s time zone`, tzAuto: (c) => `Automatic${c ? " · " + c : ""}`,
+      tzHelp: "Each of you checks in on your own clock. Your day changes at your own midnight.",
+      tzMore: "All time zones", tzZones: {"Europe/Berlin":"Germany","America/Costa_Rica":"Costa Rica","America/New_York":"New York","America/Mexico_City":"Mexico","America/Panama":"Panama","Europe/Madrid":"Spain","Europe/London":"London","America/Los_Angeles":"Los Angeles"},
+      habits: [
+        ["Read 5 pages or more", "Of your current book"],
+        ["Gratitude journal", "Write what you are grateful for today"],
+        ["Move and stretch", "2 stretches · 10 squats · 10 push-ups · 10 abs"],
+        [(w) => w ? "10,000 steps" : "7,000 steps", (w) => w ? "Weekend goal" : "Weekday goal"],
+        ["2 liters of water", "At least, spread through the day"],
+        ["Creatine", "Your daily dose"],
+        ["Duolingo", "Today's lesson"]
+      ]
+    },
+    de: {
+      locale: "de-DE",
+      day: (n) => `Tag ${n}`, of90: "von 90",
+      before: "Bald geht's los", after: "Ihr habt es geschafft!",
+      outOf: (n) => `von ${n}`,
+      left: (n) => n === 1 ? "Noch 1, dann ist das Herz voll" : `Noch ${n}, dann ist das Herz voll`,
+      none: "Tippe auf jede Aufgabe, wenn du sie erledigt hast",
+      full: "Herz voll! Ein ganzer Tag für euch beide 🍒",
+      mine: (n, o) => `Deine Hälfte ist voll. Noch ${n} von ${o}.`,
+      today: "Heute", back: "Zurück zu heute",
+      done: (n) => `${n} von 7 heute`,
+      journey: "Unsere 90 Tage",
+      statDone: (n) => `<b>${n}</b> ${n === 1 ? "volles Herz" : "volle Herzen"}`,
+      streak: (n) => `Serie: <b>${n}</b> ${n === 1 ? "Tag" : "Tage"}`,
+      legFull: "Voll (beide)", legPart: "Teilweise", legNone: "Nicht markiert",
+      hint: "Als App nutzen: Tippe auf <b>Teilen</b> und dann auf <b>Zum Home-Bildschirm</b>.",
+      hintOk: "Alles klar",
+      settings: "Einstellungen", startLabel: "Starttag der 90 Tage",
+      startHelp: "Wenn du ihn änderst, bleiben die markierten Tage erhalten.",
+      save: "Speichern", close: "Schließen",
+      reset: "Von vorne beginnen", confirm: "Damit wird alles gelöscht, was Hannah und Carlos auf diesem Handy markiert haben. Wirklich?",
+      yes: "Ja, löschen", no: "Abbrechen",
+      gear: "Einstellungen", people: "Wer hakt gerade ab?",
+      tzLabel: (n) => `Zeitzone von ${n}`, tzAuto: (c) => `Automatisch${c ? " · " + c : ""}`,
+      tzHelp: "Jeder hakt nach seiner eigenen Uhrzeit ab. Der Tag wechselt um eure eigene Mitternacht.",
+      tzMore: "Alle Zeitzonen", tzZones: {"Europe/Berlin":"Deutschland","America/Costa_Rica":"Costa Rica","America/New_York":"New York","America/Mexico_City":"Mexiko","America/Panama":"Panama","Europe/Madrid":"Spanien","Europe/London":"London","America/Los_Angeles":"Los Angeles"},
+      habits: [
+        ["Mindestens 5 Seiten lesen", "In deinem aktuellen Buch"],
+        ["Dankbarkeitsjournal", "Schreib auf, wofür du heute dankbar bist"],
+        ["Bewegung und Dehnen", "2 Dehnübungen · 10 Squats · 10 Push-ups · 10 Abs"],
+        [(w) => w ? "10.000 Schritte" : "7.000 Schritte", (w) => w ? "Ziel am Wochenende" : "Ziel unter der Woche"],
+        ["2 Liter Wasser", "Mindestens, über den Tag verteilt"],
+        ["Kreatin", "Deine tägliche Portion"],
+        ["Duolingo", "Deine Lektion für heute"]
+      ]
+    }
+  };
+
+  // [color, soft tint] per habit: read, gratitude, move, steps, water, creatine, duolingo
+  const COLORS = [["#1D4E89","#E2E8F0"],["#A66300","#F3EBDE"],["#C2410C","#F7E6DF"],["#0F766E","#E0EDEC"],["#0A73A8","#DFEDF4"],["#3E4A55","#E6E7E9"],["#3B8500","#E6EFDE"]];
+
+  const ICONS = [
+    '<path d="M4 5.5C4 4.7 4.7 4 5.5 4H10a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2H4z"/><path d="M20 5.5c0-.8-.7-1.5-1.5-1.5H14a2 2 0 0 0-2 2v14a2 2 0 0 1 2-2h6z"/>',
+    '<path d="M5 4h11a2 2 0 0 1 2 2v14H7a2 2 0 0 1-2-2z"/><path d="M5 18a2 2 0 0 1 2-2h11"/><path d="M12 8.6c-.7-1-2.6-.9-2.6.7 0 1.3 2.6 2.9 2.6 2.9s2.6-1.6 2.6-2.9c0-1.6-1.9-1.7-2.6-.7z"/>',
+    '<circle cx="12" cy="4.5" r="1.8"/><path d="M12 7v6l-3 7M12 13l3 7M5 9.5l7-1 7 1"/>',
+    '<path d="M7 3.5c1.7 0 2.5 1.8 2.5 4s-.6 4-2.2 4.4c-1.4.3-2.5-1.4-2.6-3.6C4.5 6 5.4 3.5 7 3.5z"/><path d="M5.2 14.5l4 .6-.4 2.5a2 2 0 0 1-4-.6z"/><path d="M17 7.5c1.6 0 2.5 2.5 2.3 4.8-.1 2.2-1.2 3.9-2.6 3.6-1.6-.4-2.2-2.2-2.2-4.4s.8-4 2.5-4z"/><path d="M18.8 18.5l-4 .6.4 2.5a2 2 0 0 0 4-.6z"/>',
+    '<path d="M12 3s6 6.7 6 11a6 6 0 0 1-12 0c0-4.3 6-11 6-11z"/><path d="M9.5 15a2.5 2.5 0 0 0 2.5 2.5"/>',
+    '<rect x="5.5" y="9" width="13" height="11.5" rx="2.5"/><path d="M8 9V6.5A1.5 1.5 0 0 1 9.5 5h5A1.5 1.5 0 0 1 16 6.5V9"/><path d="M5.5 13.5h13"/>',
+    '<path d="M4 6h9M8.5 4v2M6 6c.5 3 2.5 5.5 5 6.5M11 6c-.5 3-2.7 6-6 7.5"/><path d="M13 20l3.5-8 3.5 8M14.2 17.5h4.6"/>'
+  ];
+
+  const MSG = {"es": {"daily": ["El primer día es el más valiente. Hoy empiezan juntos.", "No tiene que ser perfecto. Tiene que ser hoy.", "Cada casilla marcada es una promesa que se cumplen a ustedes mismos.", "Pequeño, pero todos los días: así se construye algo grande.", "La motivación los hace empezar. El hábito los hace seguir.", "Hoy no compiten con nadie, solo con ustedes de ayer.", "Una semana entera. Eso ya no es suerte, es decisión.", "Lo difícil no es hacerlo una vez. Es volver mañana. Y aquí están.", "Su cuerpo escucha todo lo que hacen por él.", "Diez días. Diez veces dijeron que sí.", "Hacerlo juntos lo hace más fácil, y más bonito.", "Un mal día no borra un buen camino.", "Lo que hacen todos los días pesa más que lo que hacen de vez en cuando.", "Dos semanas. Su yo del futuro ya les está dando las gracias.", "No esperen tener ganas: empiecen y las ganas llegan.", "Cada página, cada paso, cada vaso de agua cuenta.", "La constancia es silenciosa, pero los resultados se notan.", "Hoy es un buen día para llenar el corazón.", "Quien se cuida, cuida mejor a quien ama.", "Veinte días. Ya no es un intento, es una costumbre.", "Tres semanas: dicen que aquí nace un hábito. Ustedes ya lo están viendo.", "No se trata de hacer más. Se trata de no soltarlo.", "El cansancio pasa. El orgullo de haberlo hecho se queda.", "Una tarea a la vez. No hay prisa, hay rumbo.", "Lo están haciendo mejor de lo que creen.", "El progreso no siempre se ve, pero siempre suma.", "Cuando cueste, recuerden por qué empezaron.", "Cuatro semanas juntos. Eso también es amor.", "Hoy también vale, aunque sea con menos energía.", "Un mes. Treinta días de elegirse a ustedes mismos.", "Ya pasaron la tercera parte. Lo mejor viene ahora.", "La disciplina es acordarse de lo que quieren, incluso cuando no tienen ganas.", "Respiren, tomen agua y sigan.", "Cada día que completan es un ladrillo de quienes quieren ser.", "Las metas grandes se ganan en días normales como hoy.", "No se trata de cuántos días faltan, sino de cómo viven este.", "Su energía de hoy es el resultado de lo que hicieron ayer.", "Sigan sumando corazones llenos.", "Hoy hagan una cosa por su mente, una por su cuerpo y una por ustedes.", "Cuarenta días. Ya hay una nueva versión de ustedes en camino.", "Si un día falla, el siguiente vuelve. Así de simple.", "Seis semanas de constancia. Eso inspira a cualquiera.", "Lo pequeño, repetido, se vuelve enorme.", "Hoy no busquen motivación, busquen terminar.", "La mitad del camino. Miren todo lo que ya hicieron.", "La segunda mitad empieza con la misma fuerza.", "Gracias por no rendirse con ustedes mismos.", "Un poco cada día le gana a mucho de vez en cuando.", "Siete semanas. Su rutina ya habla de ustedes.", "Cincuenta días. Cincuenta promesas cumplidas.", "Cuando uno flojea, el otro empuja. Para eso son equipo.", "Hoy es una nueva oportunidad para llenar el corazón.", "Su mejor versión no llega de golpe: se construye así.", "La constancia es la forma más bonita de quererse.", "Cada vaso de agua y cada página es un voto por su futuro.", "Ocho semanas. Ya no son los mismos que empezaron.", "No se comparen con otros. Compárense con el día 1.", "Lo hacen por ustedes, y se nota.", "Hoy denle un poco más de cariño a cada tarea.", "Sesenta días. Dos tercios del camino, juntos.", "Menos de treinta días y esto ya será parte de ustedes.", "El esfuerzo de hoy es la calma de mañana.", "Nueve semanas. Su constancia ya es su fortaleza.", "Un día a la vez sigue siendo el mejor plan.", "No paren ahora: están construyendo algo que dura.", "Hoy celebren lo lejos que han llegado.", "Los hábitos no se ven al principio, pero al final lo cambian todo.", "Sigan, aunque nadie más lo vea. Ustedes sí lo ven.", "Lo que empezó como un reto ya es un estilo de vida.", "Setenta días. Diez semanas de pura determinación.", "Cada día que cumplen, se lo cumplen a ustedes.", "Cada tarea que marcan es un pequeño “lo logré”.", "Ya quedan menos días de los que hicieron. Sigan.", "El cuerpo fuerte, la mente clara y el corazón lleno.", "Faltan quince días. La meta ya se ve.", "Hoy no aflojen: lo bueno está cerca.", "Once semanas. Ya son la prueba de que se puede.", "Hagan de hoy otro día del que se sientan orgullosos.", "La recta final se corre con el corazón.", "Ochenta días. Solo diez más para cumplir lo que se prometieron.", "Lo que hoy les parece normal, en el día 1 parecía imposible.", "No se trata de llegar rápido, sino de llegar juntos.", "Una semana para la meta. A dar todo.", "Doce semanas. Lo están logrando.", "Cinco días más. Cada uno cuenta el doble.", "Ya no necesitan motivación: ya tienen el hábito.", "Tres días. Disfruten cada tarea.", "Pasado mañana, la meta. Hoy, un corazón más.", "Mañana termina el reto, pero lo que construyeron se queda.", "Día 90. Lo lograron juntos. Esto apenas empieza."], "habit": [["¡Lectura lista! Cada página te hace crecer un poquito más.", "Tu mente se lleva hoy algo nuevo. Bien hecho.", "Leer todos los días es un regalo para tu futuro.", "Página a página se construye una mente fuerte."], ["Agradecer cambia cómo se siente el día entero.", "Lo bueno se multiplica cuando lo escribes.", "Un corazón agradecido es un corazón más ligero.", "Hoy te tomaste un momento para ver lo bueno. Eso vale mucho."], ["¡Cuerpo activado! Tu energía te lo va a agradecer.", "Cada sentadilla y cada estiramiento suman fuerza.", "Moverse es la mejor forma de decirle a tu cuerpo: te cuido.", "Listo el movimiento de hoy. Más fuerte que ayer."], ["¡Meta de pasos cumplida! Tus piernas y tu corazón te lo agradecen.", "Paso a paso se llega lejos. Hoy lo demostraste.", "Caminar despeja la mente y fortalece el cuerpo.", "Cada paso de hoy te acerca al día 90."], ["¡2 litros! Tu cuerpo funciona mejor hidratado.", "Agua lista. Más energía, mejor piel y la mente más clara.", "Hidratarte es cuidarte en cada sorbo.", "Tu cuerpo te dice gracias, vaso por vaso."], ["Creatina lista. La constancia es lo que da resultados.", "Un pequeño hábito que suma fuerza día tras día.", "Tus músculos ya tienen lo que necesitan hoy.", "Hecho. Lo simple, todos los días, es lo que funciona."], ["¡Lección lista! Un idioma se aprende así, un día a la vez.", "Hoy tu cerebro aprendió algo nuevo. ¡Muy bien!", "Cada lección los acerca a entenderse aún mejor.", "La racha sigue viva. Sigue así."]], "hi": "Hola, Hannah y Carlos", "btn": "Empezar el día", "before": "Muy pronto empieza su reto de 90 días. Prepárense para llenar corazones.", "after": "Lo lograron: 90 días juntos. Ahora, a mantener lo que construyeron.", "half": ["¡Tu mitad del corazón está lista, {name}! Ahora falta la de {other}.", "Hiciste tus 7, {name}. El corazón ya va por la mitad: ¡vamos, {other}!", "Tu parte está completa, {name}. {other}, el corazón te espera."], "together": ["¡Corazón lleno! {a} y {b} completaron el día juntos.", "Los 14 listos. Así se ve un equipo de verdad.", "Día completo para los dos. Mañana lo vuelven a llenar."]}, "en": {"daily": ["The first day is the bravest. Today you start together.", "It doesn't have to be perfect. It has to be today.", "Every checked box is a promise you keep to yourselves.", "Small, but every day: that's how something big is built.", "Motivation gets you started. Habit keeps you going.", "Today you're not competing with anyone but yesterday's you.", "A whole week. That's not luck anymore, it's a decision.", "The hard part isn't doing it once. It's coming back tomorrow. And here you are.", "Your body notices everything you do for it.", "Ten days. Ten times you said yes.", "Doing it together makes it easier, and more beautiful.", "One bad day doesn't erase a good path.", "What you do every day matters more than what you do once in a while.", "Two weeks. Your future selves are already thanking you.", "Don't wait until you feel like it: start, and the feeling follows.", "Every page, every step, every glass of water counts.", "Consistency is quiet, but the results show.", "Today is a good day to fill the heart.", "Taking care of yourself helps you take better care of the one you love.", "Twenty days. This isn't an attempt anymore, it's a routine.", "Three weeks: they say this is where a habit is born. You can already see it.", "It's not about doing more. It's about not letting go.", "Tiredness passes. The pride of having done it stays.", "One task at a time. No rush, just direction.", "You're doing better than you think.", "Progress isn't always visible, but it always adds up.", "When it gets hard, remember why you started.", "Four weeks together. That's love too.", "Today still counts, even with less energy.", "One month. Thirty days of choosing yourselves.", "A third of the way done. The best part starts now.", "Discipline is remembering what you want, even when you don't feel like it.", "Breathe, drink some water, keep going.", "Every completed day is a brick in who you want to be.", "Big goals are won on ordinary days like today.", "It's not about how many days are left, but how you live this one.", "Today's energy comes from what you did yesterday.", "Keep adding full hearts.", "Today, do one thing for your mind, one for your body and one for yourselves.", "Forty days. A new version of you is on its way.", "If one day slips, the next one comes back. That simple.", "Six weeks of consistency. That would inspire anyone.", "Small things, repeated, become huge.", "Today, don't look for motivation. Look for the finish.", "Halfway there. Look at everything you've already done.", "The second half starts with the same strength.", "Thank you for not giving up on yourselves.", "A little every day beats a lot once in a while.", "Seven weeks. Your routine already says who you are.", "Fifty days. Fifty promises kept.", "When one of you slows down, the other pushes. That's what a team is for.", "Today is a new chance to fill the heart.", "Your best version doesn't arrive all at once: it's built like this.", "Consistency is the most beautiful way to love yourself.", "Every glass of water and every page is a vote for your future.", "Eight weeks. You're not the same people who started.", "Don't compare yourselves to others. Compare yourselves to day 1.", "You're doing this for yourselves, and it shows.", "Today, give each task a little extra love.", "Sixty days. Two thirds of the way, together.", "Less than thirty days and this will be part of who you are.", "Today's effort is tomorrow's calm.", "Nine weeks. Your consistency is now your strength.", "One day at a time is still the best plan.", "Don't stop now: you're building something that lasts.", "Today, celebrate how far you've come.", "Habits are invisible at first, but in the end they change everything.", "Keep going, even if no one else sees it. You do.", "What started as a challenge is now a way of life.", "Seventy days. Ten weeks of pure determination.", "Every day you keep it, you keep it for yourselves.", "Every task you check is a small “I did it”.", "There are fewer days ahead than behind you. Keep going.", "A strong body, a clear mind and a full heart.", "Fifteen days to go. The finish line is in sight.", "Don't ease up today: the good part is close.", "Eleven weeks. You're the proof that it can be done.", "Make today another day you're proud of.", "The final stretch is run with the heart.", "Eighty days. Only ten more to keep the promise you made.", "What feels normal today seemed impossible on day 1.", "It's not about getting there fast, it's about getting there together.", "One week to the goal. Give it everything.", "Twelve weeks. You're making it.", "Five more days. Each one counts double.", "You don't need motivation anymore: you have the habit.", "Three days. Enjoy every task.", "The day after tomorrow, the goal. Today, one more heart.", "Tomorrow the challenge ends, but what you built stays.", "Day 90. You did it together. This is only the beginning."], "habit": [["Reading done! Every page helps you grow a little more.", "Your mind takes something new with it today. Well done.", "Reading every day is a gift to your future self.", "Page by page, a strong mind is built."], ["Gratitude changes how the whole day feels.", "Good things multiply when you write them down.", "A grateful heart is a lighter heart.", "You took a moment to see the good today. That matters."], ["Body activated! Your energy will thank you.", "Every squat and every stretch adds strength.", "Moving is the best way to tell your body: I've got you.", "Today's movement done. Stronger than yesterday."], ["Step goal reached! Your legs and your heart thank you.", "Step by step, you go far. You proved it today.", "Walking clears the mind and strengthens the body.", "Every step today brings you closer to day 90."], ["2 liters! Your body works better hydrated.", "Water done. More energy, better skin, a clearer mind.", "Staying hydrated is taking care of yourself, sip by sip.", "Your body says thank you, glass by glass."], ["Creatine done. Consistency is what brings results.", "A small habit that adds strength day after day.", "Your muscles have what they need today.", "Done. Simple things, every day, are what work."], ["Lesson done! A language is learned like this, one day at a time.", "Your brain learned something new today. Great job!", "Every lesson brings you two closer to understanding each other even better.", "The streak lives on. Keep it up."]], "hi": "Hi, Hannah and Carlos", "btn": "Start the day", "before": "Your 90-day challenge starts very soon. Get ready to fill some hearts.", "after": "You did it: 90 days together. Now keep what you built.", "half": ["Your half of the heart is done, {name}! Now it's {other}'s turn.", "You did your 7, {name}. The heart is halfway there: go, {other}!", "Your part is complete, {name}. {other}, the heart is waiting for you."], "together": ["Heart full! {a} and {b} completed the day together.", "All 14 done. That's what a real team looks like.", "A full day for both of you. Tomorrow you fill it again."]}, "de": {"daily": ["Der erste Tag ist der mutigste. Heute fangt ihr gemeinsam an.", "Es muss nicht perfekt sein. Es muss heute sein.", "Jedes Häkchen ist ein Versprechen, das ihr euch selbst haltet.", "Klein, aber jeden Tag: So entsteht etwas Großes.", "Motivation bringt euch zum Anfangen. Gewohnheit bringt euch zum Weitermachen.", "Heute messt ihr euch mit niemandem, nur mit euch von gestern.", "Eine ganze Woche. Das ist kein Glück mehr, das ist eine Entscheidung.", "Schwer ist nicht, es einmal zu machen. Schwer ist, morgen wiederzukommen. Und hier seid ihr.", "Euer Körper merkt alles, was ihr für ihn tut.", "Zehn Tage. Zehnmal habt ihr Ja gesagt.", "Zusammen ist es leichter, und schöner.", "Ein schlechter Tag löscht keinen guten Weg.", "Was ihr jeden Tag macht, zählt mehr als das, was ihr ab und zu macht.", "Zwei Wochen. Euer zukünftiges Ich bedankt sich schon.", "Wartet nicht, bis ihr Lust habt: Fangt an, dann kommt sie von selbst.", "Jede Seite, jeder Schritt, jedes Glas Wasser zählt.", "Beständigkeit ist leise, aber die Ergebnisse sieht man.", "Heute ist ein guter Tag, um das Herz zu füllen.", "Wer gut für sich sorgt, kann auch besser für die sorgen, die er liebt.", "Zwanzig Tage. Das ist kein Versuch mehr, das ist Routine.", "Drei Wochen: Man sagt, hier entsteht eine Gewohnheit. Ihr seht es schon.", "Es geht nicht darum, mehr zu machen. Es geht darum, dranzubleiben.", "Die Müdigkeit geht vorbei. Der Stolz, es geschafft zu haben, bleibt.", "Eine Aufgabe nach der anderen. Keine Eile, nur eine Richtung.", "Ihr macht das besser, als ihr denkt.", "Fortschritt sieht man nicht immer, aber er zählt immer.", "Wenn es schwer wird, denkt daran, warum ihr angefangen habt.", "Vier Wochen zusammen. Auch das ist Liebe.", "Auch heute zählt, selbst mit weniger Energie.", "Ein Monat. Dreißig Tage, an denen ihr euch für euch entschieden habt.", "Ein Drittel ist geschafft. Jetzt kommt der beste Teil.", "Disziplin heißt, sich daran zu erinnern, was man will, auch wenn man keine Lust hat.", "Durchatmen, Wasser trinken, weitermachen.", "Jeder geschaffte Tag ist ein Baustein für die Menschen, die ihr sein wollt.", "Große Ziele werden an ganz normalen Tagen wie heute erreicht.", "Es geht nicht darum, wie viele Tage noch fehlen, sondern wie ihr diesen lebt.", "Eure Energie heute kommt von dem, was ihr gestern getan habt.", "Sammelt weiter volle Herzen.", "Macht heute eine Sache für den Kopf, eine für den Körper und eine für euch.", "Vierzig Tage. Eine neue Version von euch ist unterwegs.", "Wenn ein Tag mal nicht klappt, kommt der nächste zurück. So einfach ist das.", "Sechs Wochen Beständigkeit. Das inspiriert jeden.", "Kleines, immer wieder, wird riesig.", "Sucht heute keine Motivation. Sucht das Ziel.", "Halbzeit. Schaut, was ihr schon alles geschafft habt.", "Die zweite Hälfte beginnt mit derselben Kraft.", "Danke, dass ihr euch selbst nicht aufgebt.", "Ein bisschen jeden Tag schlägt viel ab und zu.", "Sieben Wochen. Eure Routine sagt schon viel über euch.", "Fünfzig Tage. Fünfzig gehaltene Versprechen.", "Wenn einer schwächelt, zieht der andere mit. Dafür seid ihr ein Team.", "Heute ist eine neue Chance, das Herz zu füllen.", "Die beste Version von euch kommt nicht auf einmal: Sie entsteht genau so.", "Beständigkeit ist die schönste Art, sich selbst zu lieben.", "Jedes Glas Wasser und jede Seite ist eine Stimme für eure Zukunft.", "Acht Wochen. Ihr seid nicht mehr dieselben wie am Anfang.", "Vergleicht euch nicht mit anderen. Vergleicht euch mit Tag 1.", "Ihr macht das für euch, und das merkt man.", "Gebt heute jeder Aufgabe ein bisschen mehr Liebe.", "Sechzig Tage. Zwei Drittel des Weges, gemeinsam.", "Weniger als dreißig Tage, dann ist das ein Teil von euch.", "Die Mühe von heute ist die Ruhe von morgen.", "Neun Wochen. Eure Beständigkeit ist jetzt eure Stärke.", "Ein Tag nach dem anderen ist immer noch der beste Plan.", "Hört jetzt nicht auf: Ihr baut gerade etwas, das bleibt.", "Feiert heute, wie weit ihr gekommen seid.", "Gewohnheiten sieht man am Anfang nicht, aber am Ende verändern sie alles.", "Macht weiter, auch wenn es sonst niemand sieht. Ihr seht es.", "Was als Challenge angefangen hat, ist jetzt ein Lebensstil.", "Siebzig Tage. Zehn Wochen pure Entschlossenheit.", "Jeder Tag, den ihr durchzieht, ist ein Geschenk an euch selbst.", "Jede abgehakte Aufgabe ist ein kleines „Ich hab's geschafft“.", "Es liegen schon weniger Tage vor euch als hinter euch. Weiter so.", "Ein starker Körper, ein klarer Kopf und ein volles Herz.", "Noch fünfzehn Tage. Das Ziel ist in Sicht.", "Lasst heute nicht nach: Das Gute ist nah.", "Elf Wochen. Ihr seid der Beweis, dass es geht.", "Macht heute wieder zu einem Tag, auf den ihr stolz seid.", "Die Zielgerade läuft man mit dem Herzen.", "Achtzig Tage. Nur noch zehn, um euer Versprechen zu halten.", "Was sich heute normal anfühlt, schien an Tag 1 unmöglich.", "Es geht nicht darum, schnell anzukommen, sondern gemeinsam.", "Noch eine Woche bis zum Ziel. Gebt alles.", "Zwölf Wochen. Ihr schafft das.", "Noch fünf Tage. Jeder zählt doppelt.", "Ihr braucht keine Motivation mehr: Ihr habt die Gewohnheit.", "Noch drei Tage. Genießt jede Aufgabe.", "Übermorgen ist das Ziel. Heute ein Herz mehr.", "Morgen endet die Challenge, aber was ihr aufgebaut habt, bleibt.", "Tag 90. Ihr habt es gemeinsam geschafft. Das ist erst der Anfang."], "habit": [["Lesen erledigt! Jede Seite lässt dich ein bisschen wachsen.", "Dein Kopf nimmt heute etwas Neues mit. Gut gemacht.", "Jeden Tag lesen ist ein Geschenk an dein zukünftiges Ich.", "Seite für Seite entsteht ein starker Kopf."], ["Dankbarkeit verändert, wie sich der ganze Tag anfühlt.", "Gutes vermehrt sich, wenn man es aufschreibt.", "Ein dankbares Herz ist ein leichteres Herz.", "Du hast dir heute einen Moment für das Gute genommen. Das ist viel wert."], ["Körper aktiviert! Deine Energie wird es dir danken.", "Jede Kniebeuge und jede Dehnung macht dich stärker.", "Bewegung ist die schönste Art, deinem Körper zu sagen: Ich pass auf dich auf.", "Bewegung für heute erledigt. Stärker als gestern."], ["Schrittziel erreicht! Deine Beine und dein Herz danken dir.", "Schritt für Schritt kommt man weit. Heute hast du es bewiesen.", "Gehen macht den Kopf frei und den Körper stark.", "Jeder Schritt heute bringt dich näher an Tag 90."], ["2 Liter! Dein Körper funktioniert besser mit genug Wasser.", "Wasser erledigt. Mehr Energie, schönere Haut, ein klarer Kopf.", "Trinken heißt, dich Schluck für Schluck um dich zu kümmern.", "Dein Körper sagt danke, Glas für Glas."], ["Kreatin erledigt. Beständigkeit bringt die Ergebnisse.", "Eine kleine Gewohnheit, die Tag für Tag Kraft bringt.", "Deine Muskeln haben heute, was sie brauchen.", "Erledigt. Einfache Dinge, jeden Tag, das funktioniert."], ["Lektion erledigt! So lernt man eine Sprache, ein Tag nach dem anderen.", "Dein Gehirn hat heute etwas Neues gelernt. Super!", "Jede Lektion bringt euch näher daran, euch noch besser zu verstehen.", "Die Serie lebt weiter. Mach weiter so."]], "hi": "Hallo Hannah und Carlos", "btn": "Los geht's", "before": "Eure 90-Tage-Challenge beginnt schon bald. Macht euch bereit, Herzen zu füllen.", "after": "Ihr habt es geschafft: 90 Tage zusammen. Jetzt behaltet, was ihr aufgebaut habt.", "half": ["Deine Hälfte vom Herz ist voll, {name}! Jetzt ist {other} dran.", "Du hast deine 7 geschafft, {name}. Das Herz ist halb voll: Los, {other}!", "Dein Teil ist erledigt, {name}. {other}, das Herz wartet auf dich."], "together": ["Herz voll! {a} und {b} haben den Tag zusammen geschafft.", "Alle 14 erledigt. So sieht ein echtes Team aus.", "Ein voller Tag für euch beide. Morgen füllt ihr es wieder."]}};
+
+  /* ---------- Storage (safe) ---------- */
+  const today0 = () => { const d = new Date(); d.setHours(0,0,0,0); return d; };
+  const key = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+  const parse = (k) => { const [y,m,d] = k.split("-").map(Number); return new Date(y, m-1, d); };
+  const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate()+n); return x; };
+  const diffDays = (a, b) => Math.round((parse(key(b)) - parse(key(a))) / 86400000);
+  const validTz = (z) => { if (typeof z !== "string" || !z) return false; try { new Intl.DateTimeFormat("en-US", { timeZone: z }); return true; } catch(e) { return false; } };
+  const deviceTz = () => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"; } catch(e) { return "UTC"; } };
+  const keyInTz = (z) => { try { return new Intl.DateTimeFormat("en-CA", { timeZone: z, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date()); } catch(e) { return key(today0()); } };
+
+  function defaultLang(){
+    const l = (navigator.language || "es").slice(0,2).toLowerCase();
+    return l === "de" ? "de" : l === "en" ? "en" : "es";
+  }
+  function load(){
+    let s = null;
+    try { s = JSON.parse(localStorage.getItem(KEY)); } catch(e) {}
+    if (!s || typeof s !== "object") s = {};
+    if (!T[s.lang]) s.lang = defaultLang();
+    if (s.person !== "hannah" && s.person !== "carlos") s.person = "hannah";
+    if (!s.tz || typeof s.tz !== "object") s.tz = {};
+    if (!s.tzSeen || typeof s.tzSeen !== "object") s.tzSeen = {};
+    for (const p of ["hannah","carlos"]) {
+      if (s.tz[p] !== "auto" && !validTz(s.tz[p])) s.tz[p] = "auto";
+      if (s.tzSeen[p] && !validTz(s.tzSeen[p])) delete s.tzSeen[p];
+    }
+    if (!s.start || !/^\d{4}-\d{2}-\d{2}$/.test(s.start)) s.start = keyInTz(s.tz[s.person] && s.tz[s.person] !== "auto" ? s.tz[s.person] : deviceTz());
+    if (!s.data || typeof s.data !== "object") s.data = {};
+    for (const p of ["hannah","carlos"]) if (!s.data[p] || typeof s.data[p] !== "object") s.data[p] = {};
+    return s;
+  }
+  let S = load();
+  function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e) {} }
+  // Which zone a person lives in: chosen zone, or "auto" = their phone's zone
+  // (for the other person, the zone their phone reported last time).
+  function tzOf(p){
+    if (S.tz[p] && S.tz[p] !== "auto") return S.tz[p];
+    if (p === S.person) return deviceTz();
+    return S.tzSeen[p] || deviceTz();
+  }
+  function noteDevice(){ if (S.tz[S.person] === "auto") S.tzSeen[S.person] = deviceTz(); }
+  const todayKey = (p = S.person) => keyInTz(tzOf(p));
+  const cityOf = (z) => (t().tzZones[z]) || String(z).split("/").pop().replace(/_/g, " ");
+  noteDevice();
+  save();
+
+  let viewKey = todayKey();
+
+  /* ---------- Helpers ---------- */
+  const $ = (id) => document.getElementById(id);
+  const t = () => T[S.lang];
+  const marks = (p, k) => { const a = S.data[p][k]; return Array.isArray(a) && a.length === HABITS ? a : Array(HABITS).fill(false); };
+  const count = (p, k) => marks(p, k).filter(Boolean).length;
+  const isWeekend = (k) => { const d = parse(k).getDay(); return d === 0 || d === 6; };
+  const dayIndex = (k) => diffDays(parse(S.start), parse(k)) + 1; // 1..90
+  const inRange = (k) => { const i = dayIndex(k); return i >= 1 && i <= DAYS; };
+
+  const both = (k) => count("hannah", k) + count("carlos", k);
+  const NAMES = { hannah: "Hannah", carlos: "Carlos" };
+  const other = (p) => p === "hannah" ? "carlos" : "hannah";
+
+  function streak(){
+    // consecutive full days ending today (or yesterday if today isn't full yet)
+    let d = parse(todayKey()), n = 0;
+    if (both(key(d)) < HABITS * 2) d = addDays(d, -1);
+    while (inRange(key(d)) && both(key(d)) === HABITS * 2) { n++; d = addDays(d, -1); }
+    return n;
+  }
+  function fullDays(){
+    let n = 0;
+    for (const k in S.data.hannah) if (inRange(k) && both(k) === HABITS * 2) n++;
+    return n;
+  }
+
+
+  /* ---------- Messages ---------- */
+  const M = () => MSG[S.lang];
+  function dailyMessage(k){
+    const i = dayIndex(k);
+    if (i < 1) return M().before;
+    if (i > DAYS) return M().after;
+    return M().daily[i - 1];
+  }
+  let lastPick = {};
+  function pick(list, id){
+    let n = Math.floor(Math.random() * list.length);
+    if (list.length > 1 && n === lastPick[id]) n = (n + 1) % list.length;
+    lastPick[id] = n; return list[n];
+  }
+  let toastTimer = 0;
+  function toast(text, color, icon, big){
+    const el = $("toast");
+    el.style.setProperty("--tc", color);
+    el.classList.toggle("big", !!big);
+    $("toastIco").innerHTML = icon;
+    $("toastTxt").textContent = text;
+    el.classList.remove("show"); void el.offsetWidth; el.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove("show"), big ? 4200 : 3000);
+  }
+  const heartIcon = '<svg viewBox="0 0 24 24" fill="#fff"><path d="M12 21C6 16.6 2 13.1 2 8.6 2 5.5 4.4 3 7.4 3c1.9 0 3.5 1 4.6 2.5C13.1 4 14.7 3 16.6 3 19.6 3 22 5.5 22 8.6c0 4.5-4 8-10 12.4z"/></svg>';
+  const habitIcon = (i) => `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICONS[i]}</svg>`;
+
+  function showWelcome(force){
+    const tk = todayKey();
+    let seen = null;
+    try { seen = localStorage.getItem(KEY + ":seen"); } catch(e) {}
+    if (!force && seen === tk) return;
+    const L = t(), i = dayIndex(tk);
+    $("wDay").textContent = (i >= 1 && i <= DAYS) ? `${L.day(i)} ${L.of90}` : (i < 1 ? L.before : L.after);
+    $("wHi").textContent = M().hi;
+    $("wMsg").textContent = dailyMessage(tk);
+    $("wBtn").textContent = M().btn;
+    $("welcome").classList.add("show");
+    setTimeout(() => $("wBtn").focus(), 60);
+  }
+  function hideWelcome(){
+    try { localStorage.setItem(KEY + ":seen", todayKey()); } catch(e) {}
+    $("welcome").classList.remove("show");
+  }
+
+  /* ---------- Render ---------- */
+  function renderTop(){
+    const L = t(), i = dayIndex(todayKey());
+    document.documentElement.lang = L.locale;
+    let label;
+    if (i < 1) label = L.before;
+    else if (i > DAYS) label = L.after;
+    else label = `${L.day(i)} <small>${L.of90}</small>`;
+    $("daycount").innerHTML = label;
+    document.querySelectorAll(".langs button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.lang === S.lang)));
+    $("openSettings").setAttribute("aria-label", L.gear);
+    $("people").setAttribute("aria-label", L.people);
+  }
+
+  function renderPeople(){
+    const k = viewKey;
+    document.querySelectorAll(".person").forEach(b => {
+      const p = b.dataset.person, n = count(p, k);
+      b.setAttribute("aria-pressed", String(p === S.person));
+      b.querySelector(".mini-txt").textContent = t().done(n);
+      b.querySelector(".mini-fill").setAttribute("y", String(92 - 92 * n / HABITS));
+    });
+  }
+
+  let clipY = 184, clipRaf = 0;
+  function animateClip(target){
+    const rect = $("liqRect"), from = clipY, t0 = performance.now();
+    const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    cancelAnimationFrame(clipRaf);
+    if (reduce) { clipY = target; rect.setAttribute("y", target); return; }
+    const step = (now) => {
+      const k = Math.min(1, (now - t0) / 900), e = 1 - Math.pow(1 - k, 3);
+      clipY = from + (target - from) * e; rect.setAttribute("y", clipY.toFixed(2));
+      if (k < 1) clipRaf = requestAnimationFrame(step);
+    };
+    clipRaf = requestAnimationFrame(step);
+  }
+
+  let lastCount = null;
+  function renderHeart(animate){
+    const L = t(), n = both(viewKey), T2 = HABITS * 2, mine = count(S.person, viewKey);
+    const frac = n / T2;
+    // liquid top goes from y=184 (empty) to y=-12 (overflowing)
+    const y = 184 - frac * 196;
+    $("liquid").style.transform = `translateY(${y}px)`;
+    document.querySelectorAll(".sn").forEach(e => e.textContent = n);
+    document.querySelectorAll(".so").forEach(e => e.textContent = L.outOf(T2));
+    animateClip(y + 9);
+    $("heartSvg").setAttribute("aria-label", `${n} / ${T2}`);
+    const st = $("stage");
+    st.classList.toggle("full", n === T2);
+    const s = $("status");
+    s.classList.toggle("done", n === T2);
+    s.textContent = n === T2 ? L.full : n === 0 ? L.none : mine === HABITS ? L.mine(T2 - n, NAMES[other(S.person)]) : L.left(T2 - n);
+
+    const isToday = viewKey === todayKey();
+    const d = parse(viewKey);
+    const dateTxt = d.toLocaleDateString(L.locale, { weekday: "long", day: "numeric", month: "long" });
+    const di = dayIndex(viewKey);
+    $("dateline").textContent = (isToday ? `${L.today}, ` : "") + dateTxt + (di >= 1 && di <= DAYS ? ` · ${L.day(di)}` : "") + (isToday ? ` · ${cityOf(tzOf(S.person))}` : "");
+    $("quote").textContent = dailyMessage(viewKey);
+    const bt = $("backToday");
+    bt.textContent = L.back;
+    bt.classList.toggle("show", !isToday);
+
+    if (animate && lastCount !== null && n === T2 && lastCount < T2) celebrate();
+    lastCount = n;
+  }
+
+  function renderList(){
+    const L = t(), m = marks(S.person, viewKey), w = isWeekend(viewKey);
+    const ul = $("list");
+    ul.innerHTML = "";
+    L.habits.forEach((h, i) => {
+      const title = typeof h[0] === "function" ? h[0](w) : h[0];
+      const desc = typeof h[1] === "function" ? h[1](w) : h[1];
+      const li = document.createElement("li");
+      li.innerHTML = `<button type="button" class="habit" aria-pressed="${m[i]}" data-i="${i}" style="--c:${COLORS[i][0]};--cs:${COLORS[i][1]}">
+        <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${ICONS[i]}</svg></span>
+        <span><span class="t">${title}</span><span class="d">${desc}</span></span>
+        <span class="check" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      </button>`;
+      ul.appendChild(li);
+    });
+  }
+
+  const heartPath = "M12 21C6 16.6 2 13.1 2 8.6 2 5.5 4.4 3 7.4 3c1.9 0 3.5 1 4.6 2.5C13.1 4 14.7 3 16.6 3 19.6 3 22 5.5 22 8.6c0 4.5-4 8-10 12.4z";
+  function renderJourney(){
+    const L = t(), start = parse(S.start), tk = todayKey();
+    $("jt").textContent = L.journey;
+    $("statDone").innerHTML = L.statDone(fullDays());
+    $("statStreak").innerHTML = L.streak(streak());
+    const g = $("grid");
+    g.innerHTML = "";
+    for (let i = 0; i < DAYS; i++){
+      const d = addDays(start, i), k = key(d), n = both(k);
+      const b = document.createElement("button");
+      b.type = "button";
+      const future = k > tk;
+      b.className = "day" + (n === HABITS * 2 ? " full" : n > 0 ? " part" : "") + (future ? " future" : "") + (k === tk ? " today" : "") + (k === viewKey ? " sel" : "");
+      b.dataset.k = k;
+      b.disabled = future;
+      b.setAttribute("aria-label", `${L.day(i+1)}: ${n}/${HABITS * 2}`);
+      b.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><path class="h" d="${heartPath}"/></svg>`;
+      g.appendChild(b);
+    }
+    $("legend").innerHTML =
+      `<span><i style="background:var(--wine);clip-path:path('M6 10.5C3 8.3 1 6.6 1 4.3 1 2.8 2.2 1.5 3.7 1.5c1 0 1.7.5 2.3 1.2.6-.7 1.3-1.2 2.3-1.2C9.8 1.5 11 2.8 11 4.3c0 2.3-2 4-5 6.2z')"></i>${L.legFull}</span>` +
+      `<span><i style="background:var(--wine-soft);clip-path:path('M6 10.5C3 8.3 1 6.6 1 4.3 1 2.8 2.2 1.5 3.7 1.5c1 0 1.7.5 2.3 1.2.6-.7 1.3-1.2 2.3-1.2C9.8 1.5 11 2.8 11 4.3c0 2.3-2 4-5 6.2z')"></i>${L.legPart}</span>` +
+      `<span><i style="background:#DDD5D2;clip-path:path('M6 10.5C3 8.3 1 6.6 1 4.3 1 2.8 2.2 1.5 3.7 1.5c1 0 1.7.5 2.3 1.2.6-.7 1.3-1.2 2.3-1.2C9.8 1.5 11 2.8 11 4.3c0 2.3-2 4-5 6.2z')"></i>${L.legNone}</span>`;
+  }
+
+  function renderHint(){
+    const L = t();
+    const standalone = window.navigator.standalone === true || (window.matchMedia && matchMedia("(display-mode: standalone)").matches);
+    let dismissed = false;
+    try { dismissed = localStorage.getItem(KEY + ":hint") === "1"; } catch(e) {}
+    const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    $("hintText").innerHTML = L.hint;
+    $("hintClose").textContent = L.hintOk;
+    $("hint").classList.toggle("show", ios && !standalone && !dismissed);
+  }
+
+  function renderSheetText(){
+    const L = t();
+    $("sheetTitle").textContent = L.settings;
+    $("startLabel").textContent = L.startLabel;
+    $("startHelp").textContent = L.startHelp;
+    $("tzLabelH").textContent = L.tzLabel("Hannah");
+    $("tzLabelC").textContent = L.tzLabel("Carlos");
+    $("tzHelp").textContent = L.tzHelp;
+    $("saveSettings").textContent = L.save;
+    $("closeSettings").textContent = L.close;
+    $("resetBtn").textContent = L.reset;
+    $("confirmText").textContent = L.confirm;
+    $("confirmYes").textContent = L.yes;
+    $("confirmNo").textContent = L.no;
+  }
+
+  function renderAll(animate){
+    renderTop(); renderPeople(); renderHeart(animate); renderList(); renderJourney(); renderHint(); renderSheetText();
+  }
+
+  /* ---------- Celebration ---------- */
+  function celebrate(){
+    const st = $("stage");
+    st.classList.remove("pop"); void st.offsetWidth; st.classList.add("pop");
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const c = $("confetti"), colors = ["#B5122B", "#D21F3C", "#C9A15B", ...COLORS.map(c => c[0])];
+    c.innerHTML = "";
+    for (let i = 0; i < 28; i++){
+      const el = document.createElement("i");
+      el.style.left = Math.random() * 100 + "vw";
+      el.style.background = colors[i % colors.length];
+      el.style.animationDelay = (Math.random() * .5) + "s";
+      el.style.clipPath = "path('M5 9C2.5 7.2 0 5.6 0 3.4 0 1.6 1.2.5 2.6.5c1 0 1.8.5 2.4 1.3C5.6 1 6.4.5 7.4.5 8.8.5 10 1.6 10 3.4 10 5.6 7.5 7.2 5 9z')";
+      c.appendChild(el);
+    }
+    setTimeout(() => { c.innerHTML = ""; }, 2600);
+    if (navigator.vibrate) navigator.vibrate(30);
+  }
+
+  /* ---------- Events ---------- */
+  $("list").addEventListener("click", (e) => {
+    const b = e.target.closest(".habit"); if (!b) return;
+    const i = Number(b.dataset.i), m = marks(S.person, viewKey).slice();
+    m[i] = !m[i];
+    S.data[S.person][viewKey] = m;
+    save();
+    b.setAttribute("aria-pressed", String(m[i]));
+    renderPeople(); renderHeart(true); renderJourney();
+    if (m[i]) {
+      const name = NAMES[S.person], o = NAMES[other(S.person)];
+      if (both(viewKey) === HABITS * 2) toast(pick(M().together, "tog").replace("{a}", "Hannah").replace("{b}", "Carlos"), "#B5122B", heartIcon, true);
+      else if (m.every(Boolean)) toast(pick(M().half, "half").replace("{name}", name).replace("{other}", o), "#B5122B", heartIcon, true);
+      else toast(pick(M().habit[i], "h" + i), COLORS[i][0], habitIcon(i), false);
+    }
+  });
+
+  document.querySelectorAll(".langs button").forEach(b => b.addEventListener("click", () => {
+    S.lang = b.dataset.lang; save(); renderAll(false);
+    if ($("welcome").classList.contains("show")) showWelcome(true);
+  }));
+
+  document.querySelectorAll(".person").forEach(b => b.addEventListener("click", () => {
+    S.person = b.dataset.person; noteDevice(); save(); viewKey = todayKey(); lastCount = null; renderAll(false);
+  }));
+
+  $("grid").addEventListener("click", (e) => {
+    const b = e.target.closest(".day"); if (!b || b.disabled) return;
+    viewKey = b.dataset.k; lastCount = null;
+    renderHeart(false); renderList(); renderJourney();
+    $("stage").scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+
+  $("backToday").addEventListener("click", () => {
+    viewKey = todayKey(); lastCount = null; renderHeart(false); renderList(); renderJourney();
+  });
+
+  $("hintClose").addEventListener("click", () => {
+    try { localStorage.setItem(KEY + ":hint", "1"); } catch(e) {}
+    $("hint").classList.remove("show");
+  });
+
+  const TOP_TZ = ["Europe/Berlin","America/Costa_Rica","America/New_York","America/Mexico_City","America/Panama","Europe/Madrid","Europe/London","America/Los_Angeles"];
+  function fillTz(sel, p){
+    const L = t(), cur = S.tz[p] || "auto";
+    const autoCity = (p === S.person) ? cityOf(deviceTz()) : (S.tzSeen[p] ? cityOf(S.tzSeen[p]) : "");
+    let all = [];
+    try { all = Intl.supportedValuesOf("timeZone"); } catch(e) {}
+    const esc = (x) => String(x).replace(/&/g,"&amp;").replace(/</g,"&lt;");
+    let h = `<option value="auto">${esc(L.tzAuto(autoCity))}</option>`;
+    h += TOP_TZ.map(z => `<option value="${z}">${esc(cityOf(z))}</option>`).join("");
+    const rest = all.filter(z => !TOP_TZ.includes(z));
+    if (cur !== "auto" && !TOP_TZ.includes(cur) && !rest.includes(cur)) rest.unshift(cur);
+    if (rest.length) h += `<optgroup label="${esc(L.tzMore)}">` + rest.map(z => `<option value="${esc(z)}">${esc(z.replace(/_/g, " "))}</option>`).join("") + `</optgroup>`;
+    sel.innerHTML = h;
+    sel.value = cur;
+  }
+  function openSheet(){
+    $("startDate").value = S.start;
+    fillTz($("tzHannah"), "hannah"); fillTz($("tzCarlos"), "carlos");
+    $("confirm").classList.remove("show");
+    $("scrim").classList.add("open"); $("sheet").classList.add("open");
+    setTimeout(() => $("startDate").focus(), 50);
+  }
+  function closeSheet(){ $("scrim").classList.remove("open"); $("sheet").classList.remove("open"); $("openSettings").focus(); }
+  $("openSettings").addEventListener("click", openSheet);
+  $("closeSettings").addEventListener("click", closeSheet);
+  $("scrim").addEventListener("click", closeSheet);
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && $("sheet").classList.contains("open")) closeSheet(); });
+  $("saveSettings").addEventListener("click", () => {
+    const v = $("startDate").value;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(v)) S.start = v;
+    for (const [p, id] of [["hannah","tzHannah"],["carlos","tzCarlos"]]) {
+      const z = $(id).value;
+      if (z === "auto" || validTz(z)) S.tz[p] = z;
+    }
+    noteDevice(); save();
+    closeSheet(); viewKey = todayKey(); renderAll(false);
+  });
+  $("resetBtn").addEventListener("click", () => $("confirm").classList.add("show"));
+  $("confirmNo").addEventListener("click", () => $("confirm").classList.remove("show"));
+  $("confirmYes").addEventListener("click", () => {
+    S.data = { hannah: {}, carlos: {} }; S.start = todayKey(); save();
+    closeSheet(); viewKey = todayKey(); lastCount = null; renderAll(false);
+  });
+
+  // New day while the app stays open
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") { noteDevice(); save(); viewKey = todayKey(); lastCount = null; renderAll(false); showWelcome(false); }
+  });
+  // Catch midnight (in each person's own zone) while the app stays open
+  let lastToday = todayKey();
+  setInterval(() => {
+    const now = todayKey();
+    if (now === lastToday) return;
+    const wasToday = viewKey === lastToday;
+    lastToday = now;
+    if (wasToday) viewKey = now;
+    lastCount = null; renderAll(false); showWelcome(false);
+  }, 60000);
+
+  $("wBtn").addEventListener("click", hideWelcome);
+  $("welcome").addEventListener("click", (e) => { if (e.target === $("welcome")) hideWelcome(); });
+  $("daycount").addEventListener("click", () => showWelcome(true));
+  $("daycount").style.cursor = "pointer";
+
+  renderAll(false);
+  showWelcome(false);
+
+  if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+    window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+  }
+})();
+</script>
+</body>
+</html>

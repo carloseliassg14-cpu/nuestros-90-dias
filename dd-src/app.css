@@ -441,3 +441,20 @@ body:has(.restbar.show) .wrap{padding-bottom:calc(var(--tabh) + 120px + env(safe
 .exlink{border:0;background:none;padding:0;font:inherit;font-weight:600;color:inherit;text-decoration:underline;text-underline-offset:3px}
 .sheet .acts a.btn{text-decoration:none;color:inherit}
 .exlink.sm{font-size:13px;color:var(--soft);justify-self:start;text-align:left;margin-top:2px}
+/* progreso */
+.wprog{margin-top:14px;background:var(--card);border-radius:20px;padding:14px;display:grid;gap:10px}
+.wph{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.wph b{font-size:16px}
+.wph span{font-size:14px;font-weight:700;color:var(--soft)}
+.wsegs{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.wseg{border:0;background:none;padding:0;display:grid;gap:4px;justify-items:center;color:inherit}
+.wseg i{display:flex;align-items:flex-end;width:100%;height:44px;border-radius:10px;background:var(--bg);overflow:hidden}
+.wseg em{display:block;width:100%;background:color-mix(in srgb,var(--good) 70%,transparent)}
+.wseg.full em{background:var(--good)}
+.wseg.fut i{opacity:.55}
+.wseg small{font-size:12px;font-weight:700;color:var(--soft)}
+.wseg.cur small{color:var(--ink)}
+.wseg.cur i{box-shadow:inset 0 0 0 2px var(--ink)}
+.wprog .hnote,.dprog .hnote{margin:0}
+.dprog{display:grid;gap:8px}
+.hhero .pbar{background:var(--bg)}

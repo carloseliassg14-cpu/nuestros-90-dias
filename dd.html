@@ -457,6 +457,23 @@ body:has(.restbar.show) .wrap{padding-bottom:calc(var(--tabh) + 120px + env(safe
 .exlink{border:0;background:none;padding:0;font:inherit;font-weight:600;color:inherit;text-decoration:underline;text-underline-offset:3px}
 .sheet .acts a.btn{text-decoration:none;color:inherit}
 .exlink.sm{font-size:13px;color:var(--soft);justify-self:start;text-align:left;margin-top:2px}
+/* progreso */
+.wprog{margin-top:14px;background:var(--card);border-radius:20px;padding:14px;display:grid;gap:10px}
+.wph{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.wph b{font-size:16px}
+.wph span{font-size:14px;font-weight:700;color:var(--soft)}
+.wsegs{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.wseg{border:0;background:none;padding:0;display:grid;gap:4px;justify-items:center;color:inherit}
+.wseg i{display:flex;align-items:flex-end;width:100%;height:44px;border-radius:10px;background:var(--bg);overflow:hidden}
+.wseg em{display:block;width:100%;background:color-mix(in srgb,var(--good) 70%,transparent)}
+.wseg.full em{background:var(--good)}
+.wseg.fut i{opacity:.55}
+.wseg small{font-size:12px;font-weight:700;color:var(--soft)}
+.wseg.cur small{color:var(--ink)}
+.wseg.cur i{box-shadow:inset 0 0 0 2px var(--ink)}
+.wprog .hnote,.dprog .hnote{margin:0}
+.dprog{display:grid;gap:8px}
+.hhero .pbar{background:var(--bg)}
 
 </style>
 </head>
@@ -1872,13 +1889,13 @@ function daySched(k) {
   if (gs != null) {
     if (gs < open) {                                     // antes de comer: en ayunas
       slot = "am"; mode = "fasted";
-      gym = { s: gs, e: Math.min(gs + 75, 1439) };
+      gym = { s: gs, e: Math.min(gs + gymDur(k), 1439) };
       m2 = open + 210; m3 = closeT - 60;
     } else if (gs >= closeT - 30) {                      // después de cerrar la ventana
-      mode = "late"; gym = { s: gs, e: Math.min(gs + 90, 1439) };
+      mode = "late"; gym = { s: gs, e: Math.min(gs + gymDur(k), 1439) };
       m2 = open + 210; m3 = closeT - 45;
     } else {
-      gym = { s: gs, e: gs + 90 };
+      gym = { s: gs, e: Math.min(gs + gymDur(k), 1439) };
       if (gs - open >= 150) {                            // merienda antes del gym (pre-entreno)
         mode = "pre"; m2 = Math.max(open + 150, gs - 90);
         m3 = Math.max(Math.min(gym.e + 30, closeT - 45), m2 + 120);
@@ -2430,6 +2447,49 @@ function restAfterSet(k, x, i, total, items) {
   if (nx) restStart(NEXT_EX_REST, `Ahora: ${nx.t}`);
 }
 
+
+/* ---------- progreso del día y de la semana, y duración estimada ---------- */
+function itemMin(x, day, isFirstEx) {
+  const ns = nSets(x.r);
+  if (ns) return ns * 0.75 + (ns - 1) * restFor(x) / 60 + NEXT_EX_REST / 60;          // 45 s por serie + descansos + cambio de ejercicio
+  if (/Hyrox/.test(day.t) && x.id.startsWith("ex")) return isFirstEx ? 4.5 * 7 : 0;   // 4–5 rondas de ≈5 min + 2 min de descanso
+  if (/Intervalos/.test(x.t)) return 8 * 3 + 5;
+  const m = /(\d+)(?:\s*[–-]\s*(\d+))?\s*min/.exec(x.t);
+  return m ? (m[2] ? (+m[1] + +m[2]) / 2 : +m[1]) : 5;
+}
+function dayProg(k) {
+  const day = sessDay(k), h = hOf(k), done = h.done || {};
+  const items = trainItems(k).filter((x) => !x.extra);
+  let tot = 0, ok = 0, est = 0, left = 0, firstEx = true;
+  items.forEach((x) => {
+    const ns = nSets(x.r), min = itemMin(x, day, firstEx && x.id.startsWith("ex"));
+    if (x.id.startsWith("ex")) firstEx = false;
+    const u = ns || 1, sOk = ns ? Math.min(ns, setsOf(k, x.t).filter((y) => y && y.ok).length) : 0;
+    const d = done["t_" + x.id] ? u : ns ? sOk : 0;
+    tot += u; ok += d; est += min; left += min * (1 - d / u);
+  });
+  return { pct: tot ? Math.round((ok / tot) * 100) : 0, ok, tot, est: Math.round(est), left: Math.round(left) };
+}
+const round5 = (m) => Math.ceil(m / 5) * 5;
+const gymDur = (k) => Math.min(150, Math.max(40, round5(dayProg(k).est)));
+function weekProg(k) {
+  const mon = mondayOf(parseKey(k)), tk = todayKey();
+  const days = Array.from({ length: 7 }, (_, i) => { const kk = keyOf(addDays(mon, i)); return { k: kk, wd: parseKey(kk).getDay(), p: dayProg(kk).pct, fut: kk > tk, t: sessDay(kk).t }; });
+  const pct = Math.round(days.reduce((a, d) => a + d.p, 0) / 7);
+  return { days, pct, full: days.filter((d) => d.p >= 100).length };
+}
+function weekBar(k) {
+  const w = weekProg(k), t = T();
+  const segs = w.days.map((d) => `<button type="button" class="wseg${d.k === k ? " cur" : ""}${d.p >= 100 ? " full" : ""}${d.fut ? " fut" : ""}" data-act="h-day" data-k="${d.k}" aria-label="${esc(t.wdLong[d.wd])}: ${esc(d.t)}, ${d.p} %"><i><em style="height:${d.p}%"></em></i><small>${esc(t.wd[d.wd])}</small></button>`).join("");
+  const msg = w.pct >= 100 ? "Semana perfecta: cumplió el 100 % del plan." : w.full ? `${w.full} de 7 días completos.` : "Todavía no completa ningún día esta semana.";
+  return `<div class="wprog"><div class="wph"><b>Esta semana</b><span>${w.pct} %</span></div><div class="pbar"><i style="width:${w.pct}%"></i></div><div class="wsegs">${segs}</div><p class="hnote">${esc(msg)} El domingo de descanso activo también cuenta.</p></div>`;
+}
+function dayBar(k) {
+  const p = dayProg(k), day = sessDay(k);
+  const left = p.pct >= 100 ? "Sesión completa." : p.ok ? `Le faltan unos ${fmtDur(p.left)}.` : "";
+  return `<div class="dprog"><div class="wph"><b>Hoy ${p.pct} %</b><span>${p.ok} de ${p.tot} ${day.kind === "rest" ? "tareas" : "series y tareas"}</span></div><div class="pbar"><i style="width:${p.pct}%"></i></div><p class="hnote">Duración estimada: <b>${fmtDur(round5(p.est))}</b>${day.kind === "rest" ? "" : " contando los descansos entre series"}. ${left}</p></div>`;
+}
+
 /* ---------- ENTRENAMIENTO ---------- */
 function renderTrain() {
   const t = T();
@@ -2489,12 +2549,13 @@ function renderTrain() {
     ${advOnly(k)}
     ${pendBanner(k)}
     ${pendingSess(k).length && k === todayKey() ? "" : weekCard(k)}
+    ${weekBar(k)}
     ${deload ? `<div class="base-banner" style="margin-top:14px"><p><b>Semana suave.</b> Quite 1 serie por ejercicio y baje el peso un 10 %. Es parte del plan: así se recupera y sigue subiendo.</p></div>` : ""}
     <div class="hhero">
-      <div class="fastbox ${day.kind === "rest" ? "open" : "fast"}"><b>${esc(dayLabel(k))}: ${esc(day.t)}</b><span>${day.kind === "rest" ? "Día de descanso activo" : (sc.gym ? esc(fmtTime(sc.gym.s)) + (sc.slot === "am" ? " en ayunas" : " ya comido") + " · " : "") + nDone + " de " + items.length + " hechos"}</span></div>
+      <div class="fastbox ${day.kind === "rest" ? "open" : "fast"}"><b>${esc(dayLabel(k))}: ${esc(day.t)}</b><span>${day.kind === "rest" ? "Día de descanso activo" : (sc.gym ? esc(fmtTime(sc.gym.s)) + (sc.slot === "am" ? " en ayunas" : " ya comido") + " · " : "") + "unos " + fmtDur(round5(dayProg(k).est))}</span></div>
       ${sessLine(k)}
       ${slotSeg(k)}
-      <div class="pbar"><i style="width:${items.length ? Math.round(nDone / items.length * 100) : 0}%"></i></div>
+      ${dayBar(k)}
       ${day.note ? `<p class="hnote">${esc(day.note)}</p>` : ""}
       ${coachTip(k)}
     </div>

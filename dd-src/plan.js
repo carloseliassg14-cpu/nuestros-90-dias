@@ -777,7 +777,8 @@ function dayProg(k) {
     if (x.id.startsWith("ex")) firstEx = false;
     const u = ns || 1, sOk = ns ? Math.min(ns, setsOf(k, x.t).filter((y) => y && y.ok).length) : 0;
     const d = done["t_" + x.id] ? u : ns ? sOk : 0;
-    tot += u; ok += d; est += min; left += min * (1 - d / u);
+    const sw = !!(h.swap || {})[x.id];          // lo cambió por otra actividad: no cuenta en el tiempo del gym
+    tot += u; ok += d; if (!sw) { est += min; left += min * (1 - d / u); }
   });
   return { pct: tot ? Math.round((ok / tot) * 100) : 0, ok, tot, est: Math.round(est), left: Math.round(left) };
 }
@@ -801,6 +802,35 @@ function dayBar(k) {
   return `<div class="dprog"><div class="wph"><b>Hoy ${p.pct} %</b><span>${p.ok} de ${p.tot} ${day.kind === "rest" ? "tareas" : "series y tareas"}</span></div><div class="pbar"><i style="width:${p.pct}%"></i></div><p class="hnote">Duración estimada: <b>${fmtDur(round5(p.est))}</b>${day.kind === "rest" ? "" : " contando los descansos entre series"}. ${left}</p></div>`;
 }
 
+
+/* ---------- explicación de cardio, core y movilidad, y "lo cambié por otra actividad" ---------- */
+const MOB_EX = [["Gato-vaca", "10 lentas, columna completa"], ["Rotación torácica en 4 apoyos", "8 por lado"], ["Cadera 90/90", "6 por lado"], ["Sentadilla profunda sostenida", "30–45 s, talones al piso"], ["Tobillo a la pared", "10 por lado, rodilla pasa la punta del pie"], ["Círculos de hombro con banda o palo", "10 adelante y 10 atrás"]];
+const ITEM_INFO = {
+  z2: { m: "Cardio suave para quemar grasa sin quitarle recuperación a las pesas.", how: ["Escoja uno: bici estática, elíptica o caminar rápido en la caminadora con inclinación de 8 a 12 %.", "Pulso entre 120 y 140 lpm. Prueba fácil: puede hablar en frases completas, pero no cantar.", "Si el pulso pasa de 140, baje la velocidad o la inclinación. Trotar casi siempre lo saca de zona 2."], err: "Ir demasiado rápido: deja de ser zona 2 y cansa para la sesión de mañana.", swap: true },
+  int: { m: "El único cardio fuerte de la semana: mejora la condición y quema muchas calorías en poco tiempo.", how: ["Caliente 5 min suave.", "8 rondas: 1 min fuerte (casi al máximo, no puede hablar) y 2 min suave.", "Bici, remo o caminadora. En caminadora, mejor subir la inclinación que correr muy rápido."], err: "Hacer el minuto fuerte a medias: si puede hablar, no es fuerte.", swap: true },
+  core: { m: "Abdomen y zona media firmes: protegen la espalda y ayudan a que se marque el abdomen.", how: ["Haga los 4 ejercicios en circuito, sin descanso entre uno y otro.", "Descanse 1 min al final de cada vuelta. Haga 3 vueltas; si solo tiene 10 minutos, haga 2.", "Toque cada ejercicio para ver cómo se hace."], err: "Hacerlo rápido y sin control. En el core manda la técnica.", list: () => CORE },
+  mob: { m: "Prepara cadera, tobillo, columna y hombros para entrenar sin lesiones.", how: ["Hágala antes de la primera serie, sin peso.", "Movimientos lentos y controlados, respirando.", "Si algo duele, no fuerce: llegue hasta donde se sienta cómodo."], err: "Saltársela por apuro. Son los minutos que evitan una lesión.", list: () => MOB_EX },
+  walk: { m: "Descanso activo: mueve la sangre y ayuda a recuperarse sin cansar.", how: ["Camine a un ritmo cómodo, puede ser afuera o en la caminadora.", "Puede hablar sin problema todo el tiempo.", "Ideal después de comer o al final de la tarde."], err: "Convertirlo en una caminata fuerte o en trote: hoy toca recuperar.", swap: true }
+};
+const infoKey = (id) => /^z2/.test(id) ? "z2" : /^int/.test(id) ? "int" : /^core/.test(id) ? "core" : /^mob/.test(id) ? "mob" : /^walk/.test(id) ? "walk" : null;
+function openItemInfo(id) {
+  const k = S.hDate, x = trainItems(k).find((y) => y.id === id), key = infoKey(id), e = ITEM_INFO[key];
+  if (!x || !e) return;
+  const sw = (hOf(k).swap || {})[id];
+  const list = e.list ? `<table class="htbl"><tbody>${e.list().map(([a, b]) => `<tr><td>${EXI[a] ? `<button type="button" class="exlink" data-act="ex-how" data-ex="${esc(a)}">${esc(a)} ›</button>` : esc(a)}</td><td>${esc(b)}</td></tr>`).join("")}</tbody></table>` : "";
+  openSheet(`<h3>${esc(x.t)}</h3><p class="hint">${esc(e.m)}</p>${list}
+    <ol class="hol exhow">${e.how.map((h) => `<li>${esc(h)}</li>`).join("")}</ol>
+    <p class="exerr"><b>Error común:</b> ${esc(e.err)}</p>
+    ${e.swap ? `<div class="f"><label for="swT">${sw ? "Hoy lo cambió por" : "¿Hoy hace otra actividad en lugar de esto?"}</label><div class="row"><input id="swT" class="fi" maxlength="40" placeholder="Ej.: artes marciales, fútbol, natación" value="${esc(sw || "")}" style="flex:1"><button type="button" class="btn" data-act="sw-save" data-id="${esc(id)}">${sw ? "Guardar" : "Cambiar"}</button></div>${sw ? `<button type="button" class="exlink sm" data-act="sw-clear" data-id="${esc(id)}" style="margin-top:8px">Quitar el cambio</button>` : ""}</div>` : ""}
+    <div class="acts"><button type="button" class="btn pri" data-act="close">Entendido</button></div>`, { type: "info", id });
+}
+function saveSwap(id, txt) {
+  const k = S.hDate, h = hOf(k), swap = Object.assign({}, h.swap || {}), done = Object.assign({}, h.done || {});
+  if (txt) { swap[id] = txt.slice(0, 40); done["t_" + id] = true; } else { delete swap[id]; delete done["t_" + id]; }
+  hSet(k, { swap, done });
+  closeSheet(); render(); toast(txt ? `Listo: hoy ${txt.toLowerCase()} en lugar de ${(trainItems(k).find((y) => y.id === id) || {}).t || "esto"}` : "Cambio quitado");
+}
+
 /* ---------- ENTRENAMIENTO ---------- */
 function renderTrain() {
   const t = T();
@@ -820,7 +850,7 @@ function renderTrain() {
   const list = items.map((x) => {
     const ns = nSets(x.r), rr = ns ? `${ns} series de ${repGoal(x.r)} repeticiones` : x.r;
     const nOk = ns ? setsOf(k, x.t).filter((y) => y && y.ok).length : 0;
-    return `<li class="hl${done["t_" + x.id] ? " ok" : ""}${ns ? " hasets" : ""}">${exThumb(x)}<div class="htx"><b class="ht">${esc(x.t)}</b>${rr ? `<span class="hr">${esc(rr)}${ns ? ` · ${nOk}/${ns}` : ""}</span>` : ""}${x.n ? `<span class="hn">${esc(x.n)}</span>` : ""}${EXI[x.t] ? `<button type="button" class="exlink sm" data-act="ex-how" data-ex="${esc(x.t)}">Cómo se hace ›</button>` : ""}</div>${tick(!!done["t_" + x.id], "h-tick", `data-key="t_${x.id}"`, x.t)}${ns ? setsBlock(k, x, ns) : ""}</li>`;
+    return `<li class="hl${done["t_" + x.id] ? " ok" : ""}${ns ? " hasets" : ""}">${exThumb(x)}<div class="htx"><b class="ht">${esc(x.t)}</b>${rr ? `<span class="hr">${esc(rr)}${ns ? ` · ${nOk}/${ns}` : ""}</span>` : ""}${x.n ? `<span class="hn">${esc(x.n)}</span>` : ""}${EXI[x.t] ? `<button type="button" class="exlink sm" data-act="ex-how" data-ex="${esc(x.t)}">Cómo se hace ›</button>` : infoKey(x.id) ? `<button type="button" class="exlink sm" data-act="it-info" data-id="${esc(x.id)}">${(h.swap || {})[x.id] ? "Cambiado por: " + esc(h.swap[x.id]) + " ›" : infoKey(x.id) === "core" ? "Qué ejercicios hacer ›" : infoKey(x.id) === "mob" ? "Qué movimientos hacer ›" : ITEM_INFO[infoKey(x.id)].swap ? "Cómo se hace · o cámbielo por otra actividad ›" : "Cómo se hace ›"}</button>` : ""}</div>${tick(!!done["t_" + x.id], "h-tick", `data-key="t_${x.id}"`, x.t)}${ns ? setsBlock(k, x, ns) : ""}</li>`;
   }).join("");
 
   const checks = checksFor(k).map((c) => {

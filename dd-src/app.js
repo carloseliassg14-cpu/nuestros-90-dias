@@ -968,6 +968,9 @@ document.addEventListener("click", (ev) => {
     case "exu": setExUnit(S.hDate, el.dataset.ex, el.dataset.v); render(); break;
     case "wu": { lsSet("dd.wu", el.dataset.v); hSet(S.hDate, { wu: el.dataset.v }); render(); break; }
     case "tr-exp": exportTrain(el.dataset.v); break;
+    case "it-info": openItemInfo(el.dataset.id); break;
+    case "sw-save": saveSwap(el.dataset.id, (($("swT") || {}).value || "").trim()); break;
+    case "sw-clear": saveSwap(el.dataset.id, ""); break;
     case "ex-how": openExHow(el.dataset.ex); break;
     case "x-open": openExtraSheet(); break;
     case "x-ns": sheetCtx.ns = +el.dataset.v; document.querySelectorAll("[data-act=x-ns]").forEach((b) => b.setAttribute("aria-pressed", String(b === el))); break;

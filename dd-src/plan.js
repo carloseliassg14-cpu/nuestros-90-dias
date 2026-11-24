@@ -441,7 +441,73 @@ function saveSess(ix) {
   hSet(k, { sess: ix === planIx(k) ? null : ix, done });
   applyToDay(k);
   closeSheet();
-  toast(`Hoy: ${TRAIN[ix].t}`);
+  toast(recWeek(k) ? `Hoy: ${TRAIN[ix].t}. Mire cómo le recomiendo la semana` : `Hoy: ${TRAIN[ix].t}`);
+}
+
+
+/* ---------- el entrenador: cómo queda la semana cuando se mueve una sesión ---------- */
+const SESS_PRIO = [1, 2, 3, 5, 6, 4];   // si no caben todas, se cae primero la zona 2 larga
+const SESS_WHY = { 4: "es la que menos afecta ganar músculo", 6: "el circuito es lo más fácil de soltar después de la zona 2", 5: "", 3: "", 2: "", 1: "" };
+const SESS_TIP = {
+  0: "Camine suave y estire. El músculo crece cuando descansa: hoy también es parte del plan.",
+  1: "Empiece por el press de banca con el pecho fresco. Deje 1 o 2 repeticiones en reserva en cada serie.",
+  2: "En dominadas y remo, jale con los codos y apriete la espalda arriba un segundo. Más control, menos impulso.",
+  3: "Sentadilla primero, cuando tiene más energía. Si la espalda baja se redondea, baje el peso.",
+  4: "Zona 2 es suave: tiene que poder hablar. Si pasa de 140 lpm, baje el ritmo.",
+  5: "Elevaciones laterales con peso que controle: los hombros crecen con técnica, no con impulso.",
+  6: "Ritmo constante en todas las rondas. Si en la ronda 3 ya no puede, salió muy rápido."
+};
+const clash = (a, b) => a && b && (a === b || (a === 3 && b === 6) || (a === 6 && b === 3));
+function perms(a) { if (a.length <= 1) return [a.slice()]; const out = []; a.forEach((x, i) => perms(a.slice(0, i).concat(a.slice(i + 1))).forEach((p) => out.push([x].concat(p)))); return out; }
+function recWeek(k) {
+  if (k !== todayKey() || S.person !== "carlos") return null;
+  const mon = mondayOf(parseKey(k)), idx = (parseKey(k).getDay() + 6) % 7;   // 0 = lunes
+  if (idx >= 5) return null;                                                 // sábado y domingo: no hay semana que acomodar
+  const keys = Array.from({ length: 7 }, (_, i) => keyOf(addDays(mon, i)));
+  const covered = new Set();
+  keys.slice(0, idx).forEach((kk) => { if (didTrain(kk)) covered.add(sessOf(kk)); });
+  covered.add(sessOf(k));
+  const fut = keys.slice(idx + 1, 6);                                        // hasta el sábado; el domingo queda de descanso
+  let want = SESS_PRIO.filter((x) => !covered.has(x));
+  const skipped = want.slice(fut.length);
+  want = want.slice(0, fut.length);
+  while (want.length < fut.length) want.push(0);
+  const cur = fut.map(sessOf);
+  let best = null, bestScore = Infinity;
+  perms(want).forEach((p) => {
+    let prev = sessOf(k), ok = true, sc = 0;
+    p.forEach((x, i) => { if (clash(prev, x)) ok = false; prev = x; const day = idx + 2 + i; sc += x ? Math.abs(((x + 6) % 7) - (day - 1)) : 0; });
+    if (ok && sc < bestScore) { best = p; bestScore = sc; }
+  });
+  if (!best) return null;
+  const curSet = new Set(cur), problem = cur.some((x) => x && covered.has(x)) || want.some((x) => x && !curSet.has(x));
+  if (!problem || JSON.stringify(best) === JSON.stringify(cur)) return null;
+  return { days: fut.map((kk, i) => ({ k: kk, ix: best[i], was: cur[i] })), skipped, sig: k + ":" + best.join("") };
+}
+function weekCard(k) {
+  const r = recWeek(k);
+  if (!r || hOf(k).wkNo === r.sig) return "";
+  const today = sessDay(k), moved = sessOf(k) !== planIx(k);
+  const rows = r.days.map((d) => `<li${d.ix !== d.was ? ' class="chg"' : ""}><span>${esc(T().wd[parseKey(d.k).getDay()])}</span><b>${esc(TRAIN[d.ix].t)}</b>${d.ix !== d.was ? `<small>antes: <s>${esc(TRAIN[d.was].t)}</s></small>` : ""}</li>`).join("") + `<li><span>${esc(T().wd[0])}</span><b>Descanso activo</b></li>`;
+  const skip = r.skipped.length ? `<p class="wkskip">Esta semana se salta: <b>${esc(r.skipped.map((x) => TRAIN[x].t).join(", "))}</b>${r.skipped.length === 1 && SESS_WHY[r.skipped[0]] ? ` (${esc(SESS_WHY[r.skipped[0]])})` : ""}. No la meta el domingo: el descanso vale más.</p>` : "";
+  return `<section class="jcard wk" aria-label="Jarvis"><div class="jh"><span class="jdot" aria-hidden="true">J</span><b>Así le recomiendo la semana</b></div>
+    <p class="wkhead">Hoy entrena <b>${esc(today.t)}</b>${moved ? `, que tocaba el ${esc(T().wdLong[sessOf(k)].toLowerCase())}` : ""}. Para hacer todas las sesiones sin repetir y sin juntar piernas con el circuito:</p>
+    <ol class="wkl">${rows}</ol>${skip}
+    <div class="advb"><button type="button" class="btn pri" data-act="wk-ok" data-sig="${esc(r.sig)}">Acomodar la semana así</button><button type="button" class="btn" data-act="wk-no" data-sig="${esc(r.sig)}">Dejarla como está</button></div></section>`;
+}
+function applyWeek(sig) {
+  const k = todayKey(), r = recWeek(k);
+  if (!r || r.sig !== sig) return;
+  r.days.forEach((d) => {
+    if (d.ix === d.was) return;
+    hSet(d.k, { sess: d.ix === planIx(d.k) ? null : d.ix });
+    if (hasPlanBlocks(d.k)) applyToDay(d.k);
+  });
+  toast("Semana acomodada");
+}
+function coachTip(k) {
+  const ix = sessOf(k);
+  return `<p class="coach"><b>Jarvis:</b> ${esc(SESS_TIP[ix] || "")}</p>`;
 }
 
 /* ---------- ENTRENAMIENTO ---------- */
@@ -494,6 +560,7 @@ function renderTrain() {
     ${dayPicker(k, "h-day")}
     ${advOnly(k)}
     ${pendBanner(k)}
+    ${pendingSess(k).length && k === todayKey() ? "" : weekCard(k)}
     ${deload ? `<div class="base-banner" style="margin-top:14px"><p><b>Semana suave.</b> Quite 1 serie por ejercicio y baje el peso un 10 %. Es parte del plan: así se recupera y sigue subiendo.</p></div>` : ""}
     <div class="hhero">
       <div class="fastbox ${day.kind === "rest" ? "open" : "fast"}"><b>${esc(dayLabel(k))}: ${esc(day.t)}</b><span>${day.kind === "rest" ? "Día de descanso activo" : (sc.gym ? esc(fmtTime(sc.gym.s)) + (sc.slot === "am" ? " en ayunas" : " ya comido") + " · " : "") + nDone + " de " + items.length + " hechos"}</span></div>
@@ -501,6 +568,7 @@ function renderTrain() {
       ${slotSeg(k)}
       <div class="pbar"><i style="width:${items.length ? Math.round(nDone / items.length * 100) : 0}%"></i></div>
       ${day.note ? `<p class="hnote">${esc(day.note)}</p>` : ""}
+      ${coachTip(k)}
     </div>
     <h2>Sesión <span class="cnt">${nDone}/${items.length}</span></h2>
     <ul class="hlist2">${list}</ul>

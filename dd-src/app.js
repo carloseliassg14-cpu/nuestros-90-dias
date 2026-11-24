@@ -964,6 +964,8 @@ document.addEventListener("click", (ev) => {
     case "h-tick": { hToggle(S.hDate, el.dataset.key); render(); if (navigator.vibrate) try { navigator.vibrate(15); } catch (e) {} break; }
     case "h-slot": { hSet(S.hDate, { slot: el.dataset.v }); applyToDay(S.hDate); render(); const g = daySched(S.hDate).gym; toast(g ? `Día armado: gym de ${fmtTime(g.s)} a ${fmtTime(g.e)}` : t.saved); break; }
     case "s-open": openSessSheet(); break;
+    case "wk-ok": applyWeek(el.dataset.sig); render(); break;
+    case "wk-no": hSet(todayKey(), { wkNo: el.dataset.sig }); render(); break;
     case "s-set": saveSess(+el.dataset.v); render(); break;
     case "g-open": openGymSheet(); break;
     case "g-set": saveGym(el.dataset.v === "" ? null : +el.dataset.v); render(); break;

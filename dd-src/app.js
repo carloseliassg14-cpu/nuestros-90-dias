@@ -967,6 +967,14 @@ document.addEventListener("click", (ev) => {
     case "set-ok": S.svUntil = 0; S.dirty = false; setOk(S.hDate, el.dataset.ex, +el.dataset.i, +el.dataset.n, el.dataset.id); render(); break;
     case "wu": { lsSet("dd.wu", el.dataset.v); hSet(S.hDate, { wu: el.dataset.v }); render(); break; }
     case "tr-exp": exportTrain(el.dataset.v); break;
+    case "x-open": openExtraSheet(); break;
+    case "x-ns": sheetCtx.ns = +el.dataset.v; document.querySelectorAll("[data-act=x-ns]").forEach((b) => b.setAttribute("aria-pressed", String(b === el))); break;
+    case "x-rg": sheetCtx.rg = el.dataset.v; document.querySelectorAll("[data-act=x-rg]").forEach((b) => b.setAttribute("aria-pressed", String(b === el))); break;
+    case "x-save": saveExtra(); break;
+    case "x-del": delExtra(el.dataset.id); render(); toast(T().deleted); break;
+    case "rt-go": restStart(+el.dataset.v, el.dataset.l); break;
+    case "rt-add": restAdd(+el.dataset.v); break;
+    case "rt-stop": restStop(); break;
     case "wk-ok": applyWeek(el.dataset.sig); render(); break;
     case "wk-no": hSet(todayKey(), { wkNo: el.dataset.sig }); render(); break;
     case "s-set": saveSess(+el.dataset.v); render(); break;

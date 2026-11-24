@@ -426,6 +426,22 @@ textarea.fi{resize:vertical;min-height:72px;font:inherit}
 .useg button{border:0;background:none;border-radius:999px;min-height:32px;min-width:38px;font-weight:700;font-size:14px;color:inherit}
 .useg button[aria-pressed=true]{background:var(--ink);color:var(--bg)}
 .row.exp{flex-wrap:wrap;gap:8px}
+/* cronómetro de descanso */
+.restbar{position:fixed;left:50%;bottom:calc(var(--tabh) + 14px + env(safe-area-inset-bottom,0px));transform:translate(-50%,140%);width:min(520px,calc(100% - 24px));background:var(--ink);color:var(--bg);border-radius:20px;padding:12px 14px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;z-index:39;overflow:hidden;transition:transform .25s,visibility .25s;visibility:hidden;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.restbar.show{transform:translate(-50%,0);visibility:visible}
+.restbar .rtx{display:grid;gap:1px;min-width:0}
+.restbar .rtx small{font-size:12.5px;opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.restbar .rtx b{font-size:30px;font-variant-numeric:tabular-nums;line-height:1.1}
+.restbar.done{background:var(--good)}
+.restbar.done .rtx b{font-size:19px}
+.restbar .rtb{display:flex;gap:6px;flex:none}
+.restbar .btn{background:rgba(255,255,255,.14);color:inherit;min-height:38px;padding:0 10px}
+.restbar.done .btn{background:#fff;color:var(--good)}
+.restbar i{position:absolute;left:0;bottom:0;height:4px;background:var(--acc,#fff)}
+.rtbtn{justify-self:start;border:1px dashed var(--line);background:none;border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600;color:var(--soft);margin-top:2px}
+@media(prefers-reduced-motion:reduce){.restbar{transition:none}}
+body:has(.restbar.show) .toast{bottom:calc(var(--tabh) + 110px + env(safe-area-inset-bottom,0px))}
+body:has(.restbar.show) .wrap{padding-bottom:calc(var(--tabh) + 120px + env(safe-area-inset-bottom,0px))}
 
 </style>
 </head>
@@ -2160,6 +2176,43 @@ function coachTip(k) {
 }
 
 
+function trainItems(k) {
+  const day = sessDay(k), items = [];
+  if (day.kind !== "rest") items.push(MOB);
+  (day.ex || []).forEach(([n, r], i) => items.push({ id: "ex" + i, t: n, r }));
+  (day.items || []).forEach((x) => items.push(x));
+  (day.close || []).forEach((x) => items.push(x));
+  return items.concat(extrasOf(k));
+}
+
+/* ---------- ejercicios extra (fuera del plan) ---------- */
+// h.extra = [{ id, t, n, ns, rg }]
+const extrasOf = (k) => (Array.isArray(hOf(k).extra) ? hOf(k).extra : []).map((e) => ({ id: "x_" + e.id, xid: e.id, t: e.t, n: e.n, r: `${e.ns} × ${e.rg}`, extra: true }));
+function openExtraSheet() {
+  openSheet(`<h3>Ejercicio extra</h3><p class="hint">Lo que hizo fuera del plan, por ejemplo porque un amigo lo propuso. Queda guardado con sus series para tenerlo en cuenta.</p>
+    <div class="f"><label for="xT">Ejercicio</label><input id="xT" class="fi" maxlength="60" placeholder="Ej.: Press de pecho en máquina"></div>
+    <div class="f"><label for="xN">Máquina o detalle (opcional)</label><input id="xN" class="fi" maxlength="100" placeholder="Ej.: máquina Hammer, agarre cerrado"></div>
+    <div class="f"><span class="lb">Series</span><div class="chips">${[2, 3, 4, 5].map((n) => `<button type="button" class="chip" data-act="x-ns" data-v="${n}" aria-pressed="${n === 3}">${n}</button>`).join("")}</div></div>
+    <div class="f"><span class="lb">Repeticiones objetivo</span><div class="chips">${["6–8", "8–10", "10–12", "12–15", "15–20"].map((r) => `<button type="button" class="chip" data-act="x-rg" data-v="${r}" aria-pressed="${r === "10–12"}">${r}</button>`).join("")}</div></div>
+    <div class="acts"><button type="button" class="btn" data-act="close">Cancelar</button><button type="button" class="btn pri" data-act="x-save">Agregar</button></div>`, { type: "extra", ns: 3, rg: "10–12" });
+}
+function saveExtra() {
+  const x = sheetCtx; if (!x || x.type !== "extra") return;
+  const t = (($("xT") || {}).value || "").trim(), n = (($("xN") || {}).value || "").trim();
+  if (!t) { toast("Escriba el nombre del ejercicio"); return; }
+  const L = (hOf(S.hDate).extra || []).slice();
+  if (L.some((e) => e.t.toLowerCase() === t.toLowerCase()) || trainItems(S.hDate).some((e) => !e.extra && e.t.toLowerCase() === t.toLowerCase())) { toast("Ese ejercicio ya está en la sesión"); return; }
+  L.push({ id: uid(), t: t.slice(0, 60), n: n.slice(0, 100), ns: x.ns, rg: x.rg });
+  hSet(S.hDate, { extra: L.slice(0, 15) });
+  closeSheet(); render(); toast("Ejercicio agregado");
+}
+function delExtra(id) {
+  const k = S.hDate, h = hOf(k), e = (h.extra || []).find((y) => y.id === id); if (!e) return;
+  const sets = clone(h.sets || {}); delete sets[e.t];
+  const done = Object.assign({}, h.done || {}); delete done["t_x_" + id];
+  hSet(k, { extra: (h.extra || []).filter((y) => y.id !== id), sets, done });
+}
+
 /* ---------- series: peso y repeticiones de cada serie ---------- */
 // h.sets = { "Press de banca": [{ w, r, ok }] } · h.wu = "kg" | "lb"
 const nSets = (r) => { const m = /^(\d+)\s*×/.exec(String(r || "")); return m ? +m[1] : 0; };
@@ -2195,9 +2248,10 @@ function setsBlock(k, x, total) {
       <label class="sf"><input class="fi" type="number" inputmode="numeric" step="1" min="0" data-sv="r" data-ex="${esc(x.t)}" data-i="${i}" data-n="${total}" value="${has(c.r) ? esc(c.r) : ""}" placeholder="${has(ph.r) ? esc(ph.r) : esc(String(goal).split(/[–-]/).pop())}" aria-label="Repeticiones serie ${i + 1}"><small>reps</small></label>
       <button type="button" class="hchk sm${c.ok ? " on" : ""}" data-act="set-ok" data-ex="${esc(x.t)}" data-i="${i}" data-n="${total}" data-id="${x.id}" aria-pressed="${!!c.ok}" aria-label="Serie ${i + 1} hecha">${IC.check}</button></div>`;
   }).join("");
-  return `<div class="sets"><p class="slast">${lastTxt}</p>${rows}</div>`;
+  return `<div class="sets"><p class="slast">${lastTxt}</p>${rows}<button type="button" class="rtbtn" data-act="rt-go" data-v="${restFor(x)}" data-l="${esc(x.t)}">⏱ Descanso entre series: ${fmtClock(restFor(x))} min · iniciar</button></div>`;
 }
 function setOk(k, name, i, total, exId) {
+  const items0 = trainItems(k), x0 = items0.find((y) => y.t === name);
   const L = setsOf(k, name), c = L[i] || {}, on = !c.ok;
   const patch = { ok: on };
   if (on) {                       // si no escribió nada, toma lo de la vez pasada o la serie anterior
@@ -2206,7 +2260,8 @@ function setOk(k, name, i, total, exId) {
     const rowR = document.querySelector(`.set input[data-sv="r"][data-i="${i}"][data-ex="${CSS.escape(name)}"]`);
     const tw = row && row.value !== "" ? parseFloat(row.value) : null, tr = rowR && rowR.value !== "" ? parseInt(rowR.value, 10) : null;
     patch.w = has(tw) ? tw : has(c.w) ? c.w : has(ph.w) ? ph.w : null;
-    patch.r = has(tr) ? tr : has(c.r) ? c.r : has(ph.r) ? ph.r : null;
+    const gTop = parseInt(String(repGoal((trainItems(k).find((y) => y.t === name) || {}).r || "")).split(/[–-]/).pop(), 10);
+    patch.r = has(tr) ? tr : has(c.r) ? c.r : has(ph.r) ? ph.r : has(gTop) ? gTop : null;
   }
   setPut(k, name, i, patch, total);
   const after = setsOf(k, name), all = after.length >= total && after.slice(0, total).every((x) => x && x.ok);
@@ -2214,6 +2269,8 @@ function setOk(k, name, i, total, exId) {
   if (all) done["t_" + exId] = true; else delete done["t_" + exId];
   hSet(k, { done });
   if (on && navigator.vibrate) try { navigator.vibrate(15); } catch (e) {}
+  if (on && x0) restAfterSet(k, x0, i, total, items0);
+  else if (!on) restStop();
 }
 function unitSeg(k) {
   const u = wUnit(k);
@@ -2222,8 +2279,8 @@ function unitSeg(k) {
 function trainRows() {            // todas las series guardadas, para exportar
   const out = [["Fecha", "Sesión", "Ejercicio", "Serie", "Peso", "Unidad", "Repeticiones", "Hecha"]];
   Object.entries(D.plans).filter(([id, v]) => id.startsWith("h_carlos_") && v && v.sets).sort((a, b) => (a[1].date < b[1].date ? -1 : 1)).forEach(([, v]) => {
-    const ses = TRAIN[Number.isInteger(v.sess) ? v.sess : parseKey(v.date).getDay()].t;
-    Object.entries(v.sets).forEach(([ex, L]) => (L || []).forEach((x, i) => { if (x && (has(x.w) || has(x.r) || x.ok)) out.push([v.date, ses, ex, i + 1, has(x.w) ? x.w : "", v.wu || "kg", has(x.r) ? x.r : "", x.ok ? "sí" : "no"]); }));
+    const ses = TRAIN[Number.isInteger(v.sess) ? v.sess : parseKey(v.date).getDay()].t, xs = {}; (v.extra || []).forEach((e) => { xs[e.t] = e; });
+    Object.entries(v.sets).forEach(([ex, L]) => (L || []).forEach((x, i) => { if (x && (has(x.w) || has(x.r) || x.ok)) out.push([v.date, ses, xs[ex] ? `${ex} (extra${xs[ex].n ? ": " + xs[ex].n : ""})` : ex, i + 1, has(x.w) ? x.w : "", v.wu || "kg", has(x.r) ? x.r : "", x.ok ? "sí" : "no"]); }));
   });
   return out;
 }
@@ -2243,6 +2300,67 @@ function exportTrain(mode) {
   toast(`Descargado: ${rows.length - 1} series`);
 }
 
+
+/* ---------- descanso entre series (cronómetro) ---------- */
+// Evidencia: más de 60 s da algo más de músculo; pasar de 90 s ya casi no cambia la hipertrofia (Singer, Schoenfeld y cols., 2024).
+// En básicos pesados de 6–8 repeticiones se descansa más para mantener el peso (2.5 min); en aislamiento, 90 s; core, 60 s.
+const HEAVY_RE = /press de banca|press inclinado|dominadas|remo con barra|sentadilla|peso muerto|press militar|prensa|fondos/i;
+const restFor = (x) => /plancha|dead bug|pallof|rueda|core/i.test(x.t) ? 60 : HEAVY_RE.test(x.t) ? 150 : 90;
+const NEXT_EX_REST = 120;           // al cambiar de ejercicio: 2 min para preparar la máquina y calentar
+const fmtClock = (sec) => `${Math.floor(sec / 60)}:${String(Math.max(0, sec % 60)).padStart(2, "0")}`;
+let RT = null, rtTick = null, actx = null;
+function beepAt(delaySec) {
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    if (actx.state === "suspended") actx.resume();
+    const t0 = actx.currentTime + Math.max(0, delaySec);
+    [0, 0.25, 0.5].forEach((d, i) => {
+      const o = actx.createOscillator(), g = actx.createGain();
+      o.frequency.value = i === 2 ? 1175 : 880; o.connect(g); g.connect(actx.destination);
+      g.gain.setValueAtTime(0.0001, t0 + d); g.gain.exponentialRampToValueAtTime(0.35, t0 + d + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t0 + d + 0.2);
+      o.start(t0 + d); o.stop(t0 + d + 0.22);
+      (RT.osc = RT.osc || []).push(o);
+    });
+  } catch (e) {}
+}
+function restStart(sec, label) {
+  restStop(true);
+  RT = { end: Date.now() + sec * 1000, total: sec, label, osc: [] };
+  beepAt(sec);
+  rtTick = setInterval(restPaint, 250);
+  restPaint();
+}
+function restAdd(d) {
+  if (!RT) return;
+  (RT.osc || []).forEach((o) => { try { o.stop(); } catch (e) {} }); RT.osc = [];
+  RT.end = Math.max(Date.now() + 5000, RT.end + d * 1000); RT.total = Math.max(5, RT.total + d); RT.done = false;
+  beepAt((RT.end - Date.now()) / 1000);
+  restPaint();
+}
+function restStop(quiet) {
+  if (RT) (RT.osc || []).forEach((o) => { try { o.stop(); } catch (e) {} });
+  RT = null; clearInterval(rtTick); rtTick = null;
+  const el = document.getElementById("restbar"); if (el) el.classList.remove("show");
+}
+function restPaint() {
+  let el = document.getElementById("restbar");
+  if (!el) { el = document.createElement("div"); el.id = "restbar"; el.className = "restbar"; el.setAttribute("role", "timer"); document.body.appendChild(el); }
+  if (!RT) { el.classList.remove("show"); return; }
+  const left = Math.ceil((RT.end - Date.now()) / 1000);
+  if (left <= 0 && !RT.done) { RT.done = true; if (navigator.vibrate) try { navigator.vibrate([300, 150, 300, 150, 300]); } catch (e) {} setTimeout(() => { if (RT && RT.done) restStop(); }, 20000); }
+  const pct = Math.min(100, Math.max(0, 100 - (left / RT.total) * 100));
+  el.className = "restbar show" + (RT.done ? " done" : "");
+  el.innerHTML = RT.done
+    ? `<div class="rtx"><b>¡A la siguiente serie!</b><small>${esc(RT.label)}</small></div><button type="button" class="btn pri sm" data-act="rt-stop">Listo</button>`
+    : `<div class="rtx"><small>Descanso · ${esc(RT.label)}</small><b>${fmtClock(left)}</b></div><div class="rtb"><button type="button" class="btn sm" data-act="rt-add" data-v="-15">−15 s</button><button type="button" class="btn sm" data-act="rt-add" data-v="15">+15 s</button><button type="button" class="btn sm" data-act="rt-stop">Saltar</button></div><i style="width:${pct}%"></i>`;
+}
+function restAfterSet(k, x, i, total, items) {
+  if (k !== todayKey()) return;
+  if (i < total - 1) { restStart(restFor(x), `${x.t}: serie ${i + 2} de ${total}`); return; }
+  const ix = items.findIndex((y) => y.t === x.t), nx = items.slice(ix + 1).find((y) => nSets(y.r));
+  if (nx) restStart(NEXT_EX_REST, `Ahora: ${nx.t}`);
+}
+
 /* ---------- ENTRENAMIENTO ---------- */
 function renderTrain() {
   const t = T();
@@ -2255,6 +2373,10 @@ function renderTrain() {
   (day.items || []).forEach((x) => items.push(x));
   (day.close || []).forEach((x) => items.push(x));
   const nDone = items.filter((x) => done["t_" + x.id]).length;
+  const xList = extrasOf(k).map((x) => {
+    const ns = nSets(x.r), nOk = setsOf(k, x.t).filter((y) => y && y.ok).length;
+    return `<li class="hl hasets${done["t_" + x.id] ? " ok" : ""}"><div class="htx"><b class="ht">${esc(x.t)}</b><span class="hr">${ns} series de ${esc(repGoal(x.r))} repeticiones · ${nOk}/${ns}</span>${x.n ? `<span class="hn">${esc(x.n)}</span>` : ""}</div><button type="button" class="eatx" data-act="x-del" data-id="${esc(x.xid)}" aria-label="Quitar ejercicio">×</button>${setsBlock(k, x, ns)}</li>`;
+  }).join("");
   const list = items.map((x) => {
     const ns = nSets(x.r), rr = ns ? `${ns} series de ${repGoal(x.r)} repeticiones` : x.r;
     const nOk = ns ? setsOf(k, x.t).filter((y) => y && y.ok).length : 0;
@@ -2310,6 +2432,8 @@ function renderTrain() {
     <h2>Sesión <span class="cnt">${nDone}/${items.length}</span></h2>
     <div class="shead"><p class="hnote">Anote el peso y las repeticiones de cada serie y toque ✓. Si deja vacío, ✓ copia lo de la vez pasada.</p>${unitSeg(k)}</div>
     <ul class="hlist2">${list}</ul>
+    ${xList ? `<h2>Extra <span class="cnt">fuera del plan</span></h2><ul class="hlist2">${xList}</ul>` : ""}
+    <div class="row" style="margin-top:10px"><button type="button" class="btn" data-act="x-open">+ Agregar ejercicio extra</button></div>
     <h2>Chequeos de ${esc(dayLabel(k).toLowerCase())}</h2>
     <ul class="hlist2">${checks}</ul>
     <div class="tgt out" style="margin-top:12px"><div><small>Promedio de peso, esta semana</small><b>${avg != null ? esc(fmtNum(avg)) + " kg" : "—"}</b></div><div><small>Contra la semana pasada</small><b class="${diff == null ? "" : diff <= 0 ? "pos" : "neg"}">${diff != null ? (diff > 0 ? "+" : "") + esc(fmtNum(diff, 2)) + " kg" : "—"}</b></div><div><small>Cintura</small><b>${waist ? esc(fmtNum(waist.v)) + " cm" : "—"}</b></div><div><small>Meta</small><b>−0.25 a −0.5 kg/sem</b></div></div>
@@ -2323,6 +2447,7 @@ function renderTrain() {
     <h2>Guía</h2>
     <details class="hdet"><summary>Core (cierre de lunes, jueves y sábado)</summary><table class="htbl"><tbody>${CORE.map(([a, b]) => `<tr><td>${esc(a)}</td><td>${esc(b)}</td></tr>`).join("")}</tbody></table></details>
     <details class="hdet"><summary>Cómo progresar</summary><ul class="hol">
+      <li>Descanso entre series: 2:30 min en los básicos pesados (press, dominadas, remos, sentadilla, peso muerto, prensa, fondos), 1:30 min en los de aislamiento y 1 min en el core. Al cambiar de ejercicio, 2 min. El cronómetro arranca solo cuando marca ✓ en una serie.</li>
       <li>Deje 1 o 2 repeticiones en reserva en cada serie. No entrene al fallo, salvo en la última serie de los ejercicios de aislamiento.</li>
       <li>Cuando complete el tope de repeticiones en todas las series, suba el peso entre 2.5 y 5 %.</li>
       <li>La zona 2 sube 5 minutos por semana. Cada 4ª semana es más suave.</li>
@@ -2691,6 +2816,14 @@ document.addEventListener("click", (ev) => {
     case "set-ok": S.svUntil = 0; S.dirty = false; setOk(S.hDate, el.dataset.ex, +el.dataset.i, +el.dataset.n, el.dataset.id); render(); break;
     case "wu": { lsSet("dd.wu", el.dataset.v); hSet(S.hDate, { wu: el.dataset.v }); render(); break; }
     case "tr-exp": exportTrain(el.dataset.v); break;
+    case "x-open": openExtraSheet(); break;
+    case "x-ns": sheetCtx.ns = +el.dataset.v; document.querySelectorAll("[data-act=x-ns]").forEach((b) => b.setAttribute("aria-pressed", String(b === el))); break;
+    case "x-rg": sheetCtx.rg = el.dataset.v; document.querySelectorAll("[data-act=x-rg]").forEach((b) => b.setAttribute("aria-pressed", String(b === el))); break;
+    case "x-save": saveExtra(); break;
+    case "x-del": delExtra(el.dataset.id); render(); toast(T().deleted); break;
+    case "rt-go": restStart(+el.dataset.v, el.dataset.l); break;
+    case "rt-add": restAdd(+el.dataset.v); break;
+    case "rt-stop": restStop(); break;
     case "wk-ok": applyWeek(el.dataset.sig); render(); break;
     case "wk-no": hSet(todayKey(), { wkNo: el.dataset.sig }); render(); break;
     case "s-set": saveSess(+el.dataset.v); render(); break;

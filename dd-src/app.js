@@ -42,12 +42,15 @@ const lsGet = (k, d) => { try { const v = localStorage.getItem(k); return v == n
 const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
 
 /* ---------- state ---------- */
+const HASH2TAB = { "#semana": "week", "#dinero": "money", "#alimentacion": "food", "#entrenamiento": "train" };
+const TAB2HASH = { week: "semana", money: "dinero", food: "alimentacion", train: "entrenamiento" };
 const EMBED = /[?&]embed=1/.test(location.search);
 if (EMBED) document.documentElement.classList.add("embed");
 const HC = lsGet("hc90:v1", {}) || {};
 const S = {
   person: PEOPLE.includes(HC.person) ? HC.person : PEOPLE.includes(lsGet("dd.person")) ? lsGet("dd.person") : "carlos",
-  tab: /[?&]tab=week/.test(location.search) || location.hash === "#semana" ? "week" : /[?&]tab=money/.test(location.search) || location.hash === "#dinero" ? "money" : "day",
+  tab: (() => { const m = /[?&]tab=(day|week|money|food|train)\b/.exec(location.search); return m ? m[1] : HASH2TAB[location.hash] || "day"; })(),
+  hDate: todayKey(),
   date: todayKey(),
   base: null,          // weekday (0-6) while editing the base week, else null
   weekBase: false,     // week view shows the base week
@@ -255,7 +258,7 @@ function renderChrome() {
   document.querySelectorAll(".who button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.p === S.person)));
   $("who").setAttribute("aria-label", t.who);
   $("gear").setAttribute("aria-label", t.settings);
-  const tabs = { day: t.tabDay, week: t.tabWeek, money: t.tabMoney };
+  const tabs = { day: t.tabDay, week: t.tabWeek, money: t.tabMoney, food: t.tabFood, train: t.tabTrain };
   document.querySelectorAll(".tabs button").forEach((b) => {
     b.querySelector("span").textContent = tabs[b.dataset.tab];
     b.setAttribute("aria-current", b.dataset.tab === S.tab ? "page" : "false");
@@ -270,8 +273,12 @@ function render() {
   $("v-day").classList.toggle("hidden", S.tab !== "day");
   $("v-week").classList.toggle("hidden", S.tab !== "week");
   $("v-money").classList.toggle("hidden", S.tab !== "money");
+  $("v-food").classList.toggle("hidden", S.tab !== "food");
+  $("v-train").classList.toggle("hidden", S.tab !== "train");
   if (S.tab === "day") renderDay();
   else if (S.tab === "week") renderWeek();
+  else if (S.tab === "food") renderFood();
+  else if (S.tab === "train") renderTrain();
   else renderMoney();
 }
 
@@ -371,7 +378,7 @@ function renderDay() {
   const bar = isBase
     ? `<div class="base-banner"><p>${esc(t.baseHelp + wdName + ".")}</p><button class="btn pri" data-act="base-done">${esc(t.baseDone)}</button></div>`
     : "";
-  $("v-day").innerHTML = `${head}
+  $("v-day").innerHTML = `${head}${isBase ? "" : jarvisCard(S.date)}
     <div class="dayg">
       <div class="dial-card"><div class="dial">${dialSVG(blocks, isToday, isBase)}<div class="mid">${dialMid}</div></div>${nowBox}${stats}</div>
       <div>${bar}<div class="daybar"><span class="t">${esc(t.blocks(blocks.length))}</span><button class="btn pri" data-act="new-block">${IC.plus}${esc(t.add)}</button><button class="icon-btn" data-act="more" aria-label="${esc(t.more)}">${IC.dots}</button></div>${list}</div>
@@ -607,19 +614,32 @@ async function syncGmail() {
    BUZÓN DE JARVIS → gastos con tarjeta (app de los 90 días)
 ================================================================= */
 let inboxMsg = "", inboxBusy = false;
-async function importInbox() {
-  if (inboxBusy || Store.mode !== "fire" || !S.ready) return;
+async function importInbox(manual) {
+  if (inboxBusy || Store.mode !== "fire" || !S.ready) { if (manual) { calMsg = { kind: "err", text: Store.mode !== "fire" ? "Esta copia no está conectada a la nube de la app." : "Un momento, la app todavía está cargando." }; render(); } return; }
   const box = cfgOf("carlos").inbox;
-  if (!box || !/^[a-z0-9-]{24,64}$/.test(box)) return;
+  if (!box || !/^[a-z0-9-]{24,64}$/.test(box)) { if (manual) { calMsg = { kind: "err", text: "Falta el código del buzón de Jarvis en Ajustes." }; render(); } return; }
   inboxBusy = true;
+  let calDays = 0, ops = 0;
   try {
     const { F, db } = Store.fs;
     await seedHannah(box);
     const snap = await F.getDocs(F.collection(db, "inbox", box, "items"));
     let n = 0;
-    for (const d of snap.docs) {
+    const rk = (id) => (id.startsWith("op_") ? "0" : "1") + id; // primero los cambios y la semana base, después el calendario
+    const docs = snap.docs.slice().sort((x, y) => (rk(x.id) < rk(y.id) ? -1 : 1));
+    for (const d of docs) {
       const it = d.data() || {};
       const id = d.id;
+      const cm = /^cal_(\d{4}-\d{2}-\d{2})_[A-Za-z0-9]{1,24}$/.exec(id);
+      if (cm || /^op_[A-Za-z0-9]{1,24}$/.test(id)) {
+        try {
+          const j = JSON.parse(String(it.json || "null"));
+          if (cm && applyCalDay(cm[1], j)) calDays++;
+          if (!cm && applyOp(j)) ops++;
+        } catch (e) {}
+        try { await F.deleteDoc(d.ref); } catch (e) {}
+        continue;
+      }
       if (/^g_[A-Za-z0-9]{6,40}$/.test(id) && !D.tx[id] && isFinite(+it.amount) && /^\d{4}-\d{2}-\d{2}$/.test(String(it.date || ""))) {
         const g = Bank.guess(it.desc);
         put("tx", id, { person: "carlos", kind: "expense", amount: +it.amount, cur: SYM[it.cur] ? it.cur : "CRC", desc: String(it.desc || "").slice(0, 80), cat: g.cat, method: "card", scope: g.scope, date: it.date, time: String(it.time || ""), card: String(it.card || ""), bank: String(it.bank || ""), src: "gmail", mid: String(it.mid || ""), rev: true, created: Date.now() });
@@ -628,7 +648,11 @@ async function importInbox() {
       try { await F.deleteDoc(d.ref); } catch (e) {}
     }
     if (n) { inboxMsg = T().jvNew(n); if (S.person === "carlos" && S.tab === "money") render(); }
-  } catch (e) {} finally { inboxBusy = false; }
+    if (calDays) { const cc = clone(D.cfg.carlos || {}) || {}; cc.lastCal = Date.now(); put("cfg", "carlos", cc); }
+    if (calDays || ops) calMsg = { kind: "ok", text: `Jarvis acomodó ${calDays ? calDays + (calDays === 1 ? " día" : " días") + " con su Google Calendar" : ""}${calDays && ops ? " y " : ""}${ops ? ops + (ops === 1 ? " cambio que usted pidió" : " cambios que usted pidió") : ""}.` };
+    else if (manual) calMsg = { kind: "", text: "Al día: no hay nada nuevo de Jarvis." };
+    if (calDays || ops || manual) render();
+  } catch (e) { if (manual) { calMsg = { kind: "err", text: "No se pudo revisar el buzón de Jarvis. Intente de nuevo." }; render(); } } finally { inboxBusy = false; }
 }
 async function seedHannah(box) {
   try {
@@ -747,7 +771,8 @@ function loadBase(force) {
   if (!tpl.length) return;
   const cur = blocksOf({ kind: "plan", date: S.date });
   if (cur.length && !force) { const w = $("lbWarn"); if (w) { w.classList.remove("hidden"); w.innerHTML = `${esc(t.replaceWarn)} <button class="btn danger" data-act="load-base-force" style="margin-left:6px">${esc(t.loadBase)}</button>`; } return; }
-  setBlocks({ kind: "plan", date: S.date }, tpl.map((b) => Object.assign(clone(b), { id: uid(), done: false })));
+  setBlocks({ kind: "plan", date: S.date }, tpl.map((b) => Object.assign(clone(b), { id: /^(pl_|cb_)/.test(String(b.id)) ? b.id : uid(), done: false })).concat(cur.filter((b) => String(b.id).startsWith("gc_"))));
+  if (S.person === "carlos") reconcileSave(S.date);
   closeSheet(); render(); toast(t.saved);
 }
 function openCopy() {
@@ -860,12 +885,13 @@ function setCfg(patch) {
   put("cfg", S.person, c);
 }
 
+/*@@PLAN@@*/
 /* ================================================================
    EVENTS
 ================================================================= */
 function go(tab) {
   S.tab = tab; S.base = null;
-  if (!EMBED) try { history.replaceState(null, "", tab === "day" ? location.pathname + location.search : "#" + (tab === "week" ? "semana" : "dinero")); } catch (e) {}
+  if (!EMBED) try { history.replaceState(null, "", tab === "day" ? location.pathname + location.search : "#" + TAB2HASH[tab]); } catch (e) {}
   render(); window.scrollTo(0, 0);
 }
 document.addEventListener("click", (ev) => {
@@ -934,6 +960,19 @@ document.addEventListener("click", (ev) => {
       if (S.filter === "hidden" && v === "restore") S.filter = "all";
       closeSheet(); render(); toast(v === "remove" ? t.removed : v === "restore" ? t.restored : t.saved); break;
     }
+    case "h-day": S.hDate = el.dataset.k; render(); break;
+    case "h-tick": { hToggle(S.hDate, el.dataset.key); render(); if (navigator.vibrate) try { navigator.vibrate(15); } catch (e) {} break; }
+    case "h-slot": { hSet(S.hDate, { slot: el.dataset.v }); applyToDay(S.hDate); render(); const g = daySched(S.hDate).gym; toast(g ? `Día armado: gym de ${fmtTime(g.s)} a ${fmtTime(g.e)}` : t.saved); break; }
+    case "f-open": openFastSheet(el.dataset.w); break;
+    case "f-set": saveFast(+el.dataset.v); break;
+    case "f-custom": { const v = toMin(($("fTime") || {}).value); if (isFinite(v)) saveFast(v); else toast(t.writeErr); break; }
+    case "f-clear": saveFast(null); break;
+    case "to-day": applyToDay(S.hDate); render(); toast("Listo: el horario quedó en Mi día"); break;
+    case "cal-sync": syncCal(); break;
+    case "ci-edit": S.ciEdit = !S.ciEdit; render(); break;
+    case "ci-mood": { const k = el.dataset.k || S.date; S.ciEdit = true; hSet(k, { mood: hOf(k).mood === el.dataset.v ? null : el.dataset.v }); render(); break; }
+    case "adv-ok": { const k = el.dataset.k || S.date; applyAdvice(k, el.dataset.id); render(); toast("Hecho. Su día quedó ajustado"); break; }
+    case "adv-no": { const k = el.dataset.k || S.date; hSet(k, { adv: Object.assign({}, hOf(k).adv || {}, { [el.dataset.id]: "no" }) }); render(); toast("Está bien, seguimos con el plan"); break; }
     case "sync": syncGmail(); break;
     case "set": {
       const k = el.dataset.k, v = el.dataset.v;
@@ -965,21 +1004,39 @@ document.addEventListener("submit", (ev) => {
   if (ev.target.id === "bForm") saveBlock();
   else if (ev.target.id === "tForm") saveTx();
 });
+document.addEventListener("change", (ev) => {
+  const cf = ev.target.dataset && ev.target.dataset.cnum;
+  if (cf) {
+    const k = ev.target.dataset.k || S.date, raw = String(ev.target.value || "").replace(",", ".").trim(), v = parseFloat(raw);
+    const max = cf === "rec" ? 100 : 14;
+    S.ciEdit = true;
+    if (raw === "") hSet(k, { [cf]: null });
+    else if (isFinite(v) && v >= 0 && v <= max) hSet(k, { [cf]: Math.round(v * 10) / 10 });
+    else { toast(T().writeErr); return; }
+    render(); return;
+  }
+  const f = ev.target.dataset && ev.target.dataset.hnum; if (!f) return;
+  const raw = String(ev.target.value || "").replace(",", ".").trim(), v = parseFloat(raw);
+  if (raw === "") hSet(S.hDate, { [f]: null });
+  else if (isFinite(v) && v > 0 && v < 400) { hSet(S.hDate, { [f]: Math.round(v * 10) / 10 }); toast(T().saved); }
+  else { toast(T().writeErr); return; }
+  render();
+});
 document.addEventListener("input", (ev) => { if (ev.target.id === "bS" || ev.target.id === "bE") checkBlock(); });
 $("scrim").addEventListener("click", closeSheet);
 document.addEventListener("keydown", (e) => { if (e.key === "Escape" && $("sheet").classList.contains("open")) closeSheet(); });
-window.addEventListener("hashchange", () => { const h = location.hash; const tab = h === "#semana" ? "week" : h === "#dinero" ? "money" : "day"; if (tab !== S.tab) { S.tab = tab; render(); } });
+window.addEventListener("hashchange", () => { const tab = HASH2TAB[location.hash] || "day"; if (tab !== S.tab) { S.tab = tab; render(); } });
 
 // keep "now" fresh and roll over at midnight
 let lastToday = todayKey();
 setInterval(() => {
   const tk = todayKey();
-  if (tk !== lastToday) { if (S.date === lastToday) S.date = tk; lastToday = tk; }
-  if (S.tab === "day" && !$("sheet").classList.contains("open")) render();
+  if (tk !== lastToday) { if (S.date === lastToday) S.date = tk; if (S.hDate === lastToday) S.hDate = tk; lastToday = tk; }
+  if ((S.tab === "day" || S.tab === "food") && !$("sheet").classList.contains("open") && !(document.activeElement && document.activeElement.dataset && (document.activeElement.dataset.hnum || document.activeElement.dataset.cnum))) render();
 }, 60000);
 window.addEventListener("message", (e) => {
   if (e.origin !== location.origin || !e.data || e.data.dd === undefined) return;
-  if (e.data.dd === "tab" && ["day", "week", "money"].includes(e.data.tab)) { S.tab = e.data.tab; S.base = null; render(); window.scrollTo(0, 0); importInbox(); }
+  if (e.data.dd === "tab" && ["day", "week", "money", "food", "train"].includes(e.data.tab)) { S.tab = e.data.tab; S.base = null; render(); window.scrollTo(0, 0); importInbox(); }
   if (e.data.dd === "person" && PEOPLE.includes(e.data.p) && e.data.p !== S.person) { S.person = e.data.p; S.base = null; S.filter = "all"; render(); }
 });
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") importInbox(); if (document.visibilityState === "visible" && !$("sheet").classList.contains("open")) { const tk = todayKey(); if (tk !== lastToday) { if (S.date === lastToday) S.date = tk; lastToday = tk; } render(); } });

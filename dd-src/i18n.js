@@ -5,7 +5,7 @@
 const I18N = {
   es: {
     loc: "es-CR",
-    tabDay: "Mi día", tabWeek: "Semana", tabMoney: "Dinero",
+    tabDay: "Mi día", tabWeek: "Semana", tabMoney: "Dinero", tabFood: "Comida", tabTrain: "Entreno", tabFoodLong: "Alimentación", tabTrainLong: "Entrenamiento", noPlan: "Todavía no hay un plan aquí.", noPlanHelp: "Pídale a Jarvis que le arme su plan y aparece en esta sección.",
     today: "Hoy", tomorrow: "Mañana", yesterday: "Ayer",
     wd: ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"],
     wdLong: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"],
@@ -64,7 +64,7 @@ const I18N = {
   },
   de: {
     loc: "de-DE",
-    tabDay: "Mein Tag", tabWeek: "Woche", tabMoney: "Geld",
+    tabDay: "Mein Tag", tabWeek: "Woche", tabMoney: "Geld", tabFood: "Essen", tabTrain: "Training", tabFoodLong: "Ernährung", tabTrainLong: "Training", noPlan: "Hier gibt es noch keinen Plan.", noPlanHelp: "Bitte Jarvis, deinen Plan zu erstellen – dann erscheint er hier.",
     today: "Heute", tomorrow: "Morgen", yesterday: "Gestern",
     wd: ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"],
     wdLong: ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"],
@@ -121,7 +121,7 @@ const I18N = {
   },
   en: {
     loc: "en-US",
-    tabDay: "My day", tabWeek: "Week", tabMoney: "Money",
+    tabDay: "My day", tabWeek: "Week", tabMoney: "Money", tabFood: "Food", tabTrain: "Training", tabFoodLong: "Nutrition", tabTrainLong: "Training", noPlan: "There is no plan here yet.", noPlanHelp: "Ask Jarvis to build your plan and it will show up here.",
     today: "Today", tomorrow: "Tomorrow", yesterday: "Yesterday",
     wd: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
     wdLong: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],

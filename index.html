@@ -40,7 +40,7 @@
   .app{max-width:480px;margin:0 auto;padding:calc(var(--safe-top) + 14px) 18px calc(var(--safe-bottom) + 96px)}
   /* Barra de pestañas: Reto · Mi día · Semana · Dinero (23 nov 2026) */
   .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:20;background:rgba(250,247,246,.94);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-top:1px solid var(--line);padding-bottom:var(--safe-bottom)}
-  .tabbar .in{max-width:480px;margin:0 auto;display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
+  .tabbar .in{max-width:520px;margin:0 auto;display:grid;grid-template-columns:repeat(6,minmax(0,1fr))}
   .tabbar button{height:62px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:.74rem;font-weight:700;color:var(--muted)}
   .tabbar svg{width:24px;height:24px}
   .tabbar button[aria-current="page"]{color:var(--wine)}
@@ -299,6 +299,8 @@
   <button type="button" data-tab="day"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg><span>Mi día</span></button>
   <button type="button" data-tab="week"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><span>Semana</span></button>
   <button type="button" data-tab="money"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="6" width="18" height="13" rx="3"/><path d="M3 10h18M7 15h4"/></svg><span>Dinero</span></button>
+  <button type="button" data-tab="food"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10M17 21V3c-2.2 1-3.5 3.6-3.5 7v3H17"/></svg><span>Comida</span></button>
+  <button type="button" data-tab="train"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6.5 7v10M17.5 7v10M3.5 9.5v5M20.5 9.5v5M6.5 12h11"/></svg><span>Entreno</span></button>
 </div></nav>
 
 <div class="scrim" id="scrim"></div>
@@ -1012,7 +1014,7 @@
 /* Pestañas: el reto vive aquí; Mi día, Semana y Dinero viven en dd.html (misma app, misma nube) */
 (() => {
   "use strict";
-  const LBL = { es: ["Reto", "Mi día", "Semana", "Dinero"], en: ["Challenge", "My day", "Week", "Money"], de: ["Challenge", "Mein Tag", "Woche", "Geld"] };
+  const LBL = { es: ["Reto", "Mi día", "Semana", "Dinero", "Comida", "Entreno"], en: ["Challenge", "My day", "Week", "Money", "Food", "Training"], de: ["Challenge", "Mein Tag", "Woche", "Geld", "Essen", "Training"] };
   const frame = document.getElementById("ddFrame"), bar = document.getElementById("tabbar");
   const ls = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
   const st = () => { try { return JSON.parse(ls("hc90:v1")) || {}; } catch (e) { return {}; } };

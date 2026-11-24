@@ -1756,15 +1756,15 @@ const FOOD = {
   meals: [
     { id: "m1", t: "Comida 1", at: 690, p: "200 g de pollo, res magra o pescado", pE: "2 palmas de su mano (grosor de la palma, sin dedos)", c: "350 g de papa o camote + 1 fruta", cE: "2 puños cerrados + 1 fruta mediana", cRest: "350 g de papa o camote (sin fruta)", cRestE: "2 puños cerrados (sin fruta)", v: "1–2 tazas de verdura", vE: "2 puños o medio plato", f: "½ aguacate pequeño", fE: "½ aguacate pequeño" },
     { id: "m2", t: "Merienda", at: 870, p: "3 huevos + 170 g de yogur griego natural", pE: "3 huevos + ¾ de taza de yogur", c: "1 banano + 40 g de avena", cE: "1 banano + ½ taza de avena en crudo", cRest: "1 banano (sin avena)", cRestE: "1 banano (sin avena)", v: "", f: "15 g de maní natural", fE: "1 puñito (2 cucharadas)" },
-    { id: "m3", t: "Cena", at: 1080, p: "200 g de pollo, res magra o pescado", pE: "2 palmas de su mano", c: "300 g de camote o papa, o 200 g de arroz", cE: "2 puños, o 1¼ tazas de arroz cocido", cRest: "300 g de camote o papa, o 200 g de arroz", cRestE: "2 puños, o 1¼ tazas de arroz cocido", v: "1–2 tazas de verdura", vE: "2 puños o medio plato", f: "1 cucharada de aceite de oliva", fE: "1 cucharada sopera", end: 1170 }
+    { id: "m3", t: "Cena", at: 1080, p: "200 g de pollo, res magra o pescado", pE: "2 palmas de su mano", c: "300 g de camote o papa, o 5 tortillas de maíz", cE: "2 puños, o 5 tortillas", cRest: "300 g de camote o papa, o 5 tortillas de maíz", cRestE: "2 puños, o 5 tortillas", v: "1–2 tazas de verdura", vE: "2 puños o medio plato", f: "1 cucharada de aceite de oliva", fE: "1 cucharada sopera", end: 1170 }
   ],
   // 0 = domingo … 6 = sábado
   menu: [
     ["Huevos con pollo, papa pequeña y espinaca (sin fruta)", "Pescado, ensalada grande y ½ camote"],
     ["Pollo, papa, brócoli y aguacate. Fruta: papaya", "Pargo, camote, ensalada verde y aceite de oliva"],
-    ["Res, arroz, frijoles y vainica", "Pollo, papa al horno, zanahoria y ayote"],
+    ["Res, papa, frijoles y vainica", "Pollo, papa al horno, zanahoria y ayote"],
     ["Pollo, camote, espinaca y aguacate. Fruta: banano", "Res molida, yuca, chayote y pico de gallo"],
-    ["Salmón, papa y brócoli", "Pollo, arroz, ensalada y aceite de oliva"],
+    ["Salmón, papa y brócoli", "Pollo, camote, ensalada y aceite de oliva"],
     ["Res, camote, vainica y aguacate. Fruta: piña", "Tilapia, papa, ayote y zanahoria"],
     ["Pollo, plátano maduro, frijoles y ensalada", "Res, camote, brócoli y aceite de oliva"]
   ],
@@ -1786,7 +1786,7 @@ const FOOD = {
     { id: "verd", t: "Verdura en las 3 comidas", n: "Sin límite" },
     { id: "cafe", t: "Último café antes de las 12:00 pm", n: "Se acuesta a las 9:00 pm: así no le daña el sueño" }
   ],
-  carbs: [["Papa", "175 g", "1 puño grande"], ["Camote", "150 g", "1 puño"], ["Yuca, ñampí o tiquisque", "80 g", "½ puño"], ["Arroz", "105 g", "⅔ de taza"], ["Plátano maduro, al horno o cocido", "100 g", "½ plátano mediano"], ["Avena (en crudo)", "45 g", "½ taza"], ["Banano", "1 mediano", "1 mediano"], ["Papaya o piña", "2 tazas", "2 puños"], ["Frijoles", "¾ de taza (+11 g de proteína)", "¾ de taza"]],
+  carbs: [["Papa", "175 g", "1 puño grande"], ["Camote", "150 g", "1 puño"], ["Yuca, ñampí o tiquisque", "80 g", "½ puño"], ["Tortillas de maíz", "2½ tortillas", "2½ tortillas medianas"], ["Galletas de arroz (inflado)", "4 galletas", "4 galletas"], ["Plátano maduro, al horno o cocido", "100 g", "½ plátano mediano"], ["Avena (en crudo)", "45 g", "½ taza"], ["Banano", "1 mediano", "1 mediano"], ["Papaya o piña", "2 tazas", "2 puños"], ["Frijoles", "¾ de taza (+11 g de proteína)", "¾ de taza"]],
   prots: [["Pechuga de pollo", "100 g", "1 palma"], ["Res magra (lomo, posta, molida 90/10)", "110 g", "1 palma"], ["Pescado blanco (tilapia, pargo, dorado)", "130 g", "1 palma grande"], ["Salmón", "110 g", "1 palma"], ["Atún en agua, escurrido", "1 lata (≈ 120 g)", "1 lata"], ["Huevos enteros", "5 (máximo 4 a 5 por día)", "5 huevos"], ["Yogur griego natural sin azúcar", "300 g", "1¼ tazas"]]
 };
 
@@ -1836,7 +1836,7 @@ const IDEAS = {
     I("Huevos, yogur, banano y avena", "casa", "Con balanza", "3 huevos duros + 170 g de yogur griego + 1 banano + 40 g de avena", 41, 62, 18, 570, "La del plan. Ideal 1 a 2 horas antes del gym."),
     I("Pollo desmechado con plátano maduro", "casa", "Con balanza", "130 g de pollo desmechado + 100 g de plátano maduro al horno", 41, 31, 5, 335, ""),
     I("Pechuga, frijoles y aguacate", "casa", "Con balanza", "100 g de pechuga a la plancha + ¾ de taza de frijoles + ¼ de aguacate", 41, 33, 9, 390, ""),
-    I("Gallo pinto con huevo y leche", "casa", "A ojo", "1 taza de gallo pinto + 3 huevos revueltos (con poco aceite) + 1 vaso de leche descremada", 36, 58, 22, 570, "Lo tico de siempre: con 3 huevos y la leche llega a la proteína."),
+    I("Huevos con papa y tortilla", "casa", "A ojo", "3 huevos revueltos con poco aceite + 150 g de papa en cubos + 1 tortilla de maíz + 1 vaso de leche descremada", 31, 50, 17, 500, "Con la leche llega a la proteína."),
     I("Yogur griego con piña y maní", "casa", "Con balanza", "300 g de yogur griego + 1 taza de piña + 15 g de maní", 35, 36, 7, 350, ""),
     I("Omelette con queso y banano", "casa", "A ojo", "3 huevos + 2 claras + 40 g de queso tierno, espinaca y tomate + 1 banano", 33, 30, 20, 475, ""),
     I("Tostadas con atún y aguacate", "casa", "A ojo", "2 rebanadas de pan integral + 1 lata de atún + ¼ de aguacate + tomate y limón", 32, 29, 8, 320, "Si el gym es pesado, agregue 1 fruta."),
@@ -1844,15 +1844,15 @@ const IDEAS = {
     I("Carne molida con yuca", "casa", "Con balanza", "110 g de carne molida magra + 80 g de yuca + pico de gallo", 30, 34, 9, 345, "")
   ],
   m1: [
-    I("Casado limpio en la soda", "calle", "A ojo", "Pida pollo o pescado a la plancha (porción doble si se puede), arroz, frijoles y ensalada sin aderezo. Sin frito ni maduro frito.", 65, 100, 22, 890, "Números estimados: en la soda no se puede pesar. Pida la ensalada sin mayonesa."),
+    I("Casado limpio en la soda (sin arroz)", "calle", "A ojo", "Pida pollo o pescado a la plancha (porción doble si se puede), frijoles, papas o picadillo en lugar del arroz y ensalada sin aderezo. Sin frito ni maduro frito.", 65, 75, 22, 800, "Números estimados: en la soda no se puede pesar. Pida la ensalada sin mayonesa."),
     I("Pollo rostizado con papas", "calle", "Sin pesar", "1 pechuga de pollo rostizado sin piel + papas asadas o en puré (sin mantequilla) + ensalada + 1 fruta", 66, 95, 10, 760, ""),
-    I("Casado limpio en la casa", "casa", "Con balanza", "200 g de pechuga a la plancha + 150 g de arroz + 130 g de frijoles + 50 g de plátano maduro + ensalada con 1 cucharadita de aceite", 76, 92, 14, 840, ""),
+    I("Casado limpio en la casa (sin arroz)", "casa", "Con balanza", "200 g de pechuga a la plancha + 250 g de papa + 130 g de frijoles + 50 g de plátano maduro + ensalada con 1 cucharadita de aceite", 77, 100, 14, 860, ""),
     I("Bistec de res con yuca", "casa", "Con balanza", "200 g de bistec de res magro + 250 g de yuca + ensalada + 1 fruta", 60, 118, 15, 880, ""),
     I("Pescado con camote", "casa", "Con balanza", "220 g de pescado (tilapia o corvina) + 350 g de camote + verdura + ½ aguacate", 56, 82, 13, 680, "Agregue 1 fruta en días de gym fuerte.")
   ],
   m3: [
     I("Pollo rostizado con ensalada y papa", "calle", "Sin pesar", "1 pechuga de pollo rostizado sin piel + ensalada del súper (sin aderezo cremoso) + 1 papa asada", 60, 40, 10, 500, "Si entrenó fuerte hoy, agregue 1 tortilla o 1 fruta."),
-    I("Arroz con pollo casero", "casa", "Con balanza", "200 g de pollo desmechado + 200 g de arroz + chile dulce, zanahoria y culantro + 1 cucharadita de aceite", 67, 64, 13, 675, ""),
+    I("Pollo en salsa con camote", "casa", "Con balanza", "200 g de pollo desmechado en salsa de tomate con chile dulce, zanahoria y culantro + 300 g de camote + 1 cucharadita de aceite", 67, 68, 13, 685, ""),
     I("Tacos de carne molida", "casa", "Con balanza", "180 g de carne molida magra + 4 tortillas de maíz + pico de gallo + ¼ de aguacate", 53, 54, 23, 650, ""),
     I("Pescado al ajillo con papa", "casa", "Con balanza", "200 g de pescado + 300 g de papa + verdura + 1 cucharada de aceite de oliva con ajo", 50, 65, 17, 610, ""),
     I("Huevos rancheros con frijoles", "casa", "A ojo", "4 huevos + 3 claras + ¾ de taza de frijoles + 2 tortillas + pico de gallo", 48, 57, 22, 650, "")
@@ -1861,7 +1861,7 @@ const IDEAS = {
 IDEAS.x = IDEAS.m2;
 const SHOP = [
   ["Proteína", "pechuga de pollo, huevos, atún en agua, yogur griego natural sin azúcar, carne molida magra, pescado (tilapia o corvina), queso tierno o Turrialba, jamón de pechuga de pavo, leche descremada, proteína en polvo (opcional)"],
-  ["Carbohidrato", "papa, camote, yuca, plátano maduro, arroz, frijoles, tortillas de maíz, avena, pan integral, banano, piña, papaya, manzana"],
+  ["Carbohidrato", "papa, camote, yuca, plátano maduro, frijoles, tortillas de maíz, galletas de arroz inflado, avena, pan integral, banano, piña, papaya, manzana (nunca arroz)"],
   ["Grasa buena", "maní sin sal, aguacate, aceite de oliva"],
   ["Verdura", "espinaca, tomate, cebolla morada, chile dulce, brócoli, zanahoria, culantro y limón (sin pepino)"]
 ];
@@ -1899,7 +1899,7 @@ function eatList(k, m) {
 function openEatSheet(m) {
   const k = S.hDate, isToday = k === todayKey();
   openSheet(`<h3>${esc(MEAL_NAME[m] || "Anotar comida")}: ¿qué comió?</h3><p class="hint">Escríbalo como se lo diría a alguien, por ejemplo: "2 empanadas de pollo y un café negro". Los números son opcionales: si no los sabe, déjelos vacíos y dígale a Jarvis, él lo calcula y lo anota aquí.</p>
-    <div class="f"><label for="eTxt">Qué comió</label><textarea id="eTxt" class="fi" rows="3" maxlength="300" placeholder="Ej.: casado de pollo con arroz, frijoles y ensalada"></textarea></div>
+    <div class="f"><label for="eTxt">Qué comió</label><textarea id="eTxt" class="fi" rows="3" maxlength="300" placeholder="Ej.: pollo a la plancha con papa, frijoles y ensalada"></textarea></div>
     <div class="f"><label for="eAt">Hora (opcional)</label><input id="eAt" class="fi" type="time" value="${isToday ? toHHMM(nowMin()) : ""}"></div>
     <div class="f"><span class="lb">Números (opcional)</span><div class="eatnum"><label>Proteína g<input id="eP" class="fi" type="number" inputmode="numeric" min="0"></label><label>Carbo g<input id="eC" class="fi" type="number" inputmode="numeric" min="0"></label><label>Grasa g<input id="eF" class="fi" type="number" inputmode="numeric" min="0"></label><label>kcal<input id="eK" class="fi" type="number" inputmode="numeric" min="0"></label></div></div>
     <div class="acts"><button type="button" class="btn" data-act="close">Cancelar</button><button type="button" class="btn pri" data-act="eat-save">Guardar</button></div>`, { type: "eat", m });
@@ -2208,6 +2208,10 @@ function renderFood() {
       <li><b>Calorías:</b> un poco por debajo de lo que gasta. Meta: bajar 0.25–0.5 kg por semana. Más rápido se pierde más músculo, según la revisión de Helms y cols. Cada 2 semanas se ajusta con su peso real.</li>
       <li><b>Creatina 3–5 g:</b> el suplemento con más evidencia para fuerza y músculo (ISSN).</li>
       <li><b>Magnesio en la noche:</b> la evidencia para el sueño es de baja calidad. Es barato y seguro en dosis normales; tómelo si le ayuda, pero no es lo que hace la diferencia: dormir 7.5 h o más sí.</li></ul></details>
+    <details class="hdet"><summary>Qué tortilla y qué galleta comprar (nunca arroz)</summary><ul class="hol">
+      <li><b>Tortilla:</b> de maíz, de las delgadas de tortillería o del súper (≈30 g cada una, ≈12 g de carbohidrato). Que la etiqueta diga solo maíz, cal y agua. Evite las de harina de trigo: tienen más grasa y calorías por unidad.</li>
+      <li><b>Galletas:</b> galletas de arroz inflado (≈7 g de carbohidrato cada una) o galletas integrales con menos de 3 g de azúcar por porción. Sirven para la merienda o para completar el carbohidrato.</li>
+      <li><b>Arroz:</b> no está en su plan. Donde un plato tico trae arroz, cámbielo por papa, camote, yuca o tortillas.</li></ul></details>
     <details class="hdet"><summary>Lista del súper para tener en la casa</summary><ul class="hol">${SHOP.map(([a, b]) => `<li><b>${esc(a)}:</b> ${esc(b)}</li>`).join("")}</ul><p class="hnote">En cada comida, el botón 💡 Ideas le da opciones para la calle y para la casa.</p></details>
     <details class="hdet"><summary>Cómo pesar con su balanza (Gynipot GY-A09)</summary><ol class="hol"><li>Enciéndala con ⏻/T y revise que diga <b>g</b>; si no, toque UNIT hasta que salga.</li><li>Ponga el plato vacío y toque ⏻/T: queda en 0 (tara).</li><li>Sirva la proteína hasta el número del plan; toque ⏻/T otra vez y sirva el carbohidrato.</li><li>Pese la comida ya cocida. Mide de 2 en 2 g y hasta 5 kg: sirve para todo, incluso los 15 g de maní.</li><li>Si los números saltan o se apaga sola, cambie las 2 baterías AAA.</li></ol></details>
     <details class="hdet"><summary>8 meriendas limpias</summary><ol class="hol">${FOOD.snacks.map((s) => `<li>${esc(s)}</li>`).join("")}</ol></details>

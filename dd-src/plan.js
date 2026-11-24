@@ -517,6 +517,7 @@ function trainItems(k) {
   (day.ex || []).forEach(([n, r], i) => items.push({ id: "ex" + i, t: n, r }));
   (day.items || []).forEach((x) => items.push(x));
   (day.close || []).forEach((x) => items.push(x));
+  items.push(STR_ITEM);
   return items.concat(extrasOf(k));
 }
 
@@ -803,6 +804,33 @@ function dayBar(k) {
 }
 
 
+
+/* ---------- estiramientos al final de cada día (mínimo 2) ---------- */
+// ACSM: estático, hasta sentir tensión sin dolor, 10–30 s y 2–4 repeticiones; lo ideal es a diario. Va al final, no antes de entrenar.
+const STR_ITEM = { id: "str", t: "Estiramientos · 5 min", n: "Mínimo 2 de los 3, al terminar" };
+Object.assign(EXI, {
+  "Pecho y hombro con palo": { img: "Chest_And_Front_Of_Shoulder_Stretch", m: "Pecho y hombro delantero", how: ["De pie, agarre un palo, toalla o banda detrás de la espalda con las manos más anchas que los hombros.", "Saque el pecho y suba los brazos hacia atrás despacio hasta sentir el estiramiento en el pecho.", "Sin palo: apoye el antebrazo en el marco de una puerta y gire el cuerpo hacia el otro lado."], err: "Arquear la espalda baja en vez de abrir el pecho." },
+  "Tríceps detrás de la cabeza": { img: "Triceps_Stretch", m: "Tríceps", how: ["Lleve una mano detrás de la cabeza, hacia la espalda.", "Con la otra mano, jale suave el codo hacia atrás y hacia la cabeza.", "Cambie de brazo."], err: "Jalar fuerte o meter la cabeza hacia adelante." },
+  "Hombro cruzado": { img: "Shoulder_Stretch", m: "Hombro posterior", how: ["Cruce un brazo estirado frente al pecho.", "Con el otro brazo, acérquelo al pecho por encima del codo.", "Hombros abajo, sin subirlos a las orejas. Cambie de lado."], err: "Jalar desde la muñeca o el codo: se carga la articulación." },
+  "Dorsal en la pared": { img: "One_Arm_Against_Wall", m: "Dorsal ancho y costado", how: ["De lado o de frente a la pared, mano apoyada arriba.", "Lleve la cadera hacia atrás o hacia el otro lado hasta sentir el costado de la espalda.", "Respire profundo hacia ese lado. Cambie de brazo."], err: "Encoger el hombro hacia la oreja." },
+  "Bíceps de pie": { img: "Standing_Biceps_Stretch", m: "Bíceps y pecho", how: ["De pie, entrelace los dedos detrás de la espalda.", "Estire los brazos y gire las palmas hacia abajo.", "Suba un poco las manos hasta sentir el bíceps y el pecho."], err: "Inclinar el torso hacia adelante." },
+  "Postura del niño": { img: "Childs_Pose", m: "Espalda baja, dorsal y cadera", how: ["De rodillas, siéntese sobre los talones.", "Lleve el pecho hacia el piso con los brazos estirados al frente.", "Respire lento y suelte la espalda en cada exhalación."], err: "Aguantar la respiración: aquí se trata de soltar." },
+  "Flexor de cadera arrodillado": { img: "Kneeling_Hip_Flexor", m: "Flexor de cadera y cuádriceps", how: ["Una rodilla en el piso y el otro pie adelante, como en una zancada.", "Apriete el glúteo de la pierna de atrás y lleve la cadera un poco al frente.", "Siente el estiramiento al frente de la cadera. Cambie de lado."], err: "Arquear la espalda baja en vez de apretar el glúteo." },
+  "Femoral sentado": { img: "Seated_Floor_Hamstring_Stretch", m: "Femorales y pantorrilla", how: ["Sentado, una pierna estirada y la otra doblada con el pie en el muslo.", "Con la espalda recta, inclínese desde la cadera hacia el pie.", "Llegue hasta sentir tensión, no dolor. Cambie de lado."], err: "Redondear la espalda para llegar más lejos." },
+  "Glúteo en figura 4": { img: "Ankle_On_The_Knee", m: "Glúteo y piriforme", how: ["Boca arriba, rodillas dobladas.", "Ponga un tobillo sobre la rodilla contraria, como un 4.", "Acerque la pierna de abajo al pecho hasta sentir el glúteo. Cambie de lado."], err: "Despegar la cabeza y los hombros del piso." },
+  "Cuádriceps con pie en banco": { img: "Standing_Elevated_Quad_Stretch", m: "Cuádriceps y flexor de cadera", how: ["De espaldas a un banco, apoye el empeine de un pie atrás.", "Doble la rodilla de adelante y baje la cadera despacio.", "Torso recto. Sin banco: de pie, agarre el tobillo y lleve el talón al glúteo."], err: "Inclinar el torso hacia adelante." },
+  "Pantorrilla en la pared": { img: "Calf_Stretch_Hands_Against_Wall", m: "Pantorrilla", how: ["Manos en la pared, una pierna atrás estirada y el talón en el piso.", "Lleve la cadera hacia la pared hasta sentir la pantorrilla.", "Después doble un poco la rodilla de atrás para estirar la parte baja. Cambie de lado."], err: "Levantar el talón de atrás." }
+});
+const STR = {   // 3 por sesión, según lo que se trabajó
+  0: ["Glúteo en figura 4", "Femoral sentado", "Postura del niño"],
+  1: ["Pecho y hombro con palo", "Tríceps detrás de la cabeza", "Hombro cruzado"],
+  2: ["Dorsal en la pared", "Bíceps de pie", "Postura del niño"],
+  3: ["Flexor de cadera arrodillado", "Femoral sentado", "Glúteo en figura 4"],
+  4: ["Cuádriceps con pie en banco", "Pantorrilla en la pared", "Femoral sentado"],
+  5: ["Hombro cruzado", "Pecho y hombro con palo", "Dorsal en la pared"],
+  6: ["Flexor de cadera arrodillado", "Cuádriceps con pie en banco", "Postura del niño"]
+};
+
 /* ---------- explicación de cardio, core y movilidad, y "lo cambié por otra actividad" ---------- */
 const MOB_EX = [["Gato-vaca", "10 lentas, columna completa"], ["Rotación torácica en 4 apoyos", "8 por lado"], ["Cadera 90/90", "6 por lado"], ["Sentadilla profunda sostenida", "30–45 s, talones al piso"], ["Tobillo a la pared", "10 por lado, rodilla pasa la punta del pie"], ["Círculos de hombro con banda o palo", "10 adelante y 10 atrás"]];
 const ITEM_INFO = {
@@ -810,9 +838,10 @@ const ITEM_INFO = {
   int: { m: "El único cardio fuerte de la semana: mejora la condición y quema muchas calorías en poco tiempo.", how: ["Caliente 5 min suave.", "8 rondas: 1 min fuerte (casi al máximo, no puede hablar) y 2 min suave.", "Bici, remo o caminadora. En caminadora, mejor subir la inclinación que correr muy rápido."], err: "Hacer el minuto fuerte a medias: si puede hablar, no es fuerte.", swap: true },
   core: { m: "Abdomen y zona media firmes: protegen la espalda y ayudan a que se marque el abdomen.", how: ["Haga los 4 ejercicios en circuito, sin descanso entre uno y otro.", "Descanse 1 min al final de cada vuelta. Haga 3 vueltas; si solo tiene 10 minutos, haga 2.", "Toque cada ejercicio para ver cómo se hace."], err: "Hacerlo rápido y sin control. En el core manda la técnica.", list: () => CORE },
   mob: { m: "Prepara cadera, tobillo, columna y hombros para entrenar sin lesiones.", how: ["Hágala antes de la primera serie, sin peso.", "Movimientos lentos y controlados, respirando.", "Si algo duele, no fuerce: llegue hasta donde se sienta cómodo."], err: "Saltársela por apuro. Son los minutos que evitan una lesión.", list: () => MOB_EX },
+  str: { m: "Al terminar, con el músculo caliente. Mejoran la flexibilidad y ayudan a soltar la tensión.", how: ["Haga mínimo 2 de los 3; si tiene tiempo, los 3.", "Sostenga cada uno 30 segundos por lado y repítalo 2 veces.", "Llegue hasta sentir tensión, nunca dolor, y respire lento. Sin rebotes."], err: "Rebotar o forzar hasta que duela. Estirar no previene lesiones por sí solo: lo que gana es movilidad.", list: () => STR[sessOf(S.hDate)].map((n) => [n, "2 × 30 s por lado"]) },
   walk: { m: "Descanso activo: mueve la sangre y ayuda a recuperarse sin cansar.", how: ["Camine a un ritmo cómodo, puede ser afuera o en la caminadora.", "Puede hablar sin problema todo el tiempo.", "Ideal después de comer o al final de la tarde."], err: "Convertirlo en una caminata fuerte o en trote: hoy toca recuperar.", swap: true }
 };
-const infoKey = (id) => /^z2/.test(id) ? "z2" : /^int/.test(id) ? "int" : /^core/.test(id) ? "core" : /^mob/.test(id) ? "mob" : /^walk/.test(id) ? "walk" : null;
+const infoKey = (id) => id === "str" ? "str" : /^z2/.test(id) ? "z2" : /^int/.test(id) ? "int" : /^core/.test(id) ? "core" : /^mob/.test(id) ? "mob" : /^walk/.test(id) ? "walk" : null;
 function openItemInfo(id) {
   const k = S.hDate, x = trainItems(k).find((y) => y.id === id), key = infoKey(id), e = ITEM_INFO[key];
   if (!x || !e) return;
@@ -842,6 +871,7 @@ function renderTrain() {
   (day.ex || []).forEach(([n, r], i) => items.push({ id: "ex" + i, t: n, r }));
   (day.items || []).forEach((x) => items.push(x));
   (day.close || []).forEach((x) => items.push(x));
+  items.push(STR_ITEM);
   const nDone = items.filter((x) => done["t_" + x.id]).length;
   const xList = extrasOf(k).map((x) => {
     const ns = nSets(x.r), nOk = setsOf(k, x.t).filter((y) => y && y.ok).length;
@@ -850,7 +880,7 @@ function renderTrain() {
   const list = items.map((x) => {
     const ns = nSets(x.r), rr = ns ? `${ns} series de ${repGoal(x.r)} repeticiones` : x.r;
     const nOk = ns ? setsOf(k, x.t).filter((y) => y && y.ok).length : 0;
-    return `<li class="hl${done["t_" + x.id] ? " ok" : ""}${ns ? " hasets" : ""}">${exThumb(x)}<div class="htx"><b class="ht">${esc(x.t)}</b>${rr ? `<span class="hr">${esc(rr)}${ns ? ` · ${nOk}/${ns}` : ""}</span>` : ""}${x.n ? `<span class="hn">${esc(x.n)}</span>` : ""}${EXI[x.t] ? `<button type="button" class="exlink sm" data-act="ex-how" data-ex="${esc(x.t)}">Cómo se hace ›</button>` : infoKey(x.id) ? `<button type="button" class="exlink sm" data-act="it-info" data-id="${esc(x.id)}">${(h.swap || {})[x.id] ? "Cambiado por: " + esc(h.swap[x.id]) + " ›" : infoKey(x.id) === "core" ? "Qué ejercicios hacer ›" : infoKey(x.id) === "mob" ? "Qué movimientos hacer ›" : ITEM_INFO[infoKey(x.id)].swap ? "Cómo se hace · o cámbielo por otra actividad ›" : "Cómo se hace ›"}</button>` : ""}</div>${tick(!!done["t_" + x.id], "h-tick", `data-key="t_${x.id}"`, x.t)}${ns ? setsBlock(k, x, ns) : ""}</li>`;
+    return `<li class="hl${done["t_" + x.id] ? " ok" : ""}${ns ? " hasets" : ""}">${exThumb(x)}<div class="htx"><b class="ht">${esc(x.t)}</b>${rr ? `<span class="hr">${esc(rr)}${ns ? ` · ${nOk}/${ns}` : ""}</span>` : ""}${x.n ? `<span class="hn">${esc(x.n)}</span>` : ""}${EXI[x.t] ? `<button type="button" class="exlink sm" data-act="ex-how" data-ex="${esc(x.t)}">Cómo se hace ›</button>` : infoKey(x.id) ? `<button type="button" class="exlink sm" data-act="it-info" data-id="${esc(x.id)}">${(h.swap || {})[x.id] ? "Cambiado por: " + esc(h.swap[x.id]) + " ›" : infoKey(x.id) === "core" ? "Qué ejercicios hacer ›" : infoKey(x.id) === "str" ? "Cuáles hoy: " + esc(STR[six].slice(0, 2).join(", ").toLowerCase()) + "… ›" : infoKey(x.id) === "mob" ? "Qué movimientos hacer ›" : ITEM_INFO[infoKey(x.id)].swap ? "Cómo se hace · o cámbielo por otra actividad ›" : "Cómo se hace ›"}</button>` : ""}</div>${tick(!!done["t_" + x.id], "h-tick", `data-key="t_${x.id}"`, x.t)}${ns ? setsBlock(k, x, ns) : ""}</li>`;
   }).join("");
 
   const checks = checksFor(k).map((c) => {
@@ -930,6 +960,7 @@ function renderTrain() {
     <details class="hdet"><summary>Core (cierre de lunes, jueves y sábado)</summary><table class="htbl"><tbody>${CORE.map(([a, b]) => `<tr><td>${EXI[a] ? `<button type="button" class="exlink" data-act="ex-how" data-ex="${esc(a)}">${esc(a)} ›</button>` : esc(a)}</td><td>${esc(b)}</td></tr>`).join("")}</tbody></table></details>
     <details class="hdet"><summary>Cómo progresar</summary><ul class="hol">
       <li>Descanso entre series: 2:30 min en los básicos pesados (press, dominadas, remos, sentadilla, peso muerto, prensa, fondos), 1:30 min en los de aislamiento y 1 min en el core. Al cambiar de ejercicio, 2 min. El cronómetro arranca solo cuando marca ✓ en una serie.</li>
+      <li>Al terminar todos los días: mínimo 2 estiramientos de 30 s por lado, 2 veces. La guía de la ACSM recomienda estirar a diario, sostener 10 a 30 s y repetir de 2 a 4 veces. Antes de entrenar va la movilidad, no estiramientos largos.</li>
       <li>Deje 1 o 2 repeticiones en reserva en cada serie. No entrene al fallo, salvo en la última serie de los ejercicios de aislamiento.</li>
       <li>Cuando complete el tope de repeticiones en todas las series, suba el peso entre 2.5 y 5 %.</li>
       <li>La zona 2 sube 5 minutos por semana. Cada 4ª semana es más suave.</li>

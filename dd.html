@@ -1881,20 +1881,21 @@ function plannedOpen(k) {
 /* Qué sesión entrena un día: la del plan (por día de la semana) o la que Carlos escogió (h.sess = índice de TRAIN) */
 const planIx = (k) => parseKey(k).getDay();
 const sessOf = (k) => { const v = hOf(k).sess; return Number.isInteger(v) && v >= 0 && v <= 6 ? v : planIx(k); };
-const sessDay = (k) => TRAIN[sessOf(k)];
+const sessDay = (k) => verOf(k).T[sessOf(k)];
+const sessIn = (kk, k) => (verOf(kk) === verOf(k) ? sessOf(kk) : V1TO2[sessOf(kk)]);   // sesión de kk contada en la versión del plan de k
 const isRestDay = (k) => sessDay(k).kind === "rest";
-const didTrain = (k) => Object.keys(hOf(k).done || {}).some((x) => x.startsWith("t_"));
+const didTrain = (k) => { const h = hOf(k); return Object.keys(h.done || {}).some((x) => x.startsWith("t_")) || Object.values(h.sets || {}).some((L) => (L || []).some((y) => y && y.ok)); };
 function weekSess(k) {        // { índice de TRAIN: fecha en que se hizo } en la semana (lun–dom) de k
   const mon = mondayOf(parseKey(k)), out = {};
-  for (let i = 0; i < 7; i++) { const kk = keyOf(addDays(mon, i)); if (kk !== k && didTrain(kk)) out[sessOf(kk)] = kk; }
+  for (let i = 0; i < 7; i++) { const kk = keyOf(addDays(mon, i)); if (kk !== k && didTrain(kk)) out[sessIn(kk, k)] = kk; }
   return out;
 }
 function pendingSess(k) {     // sesiones de gym de días anteriores de esta semana que no se hicieron
   if (k > todayKey()) return [];
   const mon = mondayOf(parseKey(k)), made = weekSess(k), out = [];
   for (let kk = keyOf(mon); kk < k; kk = nextKey(kk)) {
-    const ix = planIx(kk);
-    if (TRAIN[ix].kind !== "rest" && made[ix] == null && !didTrain(kk) && sessOf(k) !== ix && daysBetween(PLAN_START, kk) >= 0) out.push({ ix, k: kk });
+    const ix = verOf(kk) === verOf(k) ? planIx(kk) : V1TO2[planIx(kk)];
+    if (verOf(k).T[ix].kind !== "rest" && made[ix] == null && !didTrain(kk) && sessOf(k) !== ix && daysBetween(PLAN_START, kk) >= 0) out.push({ ix, k: kk });
   }
   return out;
 }
@@ -2125,29 +2126,28 @@ function renderFood() {
 
 /* ---------- cambiar la sesión del día ---------- */
 function sessLine(k) {
-  const six = sessOf(k), moved = six !== planIx(k), day = TRAIN[six];
-  return `<button type="button" class="gymline" data-act="s-open"><span><small>¿Qué entrena hoy?</small><b>${esc(day.t)}</b><em>${moved ? "Cambiado · el plan decía " + esc(TRAIN[planIx(k)].t) : "La del plan de hoy"}</em></span><span class="gch">Cambiar</span></button>`;
+  const six = sessOf(k), moved = six !== planIx(k), day = verOf(k).T[six];
+  return `<button type="button" class="gymline" data-act="s-open"><span><small>¿Qué entrena hoy?</small><b>${esc(day.t)}</b><em>${moved ? "Cambiado · el plan decía " + esc(verOf(k).T[planIx(k)].t) : "La del plan de hoy"}</em></span><span class="gch">Cambiar</span></button>`;
 }
 function pendBanner(k) {
   const p = pendingSess(k);
   if (!p.length || k !== todayKey()) return "";
   const last = p[p.length - 1];
-  return `<div class="pend"><div><b>Quedó pendiente: ${esc(TRAIN[last.ix].t)}</b><span>Le tocaba el ${esc(niceDate(last.k))} y no la marcó. Si la hace hoy, la de hoy (${esc(TRAIN[sessOf(k)].t)}) queda para otro día de la semana.</span></div><button type="button" class="btn pri sm" data-act="s-set" data-v="${last.ix}">Hacerla hoy</button></div>`;
+  return `<div class="pend"><div><b>Quedó pendiente: ${esc(verOf(k).T[last.ix].t)}</b><span>Le tocaba el ${esc(niceDate(last.k))} y no la marcó. Si la hace hoy, la de hoy (${esc(sessDay(k).t)}) queda para otro día de la semana.</span></div><button type="button" class="btn pri sm" data-act="s-set" data-v="${last.ix}">Hacerla hoy</button></div>`;
 }
 const SESS_ORDER = [1, 2, 3, 4, 5, 6, 0];
 function sessWarn(k, ix) {
-  const day = TRAIN[ix], prev = sessDay(prevKey(k)), made = weekSess(k);
-  const w = [];
+  const V = verOf(k), day = V.T[ix], prevIx = sessIn(prevKey(k), k), made = weekSess(k);
+  const w = [], didY = didTrain(prevKey(k)), legs = (x) => V.legs.includes(x);
   if (made[ix] != null && day.kind !== "rest") w.push(`Ya la hizo el ${niceDate(made[ix])}`);
-  if (day.kind === "gym" && prev.t === day.t && didTrain(prevKey(k))) w.push("La hizo ayer: el músculo necesita 48 h");
-  if (/Piernas/.test(day.t) && /Hyrox/.test(prev.t) && didTrain(prevKey(k))) w.push("Ayer hizo circuito: las piernas van a estar cansadas");
-  if (/Hyrox/.test(day.t) && /Piernas/.test(prev.t) && didTrain(prevKey(k))) w.push("Ayer hizo piernas: el circuito le va a costar más");
+  if (didY && prevIx === ix && day.kind !== "rest") w.push("La hizo ayer: el músculo necesita 48 h");
+  else if (didY && legs(ix) && legs(prevIx)) w.push("Ayer también cargó piernas: mejor dejar 48 h entre días de pierna");
   return w;
 }
 function openSessSheet() {
   const k = S.hDate, cur = sessOf(k), pix = planIx(k), pend = pendingSess(k).map((x) => x.ix), made = weekSess(k);
   const rows = SESS_ORDER.map((ix) => {
-    const d = TRAIN[ix], w = sessWarn(k, ix);
+    const d = verOf(k).T[ix], w = sessWarn(k, ix);
     const tags = [ix === pix ? `<i class="tg">Plan de hoy</i>` : "", pend.includes(ix) ? `<i class="tg pd">Pendiente</i>` : "", made[ix] != null && d.kind !== "rest" ? `<i class="tg ok">Hecha ✓</i>` : ""].join("");
     const what = d.ex ? d.ex.slice(0, 3).map((e) => e[0]).join(", ") + (d.ex.length > 3 ? "…" : "") : (d.items || []).map((x) => x.t.split(" · ")[0]).join(", ");
     return `<button type="button" class="sopt" data-act="s-set" data-v="${ix}" aria-pressed="${cur === ix}"><span class="sday">${esc(T().wd[ix])}</span><span class="sbody"><b>${esc(d.t)}</b><small>${esc(what)}</small>${tags ? `<span class="tgs">${tags}</span>` : ""}${w.length ? `<span class="swarn">${esc(w.join(" · "))}</span>` : ""}</span></button>`;
@@ -2163,7 +2163,7 @@ function saveSess(ix) {
   hSet(k, { sess: ix === planIx(k) ? null : ix, done });
   applyToDay(k);
   closeSheet();
-  toast(recWeek(k) ? `Hoy: ${TRAIN[ix].t}. Mire cómo le recomiendo la semana` : `Hoy: ${TRAIN[ix].t}`);
+  toast(recWeek(k) ? `Hoy: ${verOf(k).T[ix].t}. Mire cómo le recomiendo la semana` : `Hoy: ${verOf(k).T[ix].t}`);
 }
 
 
@@ -2179,7 +2179,7 @@ const SESS_TIP = {
   5: "Elevaciones laterales con peso que controle: los hombros crecen con técnica, no con impulso.",
   6: "Ritmo constante en todas las rondas. Si en la ronda 3 ya no puede, salió muy rápido."
 };
-const clash = (a, b) => a && b && (a === b || (a === 3 && b === 6) || (a === 6 && b === 3));
+const clashIn = (V) => (a, b) => !!(a && b && (a === b || (V.legs.includes(a) && V.legs.includes(b))));
 function perms(a) { if (a.length <= 1) return [a.slice()]; const out = []; a.forEach((x, i) => perms(a.slice(0, i).concat(a.slice(i + 1))).forEach((p) => out.push([x].concat(p)))); return out; }
 function recWeek(k) {
   if (k !== todayKey() || S.person !== "carlos") return null;
@@ -2187,10 +2187,11 @@ function recWeek(k) {
   if (idx >= 5) return null;                                                 // sábado y domingo: no hay semana que acomodar
   const keys = Array.from({ length: 7 }, (_, i) => keyOf(addDays(mon, i)));
   const covered = new Set();
-  keys.slice(0, idx).forEach((kk) => { if (didTrain(kk)) covered.add(sessOf(kk)); });
+  const V = verOf(k), clash = clashIn(V);
+  keys.slice(0, idx).forEach((kk) => { if (didTrain(kk)) covered.add(sessIn(kk, k)); });
   covered.add(sessOf(k));
   const fut = keys.slice(idx + 1, 6);                                        // hasta el sábado; el domingo queda de descanso
-  let want = SESS_PRIO.filter((x) => !covered.has(x));
+  let want = V.prio.filter((x) => !covered.has(x));
   const skipped = want.slice(fut.length);
   want = want.slice(0, fut.length);
   while (want.length < fut.length) want.push(0);
@@ -2201,6 +2202,14 @@ function recWeek(k) {
     p.forEach((x, i) => { if (clash(prev, x)) ok = false; prev = x; const day = idx + 2 + i; sc += x ? Math.abs(((x + 6) % 7) - (day - 1)) : 0; });
     if (ok && sc < bestScore) { best = p; bestScore = sc; }
   });
+  while (!best && want.some((x) => x)) {      // si no hay forma sin juntar días de pierna, se suelta otra sesión
+    const j = want.map((x) => !!x).lastIndexOf(true); skipped.unshift(want[j]); want[j] = 0;
+    perms(want).forEach((p) => {
+      let prev = sessOf(k), ok = true, sc = 0;
+      p.forEach((x, i) => { if (clash(prev, x)) ok = false; prev = x; const day = idx + 2 + i; sc += x ? Math.abs(((x + 6) % 7) - (day - 1)) : 0; });
+      if (ok && sc < bestScore) { best = p; bestScore = sc; }
+    });
+  }
   if (!best) return null;
   const curSet = new Set(cur), problem = cur.some((x) => x && covered.has(x)) || want.some((x) => x && !curSet.has(x));
   if (!problem || JSON.stringify(best) === JSON.stringify(cur)) return null;
@@ -2209,11 +2218,11 @@ function recWeek(k) {
 function weekCard(k) {
   const r = recWeek(k);
   if (!r || hOf(k).wkNo === r.sig) return "";
-  const today = sessDay(k), moved = sessOf(k) !== planIx(k);
-  const rows = r.days.map((d) => `<li${d.ix !== d.was ? ' class="chg"' : ""}><span>${esc(T().wd[parseKey(d.k).getDay()])}</span><b>${esc(TRAIN[d.ix].t)}</b>${d.ix !== d.was ? `<small>antes: <s>${esc(TRAIN[d.was].t)}</s></small>` : ""}</li>`).join("") + `<li><span>${esc(T().wd[0])}</span><b>Descanso activo</b></li>`;
-  const skip = r.skipped.length ? `<p class="wkskip">Esta semana se salta: <b>${esc(r.skipped.map((x) => TRAIN[x].t).join(", "))}</b>${r.skipped.length === 1 && SESS_WHY[r.skipped[0]] ? ` (${esc(SESS_WHY[r.skipped[0]])})` : ""}. No la meta el domingo: el descanso vale más.</p>` : "";
+  const V = verOf(k), today = sessDay(k), moved = sessOf(k) !== planIx(k);
+  const rows = r.days.map((d) => `<li${d.ix !== d.was ? ' class="chg"' : ""}><span>${esc(T().wd[parseKey(d.k).getDay()])}</span><b>${esc(V.T[d.ix].t)}</b>${d.ix !== d.was ? `<small>antes: <s>${esc(V.T[d.was].t)}</s></small>` : ""}</li>`).join("") + `<li><span>${esc(T().wd[0])}</span><b>Descanso activo</b></li>`;
+  const skip = r.skipped.length ? `<p class="wkskip">Esta semana se salta: <b>${esc(r.skipped.map((x) => V.T[x].t).join(", "))}</b>${r.skipped.length === 1 && V.why[r.skipped[0]] ? ` (${esc(V.why[r.skipped[0]])})` : ""}. ${r.skipped.length > 1 ? "No las meta" : "No la meta"} el domingo: el descanso vale más.</p>` : "";
   return `<section class="jcard wk" aria-label="Jarvis"><div class="jh"><span class="jdot" aria-hidden="true">J</span><b>Así le recomiendo la semana</b></div>
-    <p class="wkhead">Hoy entrena <b>${esc(today.t)}</b>${moved ? `, que tocaba el ${esc(T().wdLong[sessOf(k)].toLowerCase())}` : ""}. Para hacer todas las sesiones sin repetir y sin juntar piernas con el circuito:</p>
+    <p class="wkhead">Hoy entrena <b>${esc(today.t)}</b>${moved ? `, que tocaba el ${esc(T().wdLong[sessOf(k)].toLowerCase())}` : ""}. Para hacer todas las sesiones sin repetir y sin poner dos días de pierna seguidos:</p>
     <ol class="wkl">${rows}</ol>${skip}
     <div class="advb"><button type="button" class="btn pri" data-act="wk-ok" data-sig="${esc(r.sig)}">Acomodar la semana así</button><button type="button" class="btn" data-act="wk-no" data-sig="${esc(r.sig)}">Dejarla como está</button></div></section>`;
 }
@@ -2229,7 +2238,7 @@ function applyWeek(sig) {
 }
 function coachTip(k) {
   const ix = sessOf(k);
-  return `<p class="coach"><b>Jarvis:</b> ${esc(SESS_TIP[ix] || "")}</p>`;
+  return `<p class="coach"><b>Jarvis:</b> ${esc(verOf(k).tip[ix] || "")}</p>`;
 }
 
 
@@ -2400,7 +2409,7 @@ function unitSeg(k) {
 function trainRows() {            // todas las series guardadas, para exportar
   const out = [["Fecha", "Sesión", "Ejercicio", "Serie", "Peso", "Unidad", "Repeticiones", "Hecha"]];
   Object.entries(D.plans).filter(([id, v]) => id.startsWith("h_carlos_") && v && v.sets).sort((a, b) => (a[1].date < b[1].date ? -1 : 1)).forEach(([, v]) => {
-    const ses = TRAIN[Number.isInteger(v.sess) ? v.sess : parseKey(v.date).getDay()].t, xs = {}; (v.extra || []).forEach((e) => { xs[e.t] = e; });
+    const ses = verOf(v.date).T[Number.isInteger(v.sess) ? v.sess : parseKey(v.date).getDay()].t, xs = {}; (v.extra || []).forEach((e) => { xs[e.t] = e; });
     Object.entries(v.sets).forEach(([ex, L]) => (L || []).forEach((x, i) => { if (x && (has(x.w) || has(x.r) || x.ok)) out.push([v.date, ses, xs[ex] ? `${ex} (extra${xs[ex].n ? ": " + xs[ex].n : ""})` : ex, i + 1, has(x.w) ? x.w : "", (v.exu || {})[ex] || v.wu || "kg", has(x.r) ? x.r : "", x.ok ? "sí" : "no"]); }));
   });
   return out;
@@ -2425,7 +2434,7 @@ function exportTrain(mode) {
 /* ---------- descanso entre series (cronómetro) ---------- */
 // Evidencia: más de 60 s da algo más de músculo; pasar de 90 s ya casi no cambia la hipertrofia (Singer, Schoenfeld y cols., 2024).
 // En básicos pesados de 6–8 repeticiones se descansa más para mantener el peso (2.5 min); en aislamiento, 90 s; core, 60 s.
-const HEAVY_RE = /press de banca|press inclinado|dominadas|remo con barra|sentadilla|peso muerto|press militar|prensa|fondos/i;
+const HEAVY_RE = /press de banca|press inclinado|dominadas|remo con barra|sentadilla|peso muerto|press militar|prensa|fondos|hip thrust/i;
 const restFor = (x) => /plancha|dead bug|pallof|rueda|core/i.test(x.t) ? 60 : HEAVY_RE.test(x.orig || x.t) ? 150 : 90;
 const NEXT_EX_REST = 120;           // al cambiar de ejercicio: 2 min para preparar la máquina y calentar
 const fmtClock = (sec) => `${Math.floor(sec / 60)}:${String(Math.max(0, sec % 60)).padStart(2, "0")}`;
@@ -2686,6 +2695,56 @@ function setAlt(orig, v) {
   closeSheet(); render(); toast(v ? `Hoy: ${v} en lugar de ${orig}` : `De vuelta a ${orig}`);
 }
 
+/* ---------- PLAN v2 (desde el miércoles 25 nov 2026): torso / pierna, cada músculo 2 veces por semana ----------
+   Base: Schoenfeld, Ogborn y Krieger (2016): entrenar cada músculo 2 veces por semana da más hipertrofia que 1;
+   volumen de ≈10–20 series por músculo a la semana (Schoenfeld 2017; Pelland y cols. 2024);
+   descansos > 60–90 s (Singer y cols. 2024); core sin flexión repetida (McGill, U. de Waterloo);
+   días de pierna y circuito separados por 48 h. */
+const V2_START = "2026-11-25";
+const T2 = [
+  TRAIN[0],
+  { t: "Pierna A · fuerza", kind: "gym", ex: [["Sentadilla", "4 × 6–8"], ["Peso muerto rumano", "3 × 8"], ["Prensa", "3 × 10–12"], ["Curl femoral", "3 × 10–12"], ["Pantorrilla", "4 × 12–15"]], close: [{ id: "core", t: "Core · 10 min" }] },
+  { t: "Torso A · pecho y espalda", kind: "gym", ex: [["Press de banca", "4 × 6–8"], ["Dominadas", "4 × 6–10"], ["Press inclinado con mancuernas", "3 × 8–10"], ["Remo con mancuerna", "3 × 10 por lado"], ["Elevaciones laterales", "3 × 12–15"], ["Extensión de tríceps en polea", "3 × 10–12"]], close: [{ id: "z2", t: "Zona 2 · 20 min", n: "Tope 140 lpm: bici o caminata en inclinación" }] },
+  { t: "Circuito híbrido tipo Hyrox", kind: "gym", ex: [["Remo 500 m o bici 1 km", "4–5 rondas"], ["Zancadas con peso", "20"], ["Wall balls", "15"], ["Burpees", "10"], ["Cargadas con kettlebell", "10"]], note: "Ritmo controlado: la técnica manda sobre la velocidad. Descanse 2 min entre rondas. Si prefiere, cámbielo por intervalos.", close: [{ id: "core", t: "Core · 10 min" }] },
+  { t: "Torso B · hombros y brazos", kind: "gym", ex: [["Press militar", "4 × 6–8"], ["Jalón al pecho", "3 × 10–12"], ["Fondos", "3 × 8–12"], ["Remo con barra", "3 × 8"], ["Face pull", "3 × 15"], ["Curl con barra", "3 × 8–10"], ["Press francés", "3 × 10–12"]], close: [{ id: "z2", t: "Zona 2 · 20 min", n: "Tope 140 lpm: bici o caminata en inclinación" }] },
+  { t: "Pierna B · glúteo y abdomen", kind: "gym", ex: [["Hip thrust con barra", "4 × 8–10"], ["Sentadilla búlgara", "3 × 8–10 por pierna"], ["Curl femoral", "3 × 10–12"], ["Extensión de cuádriceps", "2 × 12–15"], ["Pantorrilla", "3 × 12–15"], ["Curl-up de McGill", "3 × 6 (10 s cada una)"], ["Elevación de piernas colgado", "3 × 10–12"]], close: [{ id: "mob15", t: "Movilidad · 15 min" }] },
+  TRAIN[4]
+];
+const V1TO2 = { 0: 0, 1: 2, 2: 2, 3: 1, 4: 6, 5: 4, 6: 3 };   // sesión vieja → la parecida del plan nuevo
+const PLAN_V1 = { T: TRAIN, prio: SESS_PRIO, why: SESS_WHY, tip: SESS_TIP, str: STR, legs: [3, 6] };
+const PLAN_V2 = {
+  T: T2, legs: [1, 3, 5],
+  prio: [1, 2, 4, 5, 3, 6],   // si no caben todas: se cae primero la zona 2 larga y después el circuito
+  why: { 6: "es la que menos afecta ganar músculo", 3: "el circuito es lo más fácil de soltar" },
+  tip: {
+    0: SESS_TIP[0],
+    1: "Sentadilla primero, con energía. Profundidad hasta paralelo con la espalda neutra; si se redondea abajo, baje el peso.",
+    2: "Banca y dominadas pesadas al inicio. Deje 1 o 2 repeticiones en reserva: el objetivo es progresar semana a semana, no llegar al fallo.",
+    3: "Ritmo constante y técnica limpia en cada estación. Si la técnica se rompe, baje el ritmo: así no hay lesión.",
+    4: "Press militar con glúteos y abdomen apretados, sin arquear la espalda. Los brazos al final, cuando el resto ya está hecho.",
+    5: "Hip thrust: apriete el glúteo arriba 1 segundo. En la búlgara, pie de adelante lejos del banco para cuidar la rodilla.",
+    6: SESS_TIP[4]
+  },
+  str: {
+    0: STR[0],
+    1: ["Flexor de cadera arrodillado", "Femoral sentado", "Glúteo en figura 4"],
+    2: ["Pecho y hombro con palo", "Dorsal en la pared", "Tríceps detrás de la cabeza"],
+    3: ["Flexor de cadera arrodillado", "Cuádriceps con pie en banco", "Postura del niño"],
+    4: ["Hombro cruzado", "Bíceps de pie", "Dorsal en la pared"],
+    5: ["Glúteo en figura 4", "Cuádriceps con pie en banco", "Pantorrilla en la pared"],
+    6: STR[4]
+  }
+};
+const verOf = (k) => (k >= V2_START ? PLAN_V2 : PLAN_V1);
+Object.assign(EXI, {
+  "Puente de glúteo con barra": { img: "Barbell_Glute_Bridge", eq: "Barra", m: "Glúteos", why: "Igual al hip thrust, desde el piso: no necesita banco.", how: ["Acostado boca arriba, barra sobre la cadera con almohadilla.", "Empuje la cadera hacia arriba apretando los glúteos.", "Baje controlado sin tocar del todo el piso."], err: "Empujar con la espalda baja en vez de con el glúteo." }
+});
+Object.assign(ALT, {
+  "Hip thrust con barra": ["Puente de glúteo con barra", "Pull through en polea", "Peso muerto rumano con mancuernas"],
+  "Sentadilla búlgara": ["Zancada hacia atrás", "Step-up con mancuernas", "Hack squat"],
+  "Extensión de cuádriceps": ["Sentadilla goblet", "Hack squat", "Zancada hacia atrás"]
+});
+
 /* ---------- explicación de cardio, core y movilidad, y "lo cambié por otra actividad" ---------- */
 const MOB_EX = [["Gato-vaca", "10 lentas, columna completa"], ["Rotación torácica en 4 apoyos", "8 por lado"], ["Cadera 90/90", "6 por lado"], ["Sentadilla profunda sostenida", "30–45 s, talones al piso"], ["Tobillo a la pared", "10 por lado, rodilla pasa la punta del pie"], ["Círculos de hombro con banda o palo", "10 adelante y 10 atrás"]];
 const ITEM_INFO = {
@@ -2693,7 +2752,7 @@ const ITEM_INFO = {
   int: { m: "El único cardio fuerte de la semana: mejora la condición y quema muchas calorías en poco tiempo.", how: ["Caliente 5 min suave.", "8 rondas: 1 min fuerte (casi al máximo, no puede hablar) y 2 min suave.", "Bici, remo o caminadora. En caminadora, mejor subir la inclinación que correr muy rápido."], err: "Hacer el minuto fuerte a medias: si puede hablar, no es fuerte.", swap: true },
   core: { m: "Abdomen y zona media firmes: protegen la espalda y ayudan a que se marque el abdomen.", how: ["Haga los 4 ejercicios en circuito, sin descanso entre uno y otro.", "Descanse 1 min al final de cada vuelta. Haga 3 vueltas; si solo tiene 10 minutos, haga 2.", "Toque cada ejercicio para ver cómo se hace."], err: "Hacerlo rápido y sin control. En el core manda la técnica.", list: () => CORE },
   mob: { m: "Prepara cadera, tobillo, columna y hombros para entrenar sin lesiones.", how: ["Hágala antes de la primera serie, sin peso.", "Movimientos lentos y controlados, respirando.", "Si algo duele, no fuerce: llegue hasta donde se sienta cómodo."], err: "Saltársela por apuro. Son los minutos que evitan una lesión.", list: () => MOB_EX },
-  str: { m: "Al terminar, con el músculo caliente. Mejoran la flexibilidad y ayudan a soltar la tensión.", how: ["Haga mínimo 2 de los 3; si tiene tiempo, los 3.", "Sostenga cada uno 30 segundos por lado y repítalo 2 veces.", "Llegue hasta sentir tensión, nunca dolor, y respire lento. Sin rebotes."], err: "Rebotar o forzar hasta que duela. Estirar no previene lesiones por sí solo: lo que gana es movilidad.", list: () => STR[sessOf(S.hDate)].map((n) => [n, "2 × 30 s por lado"]) },
+  str: { m: "Al terminar, con el músculo caliente. Mejoran la flexibilidad y ayudan a soltar la tensión.", how: ["Haga mínimo 2 de los 3; si tiene tiempo, los 3.", "Sostenga cada uno 30 segundos por lado y repítalo 2 veces.", "Llegue hasta sentir tensión, nunca dolor, y respire lento. Sin rebotes."], err: "Rebotar o forzar hasta que duela. Estirar no previene lesiones por sí solo: lo que gana es movilidad.", list: () => verOf(S.hDate).str[sessOf(S.hDate)].map((n) => [n, "2 × 30 s por lado"]) },
   walk: { m: "Descanso activo: mueve la sangre y ayuda a recuperarse sin cansar.", how: ["Camine a un ritmo cómodo, puede ser afuera o en la caminadora.", "Puede hablar sin problema todo el tiempo.", "Ideal después de comer o al final de la tarde."], err: "Convertirlo en una caminata fuerte o en trote: hoy toca recuperar.", swap: true }
 };
 const infoKey = (id) => id === "str" ? "str" : /^z2/.test(id) ? "z2" : /^int/.test(id) ? "int" : /^core/.test(id) ? "core" : /^mob/.test(id) ? "mob" : /^walk/.test(id) ? "walk" : null;
@@ -2719,7 +2778,7 @@ function saveSwap(id, txt) {
 function renderTrain() {
   const t = T();
   if (S.person !== "carlos") { $("v-train").innerHTML = noPlan(t.tabTrainLong); return; }
-  const k = S.hDate, d = parseKey(k), wd = d.getDay(), six = sessOf(k), day = TRAIN[six], h = hOf(k), done = h.done || {};
+  const k = S.hDate, d = parseKey(k), wd = d.getDay(), six = sessOf(k), day = verOf(k).T[six], h = hOf(k), done = h.done || {};
   const sc0 = daySched(k), ag = blocksOf({ kind: "plan", date: k }).find((b) => b.id === "pl_gym"), sc = Object.assign({}, sc0, { gym: ag ? { s: ag.s, e: ag.e } : sc0.gym }), wi = weekInfo(k), deload = wi.cyc === 4 && daysBetween(PLAN_START, k) >= 0;
   const items = [];
   if (day.kind !== "rest") items.push(MOB);
@@ -2736,7 +2795,7 @@ function renderTrain() {
   const list = items.map((x) => {
     const ns = nSets(x.r), rr = ns ? `${ns} series de ${repGoal(x.r)} repeticiones` : x.r;
     const nOk = ns ? setsOf(k, x.t).filter((y) => y && y.ok).length : 0;
-    return `<li class="hl${done["t_" + x.id] ? " ok" : ""}${ns ? " hasets" : ""}">${exThumb(x)}<div class="htx"><b class="ht">${esc(x.t)}</b>${rr ? `<span class="hr">${esc(rr)}${ns ? ` · ${nOk}/${ns}` : ""}</span>` : ""}${x.n ? `<span class="hn">${esc(x.n)}</span>` : ""}${EXI[x.t] ? `<button type="button" class="exlink sm" data-act="ex-how" data-ex="${esc(x.t)}">Cómo se hace ›</button>` : infoKey(x.id) ? `<button type="button" class="exlink sm" data-act="it-info" data-id="${esc(x.id)}">${(h.swap || {})[x.id] ? "Cambiado por: " + esc(h.swap[x.id]) + " ›" : infoKey(x.id) === "core" ? "Qué ejercicios hacer ›" : infoKey(x.id) === "str" ? "Cuáles hoy: " + esc(STR[six].slice(0, 2).join(", ").toLowerCase()) + "… ›" : infoKey(x.id) === "mob" ? "Qué movimientos hacer ›" : ITEM_INFO[infoKey(x.id)].swap ? "Cómo se hace · o cámbielo por otra actividad ›" : "Cómo se hace ›"}</button>` : ""}</div>${tick(!!done["t_" + x.id], "h-tick", `data-key="t_${x.id}"`, x.t)}${ns ? setsBlock(k, x, ns) : ""}${altChip(k, x)}</li>`;
+    return `<li class="hl${done["t_" + x.id] ? " ok" : ""}${ns ? " hasets" : ""}">${exThumb(x)}<div class="htx"><b class="ht">${esc(x.t)}</b>${rr ? `<span class="hr">${esc(rr)}${ns ? ` · ${nOk}/${ns}` : ""}</span>` : ""}${x.n ? `<span class="hn">${esc(x.n)}</span>` : ""}${EXI[x.t] ? `<button type="button" class="exlink sm" data-act="ex-how" data-ex="${esc(x.t)}">Cómo se hace ›</button>` : infoKey(x.id) ? `<button type="button" class="exlink sm" data-act="it-info" data-id="${esc(x.id)}">${(h.swap || {})[x.id] ? "Cambiado por: " + esc(h.swap[x.id]) + " ›" : infoKey(x.id) === "core" ? "Qué ejercicios hacer ›" : infoKey(x.id) === "str" ? "Cuáles hoy: " + esc(verOf(k).str[six].slice(0, 2).join(", ").toLowerCase()) + "… ›" : infoKey(x.id) === "mob" ? "Qué movimientos hacer ›" : ITEM_INFO[infoKey(x.id)].swap ? "Cómo se hace · o cámbielo por otra actividad ›" : "Cómo se hace ›"}</button>` : ""}</div>${tick(!!done["t_" + x.id], "h-tick", `data-key="t_${x.id}"`, x.t)}${ns ? setsBlock(k, x, ns) : ""}${altChip(k, x)}</li>`;
   }).join("");
 
   const checks = checksFor(k).map((c) => {
@@ -2766,7 +2825,7 @@ function renderTrain() {
   const week = [1, 2, 3, 4, 5, 6, 0].map((i) => {
     const kk = keyOf(addDays(mondayOf(d), (i + 6) % 7));
     const sx = sessOf(kk), moved = sx !== i;
-    return `<button class="wtr${kk === k ? " cur" : ""}" data-act="h-day" data-k="${kk}"><b>${esc(t.wd[i])}</b><span>${esc(TRAIN[sx].t)}${moved ? ` <em class="mv">cambiado</em>` : ""}${didTrain(kk) ? " ✓" : ""}</span></button>`;
+    return `<button class="wtr${kk === k ? " cur" : ""}" data-act="h-day" data-k="${kk}"><b>${esc(t.wd[i])}</b><span>${esc(verOf(kk).T[sx].t)}${moved ? ` <em class="mv">cambiado</em>` : ""}${didTrain(kk) ? " ✓" : ""}</span></button>`;
   }).join("");
 
   $("v-train").innerHTML = `
@@ -2813,7 +2872,7 @@ function renderTrain() {
       <li><b>El cronómetro</b> arranca solo cuando marca ✓ en una serie. Al terminar suena y vibra (el teléfono no puede estar en silencio). También lo puede arrancar con el botón ⏱ de cada ejercicio.</li></ul></details>
     <details class="hdet"><summary>Ejercicios extra con amigos</summary><ul class="hol"><li>Anótelos con "+ Agregar ejercicio extra": nombre, máquina y series. Quedan guardados con peso y repeticiones, y salen marcados como "(extra)" al descargar sus entrenos.</li>
       <li><b>Consejo de entrenador:</b> si el extra es del mismo músculo del día, máximo 2 o 3 series. Más que eso le quita recuperación para la sesión siguiente del plan.</li></ul></details>
-    <details class="hdet"><summary>Core (cierre de lunes, jueves y sábado)</summary><table class="htbl"><tbody>${CORE.map(([a, b]) => `<tr><td>${EXI[a] ? `<button type="button" class="exlink" data-act="ex-how" data-ex="${esc(a)}">${esc(a)} ›</button>` : esc(a)}</td><td>${esc(b)}</td></tr>`).join("")}</tbody></table></details>
+    <details class="hdet"><summary>Core (4 ejercicios que protegen la columna)</summary><table class="htbl"><tbody>${CORE.map(([a, b]) => `<tr><td>${EXI[a] ? `<button type="button" class="exlink" data-act="ex-how" data-ex="${esc(a)}">${esc(a)} ›</button>` : esc(a)}</td><td>${esc(b)}</td></tr>`).join("")}</tbody></table></details>
     <details class="hdet"><summary>Cómo progresar</summary><ul class="hol">
       <li>Descanso entre series: 2:30 min en los básicos pesados (press, dominadas, remos, sentadilla, peso muerto, prensa, fondos), 1:30 min en los de aislamiento y 1 min en el core. Al cambiar de ejercicio, 2 min. El cronómetro arranca solo cuando marca ✓ en una serie.</li>
       <li>Al terminar todos los días: mínimo 2 estiramientos de 30 s por lado, 2 veces. La guía de la ACSM recomienda estirar a diario, sostener 10 a 30 s y repetir de 2 a 4 veces. Antes de entrenar va la movilidad, no estiramientos largos.</li>

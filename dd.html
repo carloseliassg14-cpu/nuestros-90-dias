@@ -1620,11 +1620,11 @@ const FOOD = {
 const MOB = { id: "mob", t: "Movilidad de entrada · 10 min", n: "Cadera, tobillo, columna torácica, hombro" };
 const TRAIN = [
   { t: "Descanso activo", kind: "rest", items: [{ id: "walk", t: "Caminar suave · 30–60 min" }, { id: "mob20", t: "Movilidad · 20 min" }], note: "Nada de pesas ni cardio fuerte. Cuenta como su día de descanso." },
-  { t: "Pecho y tríceps", kind: "gym", ex: [["Press de banca", "4 × 6–8"], ["Press inclinado con mancuernas", "3 × 8–10"], ["Fondos", "3 × 8–12"], ["Aperturas en polea", "3 × 12–15"], ["Extensión de tríceps en polea", "3 × 10–12"], ["Press francés", "3 × 10–12"]], close: [{ id: "z2", t: "Zona 2 · 20 min" }, { id: "core", t: "Core · 10 min" }] },
+  { t: "Pecho y tríceps", kind: "gym", ex: [["Press de banca", "4 × 6–8"], ["Press inclinado con mancuernas", "3 × 8–10"], ["Fondos", "3 × 8–12"], ["Aperturas en polea", "3 × 12–15"], ["Extensión de tríceps en polea", "3 × 10–12"], ["Press francés", "3 × 10–12"]], close: [{ id: "z2", t: "Zona 2 · 20 min", n: "Tope 140 lpm: bici o caminata en inclinación" }, { id: "core", t: "Core · 10 min" }] },
   { t: "Espalda y bíceps", kind: "gym", ex: [["Dominadas", "4 × 6–10"], ["Remo con barra", "4 × 8"], ["Jalón al pecho", "3 × 10–12"], ["Remo con mancuerna", "3 × 10 por lado"], ["Curl con barra", "3 × 8–10"], ["Curl martillo", "3 × 10–12"]], close: [{ id: "int", t: "Intervalos · 8 × (1 min fuerte + 2 min suave)" }] },
   { t: "Piernas", kind: "gym", ex: [["Sentadilla", "4 × 6–8"], ["Peso muerto rumano", "3 × 8"], ["Prensa", "3 × 10–12"], ["Zancadas", "3 × 10 por pierna"], ["Curl femoral", "3 × 12"], ["Pantorrilla", "4 × 12–15"]], close: [{ id: "mob15", t: "Movilidad · 15 min" }] },
-  { t: "Zona 2 larga", kind: "cardio", items: [{ id: "z2l", t: "Zona 2 · 45–60 min" }, { id: "core15", t: "Core · 15 min" }, { id: "mob15", t: "Movilidad · 15 min" }], note: "Sin pesas." },
-  { t: "Hombros y abdomen", kind: "gym", ex: [["Press militar", "4 × 6–8"], ["Elevaciones laterales", "4 × 12–15"], ["Face pull", "3 × 15"], ["Pájaros (deltoide posterior)", "3 × 12–15"], ["Encogimientos", "3 × 10–12"], ["Elevación de piernas colgado", "3 × 10–12"]], close: [{ id: "z2", t: "Zona 2 · 20 min" }] },
+  { t: "Zona 2 larga", kind: "cardio", items: [{ id: "z2l", t: "Zona 2 · 45–60 min", n: "Tope 140 lpm. Si trotando pasa de 140, camine en inclinación o use la bici" }, { id: "core15", t: "Core · 15 min" }, { id: "mob15", t: "Movilidad · 15 min" }], note: "Sin pesas." },
+  { t: "Hombros y abdomen", kind: "gym", ex: [["Press militar", "4 × 6–8"], ["Elevaciones laterales", "4 × 12–15"], ["Face pull", "3 × 15"], ["Pájaros (deltoide posterior)", "3 × 12–15"], ["Encogimientos", "3 × 10–12"], ["Elevación de piernas colgado", "3 × 10–12"]], close: [{ id: "z2", t: "Zona 2 · 20 min", n: "Tope 140 lpm: bici o caminata en inclinación" }] },
   { t: "Circuito híbrido tipo Hyrox", kind: "gym", ex: [["Remo 500 m o bici 1 km", "4–5 rondas"], ["Zancadas con peso", "20"], ["Wall balls", "15"], ["Burpees", "10"], ["Cargadas con kettlebell", "10"]], note: "Descanse 2 min entre rondas.", close: [{ id: "core", t: "Core · 10 min" }] }
 ];
 const CORE = [["Plancha", "3 × 40 s"], ["Dead bug", "3 × 10 por lado"], ["Pallof press", "3 × 10 por lado"], ["Rueda abdominal", "3 × 8–10"]];
@@ -1685,7 +1685,7 @@ function planBlocks(k) {
   B.push({ id: "pl_m1", t: "Comida 1 · romper el ayuno", s: sc.m[0], e: sc.m[0] + 45, c: "health" });
   B.push({ id: "pl_m2", t: "Merienda", s: sc.m[1], e: sc.m[1] + 30, c: "health" });
   if (sc.gym) B.push({ id: "pl_gym", t: "Gym: " + day.t, s: sc.gym.s, e: sc.gym.e, c: "train", n: sc.slot === "am" ? "En ayunas" : "" });
-  if (sc.gym) { const s2 = sc.slot === "pm" ? 360 : 1020; B.push({ id: "pl_s2", t: "Sesión 2 (opcional) · zona 2 suave o movilidad", s: s2, e: s2 + 40, c: "train", n: "Solo si durmió 7.5 h o más y WHOOP está en verde" }); }
+  if (sc.gym) { const s2 = sc.slot === "pm" ? 360 : 1020; B.push({ id: "pl_s2", t: "Sesión 2 (opcional) · zona 2 suave o movilidad", s: s2, e: s2 + 40, c: "train", n: "Tope 140 lpm (bici o caminata, no correr fuerte). Solo si durmió 7.5 h o más y WHOOP está en verde" }); }
   if (sc.walk) B.push({ id: "pl_walk", t: "Caminar suave + movilidad", s: sc.walk.s, e: sc.walk.e, c: "train" });
   const ca = hOf(k).closeAt, cEnd = has(ca) ? ca : sc.closeT;
   B.push({ id: "pl_m3", t: "Cena · cerrar la ventana", s: Math.min(sc.m[2], cEnd - 30), e: Math.max(Math.min(sc.m[2], cEnd - 30) + 30, cEnd), c: "health", n: (has(ca) ? "Terminó a las " : "Terminar a las ") + fmtTime(cEnd) });
@@ -1917,7 +1917,7 @@ function renderTrain() {
       <li>Deje 1 o 2 repeticiones en reserva en cada serie. No entrene al fallo, salvo en la última serie de los ejercicios de aislamiento.</li>
       <li>Cuando complete el tope de repeticiones en todas las series, suba el peso entre 2.5 y 5 %.</li>
       <li>La zona 2 sube 5 minutos por semana. Cada 4ª semana es más suave.</li>
-      <li>Zona 2: unos 120 a 140 lpm, a un ritmo en el que puede hablar en frases completas aunque le cueste un poco. Corrija el rango con las zonas de WHOOP.</li>
+      <li>Zona 2: tope de 140 lpm, a un ritmo en el que puede hablar en frases completas. Sus carreras van a 150–163 lpm, que es zona 3–4: para la zona 2 use bici, elíptica o caminata en inclinación.</li><li>El único cardio fuerte de la semana son los intervalos del martes.</li>
       <li>Segunda sesión: solo si durmió 7.5 h o más y WHOOP está en verde, máximo 3 veces por semana y siempre suave.</li></ul></details>
     <details class="hdet"><summary>Reglas de ajuste (si pasa 2 semanas seguidas)</summary><table class="htbl"><thead><tr><th>Si pasa esto</th><th>Qué se cambia</th></tr></thead><tbody>${RULES.map(([a, b]) => `<tr><td>${esc(a)}</td><td>${esc(b)}</td></tr>`).join("")}</tbody></table></details>
     <p class="hfoot muted">Si siente dolor que no se quita, mareos o palpitaciones, vaya al médico.</p>`;

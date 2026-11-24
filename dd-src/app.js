@@ -963,6 +963,8 @@ document.addEventListener("click", (ev) => {
     case "h-day": S.hDate = el.dataset.k; render(); break;
     case "h-tick": { hToggle(S.hDate, el.dataset.key); render(); if (navigator.vibrate) try { navigator.vibrate(15); } catch (e) {} break; }
     case "h-slot": { hSet(S.hDate, { slot: el.dataset.v }); applyToDay(S.hDate); render(); const g = daySched(S.hDate).gym; toast(g ? `Día armado: gym de ${fmtTime(g.s)} a ${fmtTime(g.e)}` : t.saved); break; }
+    case "s-open": openSessSheet(); break;
+    case "s-set": saveSess(+el.dataset.v); render(); break;
     case "g-open": openGymSheet(); break;
     case "g-set": saveGym(el.dataset.v === "" ? null : +el.dataset.v); render(); break;
     case "g-custom": { const v = toMin(($("gTime") || {}).value); if (isFinite(v) && v < 1440) { saveGym(v); render(); } else toast(t.writeErr); break; }

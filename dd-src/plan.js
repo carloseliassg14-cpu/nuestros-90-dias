@@ -156,6 +156,26 @@ function plannedOpen(k) {
   const pc = hOf(prevKey(k)).closeAt;
   return has(pc) ? Math.min(1439, Math.max(0, pc + FAST_M - 1440)) : DEF_OPEN;
 }
+/* Qué sesión entrena un día: la del plan (por día de la semana) o la que Carlos escogió (h.sess = índice de TRAIN) */
+const planIx = (k) => parseKey(k).getDay();
+const sessOf = (k) => { const v = hOf(k).sess; return Number.isInteger(v) && v >= 0 && v <= 6 ? v : planIx(k); };
+const sessDay = (k) => TRAIN[sessOf(k)];
+const isRestDay = (k) => sessDay(k).kind === "rest";
+const didTrain = (k) => Object.keys(hOf(k).done || {}).some((x) => x.startsWith("t_"));
+function weekSess(k) {        // { índice de TRAIN: fecha en que se hizo } en la semana (lun–dom) de k
+  const mon = mondayOf(parseKey(k)), out = {};
+  for (let i = 0; i < 7; i++) { const kk = keyOf(addDays(mon, i)); if (kk !== k && didTrain(kk)) out[sessOf(kk)] = kk; }
+  return out;
+}
+function pendingSess(k) {     // sesiones de gym de días anteriores de esta semana que no se hicieron
+  if (k > todayKey()) return [];
+  const mon = mondayOf(parseKey(k)), made = weekSess(k), out = [];
+  for (let kk = keyOf(mon); kk < k; kk = nextKey(kk)) {
+    const ix = planIx(kk);
+    if (TRAIN[ix].kind !== "rest" && made[ix] == null && !didTrain(kk) && sessOf(k) !== ix && daysBetween(PLAN_START, kk) >= 0) out.push({ ix, k: kk });
+  }
+  return out;
+}
 const GYM_DEF = { am: 390, pm: 960 };        // 6:30 am en ayunas · 4:00 pm ya comido
 function gymStart(k) {                       // null = hoy no va
   const h = hOf(k);
@@ -167,7 +187,7 @@ function daySched(k) {
   const h = hOf(k), wd = parseKey(k).getDay();
   const open = has(h.breakAt) ? h.breakAt : plannedOpen(k);
   const closeT = Math.max(open + 240, Math.min(open + WIN_M, MAX_CLOSE));
-  const gs = wd === 0 ? null : gymStart(k), set = has(h.gymAt) && h.gymAt >= 0;
+  const rd = isRestDay(k), gs = rd ? null : gymStart(k), set = has(h.gymAt) && h.gymAt >= 0;
   let gym = null, m2 = open + 210, m3 = closeT - 60, slot = "pm", mode = "none";
   if (gs != null) {
     if (gs < open) {                                     // antes de comer: en ayunas
@@ -190,10 +210,10 @@ function daySched(k) {
       if (m2 > m3 - 90) m2 = Math.max(open + 120, m3 - 90);
     }
   }
-  return { slot, mode, set, open, closeT, gym, m: [open, m2, m3], walk: wd === 0 ? { s: 960, e: 1020 } : null };
+  return { slot, mode, set, open, closeT, gym, m: [open, m2, m3], walk: rd ? { s: 960, e: 1020 } : null };
 }
 function planBlocks(k) {
-  const sc = daySched(k), day = TRAIN[parseKey(k).getDay()], B = [];
+  const sc = daySched(k), day = sessDay(k), B = [];
   B.push({ id: "pl_m1", t: "Comida 1 · romper el ayuno", s: sc.m[0], e: sc.m[0] + 45, c: "health" });
   B.push({ id: "pl_m2", t: "Merienda", s: sc.m[1], e: sc.m[1] + 30, c: "health" });
   if (sc.gym) { const g = { id: "pl_gym", t: "Gym: " + day.t, s: sc.gym.s, e: sc.gym.e, c: "train", n: sc.mode === "fasted" ? "En ayunas" : sc.mode === "post" ? "Merienda de recuperación al salir" : "" }; if (sc.set) g.fx = true; B.push(g); }
@@ -236,7 +256,7 @@ function fastPast(k) {
 }
 function slotSeg(k) {
   const sc = daySched(k), h = hOf(k);
-  if (parseKey(k).getDay() === 0) return `<p class="hnote"><b>Domingo:</b> descanso activo, sin gym.</p>`;
+  if (isRestDay(k)) return `<p class="hnote"><b>${parseKey(k).getDay() === 0 ? "Domingo" : "Hoy"}:</b> descanso activo, sin gym.</p>`;
   const lbl = h.gymAt === -1 ? "Hoy no voy" : sc.gym ? fmtTime(sc.gym.s) + (sc.set ? "" : " (sugerido)") : "—";
   const why = { fasted: "en ayunas, antes de comer", pre: "merienda antes del gym", post: "merienda de recuperación al salir", late: "después de cerrar la ventana", none: "" }[sc.mode];
   return `<button type="button" class="gymline" data-act="g-open"><span><small>¿A qué hora va hoy al gym?</small><b>${esc(lbl)}</b>${why ? `<em>${esc(why)}</em>` : ""}</span><span class="gch">Cambiar</span></button>`;
@@ -334,7 +354,7 @@ function dayPicker(k, act) {
 function renderFood() {
   const t = T();
   if (S.person !== "carlos") { $("v-food").innerHTML = noPlan(t.tabFoodLong); return; }
-  const k = S.hDate, d = parseKey(k), wd = d.getDay(), rest = wd === 0;
+  const k = S.hDate, d = parseKey(k), wd = d.getDay(), rest = isRestDay(k);
   const tg = FOOD.targets[rest ? "rest" : "train"], h = hOf(k), done = h.done || {};
   const fs = k === todayKey() ? fastNow() : fastPast(k), sc = daySched(k), h2 = hOf(k);
   const snackIx = Math.floor(daysBetween("2026-01-01", k)) % FOOD.snacks.length;
@@ -345,7 +365,7 @@ function renderFood() {
     return `<li class="hcard${done[x.id] ? " ok" : ""}">
       <div class="hrow"><div class="htx"><span class="hk">${esc(fmtTime(sc.m[i]))}${x.id === "m3" ? " – " + esc(fmtTime(sc.closeT)) : ""}</span><b class="ht">${esc(x.t)}</b></div>${tick(!!done[x.id], "h-tick", `data-key="${x.id}"`, x.t)}</div>
       <p class="sug"><span class="muted">Hoy:</span> ${esc(sug)}</p>
-      ${x.id === "m2" ? `<dl class="macro"><div><dt>Meta</dt><dd>35–40 g de proteína y algo de carbohidrato${rest ? " (domingo: sin avena)" : ""}. Puede usar cualquiera de las 8 meriendas de la guía.</dd></div></dl>` : `<dl class="macro"><div><dt>Proteína</dt><dd>${esc(x.p)}<span class="eye">A ojo: ${esc(x.pE)}</span></dd></div><div><dt>Carbohidrato</dt><dd>${esc(rest ? x.cRest : x.c)}<span class="eye">A ojo: ${esc(rest ? x.cRestE : x.cE)}</span></dd></div>${x.v ? `<div><dt>Verdura</dt><dd>${esc(x.v)}<span class="eye">A ojo: ${esc(x.vE)}</span></dd></div>` : ""}<div><dt>Grasa</dt><dd>${esc(x.f)}<span class="eye">A ojo: ${esc(x.fE)}</span></dd></div></dl>`}
+      ${x.id === "m2" ? `<dl class="macro"><div><dt>Meta</dt><dd>35–40 g de proteína y algo de carbohidrato${rest ? " (descanso: sin avena)" : ""}. Puede usar cualquiera de las 8 meriendas de la guía.</dd></div></dl>` : `<dl class="macro"><div><dt>Proteína</dt><dd>${esc(x.p)}<span class="eye">A ojo: ${esc(x.pE)}</span></dd></div><div><dt>Carbohidrato</dt><dd>${esc(rest ? x.cRest : x.c)}<span class="eye">A ojo: ${esc(rest ? x.cRestE : x.cE)}</span></dd></div>${x.v ? `<div><dt>Verdura</dt><dd>${esc(x.v)}<span class="eye">A ojo: ${esc(x.vE)}</span></dd></div>` : ""}<div><dt>Grasa</dt><dd>${esc(x.f)}<span class="eye">A ojo: ${esc(x.fE)}</span></dd></div></dl>`}
       ${eatList(k, x.id)}
     </li>`;
   }).join("");
@@ -362,7 +382,7 @@ function renderFood() {
       <div class="fbtns"><button type="button" class="btn${has(h2.breakAt) ? "" : " pri"}" data-act="f-open" data-w="break">${has(h2.breakAt) ? "Rompí el ayuno · " + esc(fmtTime(h2.breakAt)) : "Rompí el ayuno"}</button><button type="button" class="btn${has(h2.breakAt) && !has(h2.closeAt) ? " pri" : ""}" data-act="f-open" data-w="close">${has(h2.closeAt) ? "Terminé · " + esc(fmtTime(h2.closeAt)) : "Terminé de comer"}</button></div>
       ${slotSeg(k)}
       <div class="tgt"><div><small>Calorías</small><b>${esc(tg.kcal)}</b></div><div><small>Proteína</small><b>${esc(tg.p)}</b></div><div><small>Carbohidrato</small><b>${esc(tg.c)}</b></div><div><small>Grasa</small><b>${esc(tg.f)}</b></div></div>
-      <p class="hnote">${rest ? "Domingo: sin fruta en la comida 1 ni avena en la merienda." : "Con balanza: todo se pesa ya cocido. Sin balanza: use su mano (palma = proteína, puño = carbohidrato, pulgar = grasa)."}</p>
+      <p class="hnote">${rest ? "Día de descanso: sin fruta en la comida 1 ni avena en la merienda." : "Con balanza: todo se pesa ya cocido. Sin balanza: use su mano (palma = proteína, puño = carbohidrato, pulgar = grasa)."}</p>
     </div>
     <h2>Horario de ${esc(dayLabel(k).toLowerCase())}</h2>
     ${timeline(k)}
@@ -381,11 +401,54 @@ function renderFood() {
     <p class="hfoot muted">Cuando la familia cocine otra cosa: pese la proteína, use los intercambios para el carbohidrato y llene el resto del plato con verdura.</p>`;
 }
 
+/* ---------- cambiar la sesión del día ---------- */
+function sessLine(k) {
+  const six = sessOf(k), moved = six !== planIx(k), day = TRAIN[six];
+  return `<button type="button" class="gymline" data-act="s-open"><span><small>¿Qué entrena hoy?</small><b>${esc(day.t)}</b><em>${moved ? "Cambiado · el plan decía " + esc(TRAIN[planIx(k)].t) : "La del plan de hoy"}</em></span><span class="gch">Cambiar</span></button>`;
+}
+function pendBanner(k) {
+  const p = pendingSess(k);
+  if (!p.length || k !== todayKey()) return "";
+  const last = p[p.length - 1];
+  return `<div class="pend"><div><b>Quedó pendiente: ${esc(TRAIN[last.ix].t)}</b><span>Le tocaba el ${esc(niceDate(last.k))} y no la marcó. Si la hace hoy, la de hoy (${esc(TRAIN[sessOf(k)].t)}) queda para otro día de la semana.</span></div><button type="button" class="btn pri sm" data-act="s-set" data-v="${last.ix}">Hacerla hoy</button></div>`;
+}
+const SESS_ORDER = [1, 2, 3, 4, 5, 6, 0];
+function sessWarn(k, ix) {
+  const day = TRAIN[ix], prev = sessDay(prevKey(k)), made = weekSess(k);
+  const w = [];
+  if (made[ix] != null && day.kind !== "rest") w.push(`Ya la hizo el ${niceDate(made[ix])}`);
+  if (day.kind === "gym" && prev.t === day.t && didTrain(prevKey(k))) w.push("La hizo ayer: el músculo necesita 48 h");
+  if (/Piernas/.test(day.t) && /Hyrox/.test(prev.t) && didTrain(prevKey(k))) w.push("Ayer hizo circuito: las piernas van a estar cansadas");
+  if (/Hyrox/.test(day.t) && /Piernas/.test(prev.t) && didTrain(prevKey(k))) w.push("Ayer hizo piernas: el circuito le va a costar más");
+  return w;
+}
+function openSessSheet() {
+  const k = S.hDate, cur = sessOf(k), pix = planIx(k), pend = pendingSess(k).map((x) => x.ix), made = weekSess(k);
+  const rows = SESS_ORDER.map((ix) => {
+    const d = TRAIN[ix], w = sessWarn(k, ix);
+    const tags = [ix === pix ? `<i class="tg">Plan de hoy</i>` : "", pend.includes(ix) ? `<i class="tg pd">Pendiente</i>` : "", made[ix] != null && d.kind !== "rest" ? `<i class="tg ok">Hecha ✓</i>` : ""].join("");
+    const what = d.ex ? d.ex.slice(0, 3).map((e) => e[0]).join(", ") + (d.ex.length > 3 ? "…" : "") : (d.items || []).map((x) => x.t.split(" · ")[0]).join(", ");
+    return `<button type="button" class="sopt" data-act="s-set" data-v="${ix}" aria-pressed="${cur === ix}"><span class="sday">${esc(T().wd[ix])}</span><span class="sbody"><b>${esc(d.t)}</b><small>${esc(what)}</small>${tags ? `<span class="tgs">${tags}</span>` : ""}${w.length ? `<span class="swarn">${esc(w.join(" · "))}</span>` : ""}</span></button>`;
+  }).join("");
+  openSheet(`<h3>¿Qué entrena hoy?</h3><p class="hint">Son las mismas sesiones del plan, solo cambia el día. La regla: en la semana se hacen todas una vez. Si mueve una, la que quita hoy hágala otro día.</p><div class="sopts">${rows}</div>
+    <div class="acts">${cur !== pix ? `<button type="button" class="btn" data-act="s-set" data-v="${pix}">Volver a la del plan</button>` : ""}<button type="button" class="btn" data-act="close">Cerrar</button></div>`, { type: "sess" });
+}
+function saveSess(ix) {
+  const k = S.hDate, cur = sessOf(k);
+  if (ix === cur) { closeSheet(); return; }
+  const done = Object.assign({}, hOf(k).done || {});
+  Object.keys(done).forEach((x) => { if (x.startsWith("t_")) delete done[x]; });
+  hSet(k, { sess: ix === planIx(k) ? null : ix, done });
+  applyToDay(k);
+  closeSheet();
+  toast(`Hoy: ${TRAIN[ix].t}`);
+}
+
 /* ---------- ENTRENAMIENTO ---------- */
 function renderTrain() {
   const t = T();
   if (S.person !== "carlos") { $("v-train").innerHTML = noPlan(t.tabTrainLong); return; }
-  const k = S.hDate, d = parseKey(k), wd = d.getDay(), day = TRAIN[wd], h = hOf(k), done = h.done || {};
+  const k = S.hDate, d = parseKey(k), wd = d.getDay(), six = sessOf(k), day = TRAIN[six], h = hOf(k), done = h.done || {};
   const sc0 = daySched(k), ag = blocksOf({ kind: "plan", date: k }).find((b) => b.id === "pl_gym"), sc = Object.assign({}, sc0, { gym: ag ? { s: ag.s, e: ag.e } : sc0.gym }), wi = weekInfo(k), deload = wi.cyc === 4 && daysBetween(PLAN_START, k) >= 0;
   const items = [];
   if (day.kind !== "rest") items.push(MOB);
@@ -421,7 +484,8 @@ function renderTrain() {
 
   const week = [1, 2, 3, 4, 5, 6, 0].map((i) => {
     const kk = keyOf(addDays(mondayOf(d), (i + 6) % 7));
-    return `<button class="wtr${kk === k ? " cur" : ""}" data-act="h-day" data-k="${kk}"><b>${esc(t.wd[i])}</b><span>${esc(TRAIN[i].t)}</span></button>`;
+    const sx = sessOf(kk), moved = sx !== i;
+    return `<button class="wtr${kk === k ? " cur" : ""}" data-act="h-day" data-k="${kk}"><b>${esc(t.wd[i])}</b><span>${esc(TRAIN[sx].t)}${moved ? ` <em class="mv">cambiado</em>` : ""}${didTrain(kk) ? " ✓" : ""}</span></button>`;
   }).join("");
 
   $("v-train").innerHTML = `
@@ -429,9 +493,11 @@ function renderTrain() {
     <p class="sub">Semana ${wi.n} · bloque ${wi.cyc} de 4${sc.gym ? " · gym de " + esc(fmtTime(sc.gym.s)) + " a " + esc(fmtTime(sc.gym.e)) : ""}</p>
     ${dayPicker(k, "h-day")}
     ${advOnly(k)}
+    ${pendBanner(k)}
     ${deload ? `<div class="base-banner" style="margin-top:14px"><p><b>Semana suave.</b> Quite 1 serie por ejercicio y baje el peso un 10 %. Es parte del plan: así se recupera y sigue subiendo.</p></div>` : ""}
     <div class="hhero">
       <div class="fastbox ${day.kind === "rest" ? "open" : "fast"}"><b>${esc(dayLabel(k))}: ${esc(day.t)}</b><span>${day.kind === "rest" ? "Día de descanso activo" : (sc.gym ? esc(fmtTime(sc.gym.s)) + (sc.slot === "am" ? " en ayunas" : " ya comido") + " · " : "") + nDone + " de " + items.length + " hechos"}</span></div>
+      ${sessLine(k)}
       ${slotSeg(k)}
       <div class="pbar"><i style="width:${items.length ? Math.round(nDone / items.length * 100) : 0}%"></i></div>
       ${day.note ? `<p class="hnote">${esc(day.note)}</p>` : ""}
@@ -644,10 +710,11 @@ function applyOp(o) {
     const tg = { kind: "plan", date: k };
     if (o.slot === "am" || o.slot === "pm") { hSet(k, { slot: o.slot }); applyToDay(k); }
     if (o.gym === -1 || (isFinite(+o.gym) && o.gym !== null && o.gym !== "" && +o.gym >= 0 && +o.gym < 1440)) { hSet(k, { gymAt: Math.round(+o.gym) }); applyToDay(k); }
+    if (Number.isInteger(o.sess) && o.sess >= 0 && o.sess <= 6) { hSet(k, { sess: o.sess === planIx(k) ? null : o.sess }); applyToDay(k); }
     if (Array.isArray(o.eat)) {
       if (Array.isArray(o.eatReplace)) hSet(k, { eat: eatOf(k).filter((e) => !(e.src === "jarvis" && o.eatReplace.includes(e.m))) });
       o.eat.slice(0, 20).forEach((e) => eatAdd(k, Object.assign({}, e, { src: "jarvis" })));
-      if (!o.add && !o.remove && !o.slot && o.gym == null) return true;
+      if (!o.add && !o.remove && !o.slot && o.gym == null && o.sess == null) return true;
     }
     let bl = blocksOf(tg);
     if (!bl.length) bl = blocksOf({ kind: "tpl", wd: parseKey(k).getDay() }).map((b) => Object.assign(clone(b), { id: /^(pl_|cb_)/.test(String(b.id)) ? b.id : uid(), done: false }));

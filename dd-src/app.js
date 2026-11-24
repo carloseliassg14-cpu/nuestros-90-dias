@@ -965,6 +965,7 @@ document.addEventListener("click", (ev) => {
     case "h-slot": { hSet(S.hDate, { slot: el.dataset.v }); applyToDay(S.hDate); render(); const g = daySched(S.hDate).gym; toast(g ? `Día armado: gym de ${fmtTime(g.s)} a ${fmtTime(g.e)}` : t.saved); break; }
     case "s-open": openSessSheet(); break;
     case "set-ok": S.svUntil = 0; S.dirty = false; setOk(S.hDate, el.dataset.ex, +el.dataset.i, +el.dataset.n, el.dataset.id); render(); break;
+    case "exu": setExUnit(S.hDate, el.dataset.ex, el.dataset.v); render(); break;
     case "wu": { lsSet("dd.wu", el.dataset.v); hSet(S.hDate, { wu: el.dataset.v }); render(); break; }
     case "tr-exp": exportTrain(el.dataset.v); break;
     case "ex-how": openExHow(el.dataset.ex); break;

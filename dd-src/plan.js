@@ -607,13 +607,19 @@ function openExHow(name) {
 const nSets = (r) => { const m = /^(\d+)\s*×/.exec(String(r || "")); return m ? +m[1] : 0; };
 const repGoal = (r) => { const m = /×\s*([\d–-]+)/.exec(String(r || "")); return m ? m[1] : ""; };
 const wUnit = (k) => hOf(k).wu || lsGet("dd.wu", "kg");
+// unidad de cada ejercicio: la que escogió ese día, si no la que usó la última vez, si no la general
+const exUnit = (k, name) => ((hOf(k).exu || {})[name]) || (lsGet("dd.exu", {})[name]) || (lastSets(name, k) || {}).u || wUnit(k);
+function setExUnit(k, name, u) {
+  const m = lsGet("dd.exu", {}); m[name] = u; lsSet("dd.exu", m);
+  hSet(k, { exu: Object.assign({}, hOf(k).exu || {}, { [name]: u }) });
+}
 const setsOf = (k, name) => ((hOf(k).sets || {})[name] || []);
 function lastSets(name, beforeKey) {          // la última vez que hizo ese ejercicio
   let best = null;
   Object.entries(D.plans).forEach(([id, v]) => {
     if (!id.startsWith("h_carlos_") || !v || !v.sets || !v.date || v.date >= beforeKey) return;
     const L = (v.sets[name] || []).filter((x) => has(x.w) || has(x.r));
-    if (L.length && (!best || v.date > best.date)) best = { date: v.date, sets: L, u: v.wu || "kg" };
+    if (L.length && (!best || v.date > best.date)) best = { date: v.date, sets: L, u: (v.exu || {})[name] || v.wu || "kg" };
   });
   return best;
 }
@@ -625,10 +631,11 @@ function setPut(k, name, i, patch, total) {
   all[name] = L;
   const patchH = { sets: all };
   if (!hOf(k).wu) patchH.wu = wUnit(k);
+  if (!(hOf(k).exu || {})[name]) patchH.exu = Object.assign({}, hOf(k).exu || {}, { [name]: exUnit(k, name) });
   hSet(k, patchH);
 }
 function setsBlock(k, x, total) {
-  const L = setsOf(k, x.t), last = lastSets(x.t, k), u = wUnit(k), goal = repGoal(x.r);
+  const L = setsOf(k, x.t), last = lastSets(x.t, k), u = exUnit(k, x.t), goal = repGoal(x.r);
   const lastTxt = last ? `La vez pasada (${esc(shortDate(last.date))}): ${esc(last.sets.map((s) => `${has(s.w) ? fmtNum(s.w, s.w % 1 ? 1 : 0) : "—"}${last.u === u ? "" : " " + last.u} × ${has(s.r) ? s.r : "—"}`).join(" · "))}${last.u === u ? " " + u : ""}` : "Primera vez: escoja un peso con el que llegue a " + esc(goal) + " repeticiones dejando 1 o 2 en reserva.";
   const rows = Array.from({ length: total }, (_, i) => {
     const c = L[i] || {}, ph = (last && last.sets[i]) || L[i - 1] || {};
@@ -637,7 +644,8 @@ function setsBlock(k, x, total) {
       <label class="sf"><input class="fi" type="number" inputmode="numeric" step="1" min="0" data-sv="r" data-ex="${esc(x.t)}" data-i="${i}" data-n="${total}" value="${has(c.r) ? esc(c.r) : ""}" placeholder="${has(ph.r) ? esc(ph.r) : esc(String(goal).split(/[–-]/).pop())}" aria-label="Repeticiones serie ${i + 1}"><small>reps</small></label>
       <button type="button" class="hchk sm${c.ok ? " on" : ""}" data-act="set-ok" data-ex="${esc(x.t)}" data-i="${i}" data-n="${total}" data-id="${x.id}" aria-pressed="${!!c.ok}" aria-label="Serie ${i + 1} hecha">${IC.check}</button></div>`;
   }).join("");
-  return `<div class="sets"><p class="slast">${lastTxt}</p>${rows}<button type="button" class="rtbtn" data-act="rt-go" data-v="${restFor(x)}" data-l="${esc(x.t)}">⏱ Descanso entre series: ${fmtClock(restFor(x))} min · iniciar</button></div>`;
+  const useg = `<div class="useg sm" role="group" aria-label="Unidad de ${esc(x.t)}"><button type="button" data-act="exu" data-ex="${esc(x.t)}" data-v="kg" aria-pressed="${u === "kg"}">kg</button><button type="button" data-act="exu" data-ex="${esc(x.t)}" data-v="lb" aria-pressed="${u === "lb"}">lb</button></div>`;
+  return `<div class="sets"><div class="shd"><p class="slast">${lastTxt}</p>${useg}</div>${rows}<button type="button" class="rtbtn" data-act="rt-go" data-v="${restFor(x)}" data-l="${esc(x.t)}">⏱ Descanso entre series: ${fmtClock(restFor(x))} min · iniciar</button></div>`;
 }
 function setOk(k, name, i, total, exId) {
   const items0 = trainItems(k), x0 = items0.find((y) => y.t === name);
@@ -663,13 +671,13 @@ function setOk(k, name, i, total, exId) {
 }
 function unitSeg(k) {
   const u = wUnit(k);
-  return `<div class="useg" role="group" aria-label="Unidad de peso"><span>Peso en</span><button type="button" data-act="wu" data-v="kg" aria-pressed="${u === "kg"}">kg</button><button type="button" data-act="wu" data-v="lb" aria-pressed="${u === "lb"}">lb</button></div>`;
+  return `<div class="useg" role="group" aria-label="Unidad de peso"><span>Unidad general</span><button type="button" data-act="wu" data-v="kg" aria-pressed="${u === "kg"}">kg</button><button type="button" data-act="wu" data-v="lb" aria-pressed="${u === "lb"}">lb</button></div>`;
 }
 function trainRows() {            // todas las series guardadas, para exportar
   const out = [["Fecha", "Sesión", "Ejercicio", "Serie", "Peso", "Unidad", "Repeticiones", "Hecha"]];
   Object.entries(D.plans).filter(([id, v]) => id.startsWith("h_carlos_") && v && v.sets).sort((a, b) => (a[1].date < b[1].date ? -1 : 1)).forEach(([, v]) => {
     const ses = TRAIN[Number.isInteger(v.sess) ? v.sess : parseKey(v.date).getDay()].t, xs = {}; (v.extra || []).forEach((e) => { xs[e.t] = e; });
-    Object.entries(v.sets).forEach(([ex, L]) => (L || []).forEach((x, i) => { if (x && (has(x.w) || has(x.r) || x.ok)) out.push([v.date, ses, xs[ex] ? `${ex} (extra${xs[ex].n ? ": " + xs[ex].n : ""})` : ex, i + 1, has(x.w) ? x.w : "", v.wu || "kg", has(x.r) ? x.r : "", x.ok ? "sí" : "no"]); }));
+    Object.entries(v.sets).forEach(([ex, L]) => (L || []).forEach((x, i) => { if (x && (has(x.w) || has(x.r) || x.ok)) out.push([v.date, ses, xs[ex] ? `${ex} (extra${xs[ex].n ? ": " + xs[ex].n : ""})` : ex, i + 1, has(x.w) ? x.w : "", (v.exu || {})[ex] || v.wu || "kg", has(x.r) ? x.r : "", x.ok ? "sí" : "no"]); }));
   });
   return out;
 }
@@ -863,7 +871,7 @@ function renderTrain() {
       ${coachTip(k)}
     </div>
     <h2>Sesión <span class="cnt">${nDone}/${items.length}</span></h2>
-    <div class="shead"><p class="hnote">Anote el peso y las repeticiones de cada serie y toque ✓. Si deja vacío, ✓ copia lo de la vez pasada. Al marcar ✓ arranca el descanso: 2:30 en los pesados, 1:30 en los demás. Toque la foto de un ejercicio para ver cómo se hace.</p>${unitSeg(k)}</div>
+    <div class="shead"><p class="hnote">Anote el peso y las repeticiones de cada serie y toque ✓. Si deja vacío, ✓ copia lo de la vez pasada. Cada ejercicio tiene su kg o lb, según la máquina. Al marcar ✓ arranca el descanso: 2:30 en los pesados, 1:30 en los demás. Toque la foto de un ejercicio para ver cómo se hace.</p>${unitSeg(k)}</div>
     <ul class="hlist2">${list}</ul>
     ${xList ? `<h2>Extra <span class="cnt">fuera del plan</span></h2><ul class="hlist2">${xList}</ul><p class="hnote">Extras del mismo músculo de hoy: máximo 2 o 3 series en total.</p>` : ""}
     <div class="row" style="margin-top:10px"><button type="button" class="btn" data-act="x-open">+ Agregar ejercicio extra</button></div>

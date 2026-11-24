@@ -458,3 +458,7 @@ body:has(.restbar.show) .wrap{padding-bottom:calc(var(--tabh) + 120px + env(safe
 .wprog .hnote,.dprog .hnote{margin:0}
 .dprog{display:grid;gap:8px}
 .hhero .pbar{background:var(--bg)}
+.shd{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.shd .slast{flex:1;margin:0}
+.useg.sm{padding:2px;background:var(--bg)}
+.useg.sm button{min-height:30px;min-width:34px;font-size:13px}

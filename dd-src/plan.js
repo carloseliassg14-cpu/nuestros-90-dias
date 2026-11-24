@@ -524,7 +524,7 @@ function trainItems(k) {
 // h.extra = [{ id, t, n, ns, rg }]
 const extrasOf = (k) => (Array.isArray(hOf(k).extra) ? hOf(k).extra : []).map((e) => ({ id: "x_" + e.id, xid: e.id, t: e.t, n: e.n, r: `${e.ns} × ${e.rg}`, extra: true }));
 function openExtraSheet() {
-  openSheet(`<h3>Ejercicio extra</h3><p class="hint">Lo que hizo fuera del plan, por ejemplo porque un amigo lo propuso. Queda guardado con sus series para tenerlo en cuenta.</p>
+  openSheet(`<h3>Ejercicio extra</h3><p class="hint">Lo que hizo fuera del plan, por ejemplo porque un amigo lo propuso. Queda guardado con sus series para tenerlo en cuenta.</p><p class="coach"><b>Jarvis:</b> si es del mismo músculo de hoy, máximo 2 o 3 series. Más que eso le quita recuperación para la sesión siguiente.</p>
     <div class="f"><label for="xT">Ejercicio</label><input id="xT" class="fi" maxlength="60" placeholder="Ej.: Press de pecho en máquina"></div>
     <div class="f"><label for="xN">Máquina o detalle (opcional)</label><input id="xN" class="fi" maxlength="100" placeholder="Ej.: máquina Hammer, agarre cerrado"></div>
     <div class="f"><span class="lb">Series</span><div class="chips">${[2, 3, 4, 5].map((n) => `<button type="button" class="chip" data-act="x-ns" data-v="${n}" aria-pressed="${n === 3}">${n}</button>`).join("")}</div></div>
@@ -765,9 +765,9 @@ function renderTrain() {
       ${coachTip(k)}
     </div>
     <h2>Sesión <span class="cnt">${nDone}/${items.length}</span></h2>
-    <div class="shead"><p class="hnote">Anote el peso y las repeticiones de cada serie y toque ✓. Si deja vacío, ✓ copia lo de la vez pasada.</p>${unitSeg(k)}</div>
+    <div class="shead"><p class="hnote">Anote el peso y las repeticiones de cada serie y toque ✓. Si deja vacío, ✓ copia lo de la vez pasada. Al marcar ✓ arranca el descanso: 2:30 en los pesados, 1:30 en los demás.</p>${unitSeg(k)}</div>
     <ul class="hlist2">${list}</ul>
-    ${xList ? `<h2>Extra <span class="cnt">fuera del plan</span></h2><ul class="hlist2">${xList}</ul>` : ""}
+    ${xList ? `<h2>Extra <span class="cnt">fuera del plan</span></h2><ul class="hlist2">${xList}</ul><p class="hnote">Extras del mismo músculo de hoy: máximo 2 o 3 series en total.</p>` : ""}
     <div class="row" style="margin-top:10px"><button type="button" class="btn" data-act="x-open">+ Agregar ejercicio extra</button></div>
     <h2>Chequeos de ${esc(dayLabel(k).toLowerCase())}</h2>
     <ul class="hlist2">${checks}</ul>
@@ -780,6 +780,17 @@ function renderTrain() {
     <div class="row exp"><button type="button" class="btn" data-act="tr-exp" data-v="csv">Descargar entrenos (Excel)</button><button type="button" class="btn" data-act="tr-exp" data-v="copy">Copiar entrenos</button></div>
     <p class="hnote">Todas las series con fecha, sesión, peso y repeticiones, para mandárselas a quien las necesite.</p>
     <h2>Guía</h2>
+    <details class="hdet"><summary>Cuánto descansar entre series (y por qué)</summary>
+      <table class="htbl"><thead><tr><th>Tipo de ejercicio</th><th>Descanso</th></tr></thead><tbody>
+      <tr><td>Básicos pesados: press de banca e inclinado, dominadas, remo con barra, sentadilla, peso muerto, prensa, fondos, press militar</td><td>2:30</td></tr>
+      <tr><td>Aislamiento: aperturas, curls, extensiones, laterales, face pull</td><td>1:30</td></tr>
+      <tr><td>Core</td><td>1:00</td></tr>
+      <tr><td>Al cambiar de ejercicio</td><td>2:00</td></tr></tbody></table>
+      <ul class="hol"><li><b>La evidencia:</b> la revisión más reciente de Schoenfeld y su equipo (2024) encontró que descansar más de 60 s da algo más de músculo, y que pasar de 90 s ya casi no cambia el resultado.</li>
+      <li><b>Por qué 2:30 en los pesados:</b> no es que el músculo crezca más por descansar. Es para que mantenga el peso y las repeticiones en todas las series.</li>
+      <li><b>El cronómetro</b> arranca solo cuando marca ✓ en una serie. Al terminar suena y vibra (el teléfono no puede estar en silencio). También lo puede arrancar con el botón ⏱ de cada ejercicio.</li></ul></details>
+    <details class="hdet"><summary>Ejercicios extra con amigos</summary><ul class="hol"><li>Anótelos con "+ Agregar ejercicio extra": nombre, máquina y series. Quedan guardados con peso y repeticiones, y salen marcados como "(extra)" al descargar sus entrenos.</li>
+      <li><b>Consejo de entrenador:</b> si el extra es del mismo músculo del día, máximo 2 o 3 series. Más que eso le quita recuperación para la sesión siguiente del plan.</li></ul></details>
     <details class="hdet"><summary>Core (cierre de lunes, jueves y sábado)</summary><table class="htbl"><tbody>${CORE.map(([a, b]) => `<tr><td>${esc(a)}</td><td>${esc(b)}</td></tr>`).join("")}</tbody></table></details>
     <details class="hdet"><summary>Cómo progresar</summary><ul class="hol">
       <li>Descanso entre series: 2:30 min en los básicos pesados (press, dominadas, remos, sentadilla, peso muerto, prensa, fondos), 1:30 min en los de aislamiento y 1 min en el core. Al cambiar de ejercicio, 2 min. El cronómetro arranca solo cuando marca ✓ en una serie.</li>

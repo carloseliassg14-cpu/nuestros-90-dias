@@ -426,3 +426,4 @@ textarea.fi{resize:vertical;min-height:72px;font:inherit}
 @media(prefers-reduced-motion:reduce){.restbar{transition:none}}
 body:has(.restbar.show) .toast{bottom:calc(var(--tabh) + 110px + env(safe-area-inset-bottom,0px))}
 body:has(.restbar.show) .wrap{padding-bottom:calc(var(--tabh) + 120px + env(safe-area-inset-bottom,0px))}
+.sheet .coach{margin:-4px 0 14px}

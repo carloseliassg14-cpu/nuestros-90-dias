@@ -483,3 +483,9 @@ body:has(.restbar.show) .wrap{padding-bottom:calc(var(--tabh) + 120px + env(safe
 .altgo{font-weight:700;font-size:13px;padding:6px 12px;border-radius:999px;background:var(--ink);color:var(--bg)}
 .altcard.cur .altgo{background:var(--good)}
 @media(prefers-reduced-motion:reduce){.altimg img:last-child{animation:none;opacity:0}}
+/* cronómetro de ejercicio */
+.restbar.work{background:#0f5132}
+.restbar.work .btn{background:rgba(255,255,255,.16)}
+.wtrow{flex-basis:100%;margin-top:8px}
+.rtbtn.go{border-style:solid;border-color:var(--ink);color:var(--ink);background:var(--bg);font-weight:700}
+.htbl .rtbtn.go{margin-top:6px;padding:4px 10px;font-size:12.5px}

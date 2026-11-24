@@ -982,6 +982,8 @@ document.addEventListener("click", (ev) => {
     case "rt-go": restStart(+el.dataset.v, el.dataset.l); break;
     case "rt-add": restAdd(+el.dataset.v); break;
     case "rt-stop": restStop(); break;
+    case "rt-pause": restPause(); break;
+    case "wt-go": startTimer(el.dataset.kind, el.dataset.n); break;
     case "wk-ok": applyWeek(el.dataset.sig); render(); break;
     case "wk-no": hSet(todayKey(), { wkNo: el.dataset.sig }); render(); break;
     case "s-set": saveSess(+el.dataset.v); render(); break;

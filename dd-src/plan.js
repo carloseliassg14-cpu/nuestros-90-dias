@@ -122,7 +122,7 @@ const TRAIN = [
   { t: "Hombros y abdomen", kind: "gym", ex: [["Press militar", "4 × 6–8"], ["Elevaciones laterales", "4 × 12–15"], ["Face pull", "3 × 15"], ["Pájaros (deltoide posterior)", "3 × 12–15"], ["Curl-up de McGill", "3 × 6 (10 s cada una)"], ["Elevación de piernas colgado", "3 × 10–12"]], close: [{ id: "z2", t: "Zona 2 · 20 min", n: "Tope 140 lpm: bici o caminata en inclinación" }] },
   { t: "Circuito híbrido tipo Hyrox", kind: "gym", ex: [["Remo 500 m o bici 1 km", "4–5 rondas"], ["Zancadas con peso", "20"], ["Wall balls", "15"], ["Burpees", "10"], ["Cargadas con kettlebell", "10"]], note: "Descanse 2 min entre rondas.", close: [{ id: "core", t: "Core · 10 min" }] }
 ];
-const CORE = [["Plancha lateral", "3 × 20–30 s por lado"], ["Bird dog", "3 × 6 por lado (10 s)"], ["Dead bug", "3 × 10 por lado"], ["Pallof press", "3 × 10 por lado"]];  // Core que protege la columna (McGill, U. de Waterloo): sin flexión repetida
+const CORE = [["Plancha lateral", "3 × 20–30 s por lado"], ["Bird dog", "6 por lado, 10 s cada una"], ["Dead bug", "3 × 10 por lado"], ["Pallof press", "3 × 10 por lado"]];  // Core que protege la columna (McGill, U. de Waterloo): sin flexión repetida
 const RULES = [
   ["Baja más de 0.7 kg por semana", "+30 g de carbohidrato al día"],
   ["El peso y la cintura no se mueven", "−150 kcal (≈ −40 g de carbohidrato) o +10 min de zona 2"],
@@ -617,6 +617,7 @@ function openExHow(name) {
     ${e.img ? `<div class="exanim"><img src="${exImg(e.img, 0)}" alt="Posición inicial de ${esc(name)}"><img src="${exImg(e.img, 1)}" alt="Posición final de ${esc(name)}"></div>` : ""}
     <ol class="hol exhow">${e.how.map((h) => `<li>${esc(h)}</li>`).join("")}</ol>
     <p class="exerr"><b>Error común:</b> ${esc(e.err)}</p>
+    ${HOLDS[name] ? `<div class="wtrow">${timerBtn("hold", name, "Iniciar: " + holdTxt(name))}</div>` : Object.values(PLAN_V2.str).concat(Object.values(PLAN_V1.str)).some((L) => L.includes(name)) ? `<div class="wtrow">${timerBtn("str", name, "Iniciar: 2 × 30 s por lado")}</div>` : ""}
     <div class="acts"><a class="btn" href="${yt}" target="_blank" rel="noopener">Ver videos</a><button type="button" class="btn pri" data-act="close">Entendido</button></div>
     ${e.img ? `<p class="hfoot muted">Fotos: Free Exercise DB (dominio público).</p>` : ""}`, { type: "exhow" });
 }
@@ -664,7 +665,7 @@ function setsBlock(k, x, total) {
       <button type="button" class="hchk sm${c.ok ? " on" : ""}" data-act="set-ok" data-ex="${esc(x.t)}" data-i="${i}" data-n="${total}" data-id="${x.id}" aria-pressed="${!!c.ok}" aria-label="Serie ${i + 1} hecha">${IC.check}</button></div>`;
   }).join("");
   const useg = `<div class="useg sm" role="group" aria-label="Unidad de ${esc(x.t)}"><button type="button" data-act="exu" data-ex="${esc(x.t)}" data-v="kg" aria-pressed="${u === "kg"}">kg</button><button type="button" data-act="exu" data-ex="${esc(x.t)}" data-v="lb" aria-pressed="${u === "lb"}">lb</button></div>`;
-  return `<div class="sets"><div class="shd"><p class="slast">${lastTxt}</p>${useg}</div>${rows}<button type="button" class="rtbtn" data-act="rt-go" data-v="${restFor(x)}" data-l="${esc(x.t)}">⏱ Descanso entre series: ${fmtClock(restFor(x))} min · iniciar</button></div>`;
+  return `<div class="sets"><div class="shd"><p class="slast">${lastTxt}</p>${useg}</div>${rows}${HOLDS[x.t] ? timerBtn("hold", x.t, "Sostener: " + holdTxt(x.t) + " · iniciar") : ""}<button type="button" class="rtbtn" data-act="rt-go" data-v="${restFor(x)}" data-l="${esc(x.t)}">⏱ Descanso entre series: ${fmtClock(restFor(x))} min · iniciar</button></div>`;
 }
 function setOk(k, name, i, total, exId) {
   const items0 = trainItems(k), x0 = items0.find((y) => y.t === name);
@@ -725,36 +726,50 @@ const restFor = (x) => /plancha|dead bug|pallof|rueda|core/i.test(x.t) ? 60 : HE
 const NEXT_EX_REST = 120;           // al cambiar de ejercicio: 2 min para preparar la máquina y calentar
 const fmtClock = (sec) => `${Math.floor(sec / 60)}:${String(Math.max(0, sec % 60)).padStart(2, "0")}`;
 let RT = null, rtTick = null, actx = null;
-function beepAt(delaySec) {
+// RT = { title, phases:[{sec, label, kind:"rest"|"work"}], i, end (ms), left (si está en pausa), osc }
+function tone(t0, freqs) {
+  freqs.forEach(([d, f]) => {
+    const o = actx.createOscillator(), g = actx.createGain();
+    o.frequency.value = f; o.connect(g); g.connect(actx.destination);
+    g.gain.setValueAtTime(0.0001, t0 + d); g.gain.exponentialRampToValueAtTime(0.35, t0 + d + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t0 + d + 0.2);
+    o.start(t0 + d); o.stop(t0 + d + 0.22); RT.osc.push(o);
+  });
+}
+function schedBeeps() {                 // un pitido al cambiar de fase y tres al terminar todo
   try {
     actx = actx || new (window.AudioContext || window.webkitAudioContext)();
     if (actx.state === "suspended") actx.resume();
-    const t0 = actx.currentTime + Math.max(0, delaySec);
-    [0, 0.25, 0.5].forEach((d, i) => {
-      const o = actx.createOscillator(), g = actx.createGain();
-      o.frequency.value = i === 2 ? 1175 : 880; o.connect(g); g.connect(actx.destination);
-      g.gain.setValueAtTime(0.0001, t0 + d); g.gain.exponentialRampToValueAtTime(0.35, t0 + d + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t0 + d + 0.2);
-      o.start(t0 + d); o.stop(t0 + d + 0.22);
-      (RT.osc = RT.osc || []).push(o);
-    });
+    let t = (RT.end - Date.now()) / 1000;
+    for (let j = RT.i; j < RT.phases.length; j++) {
+      if (j > RT.i) t += RT.phases[j].sec;
+      const last = j === RT.phases.length - 1;
+      tone(actx.currentTime + Math.max(0, t), last ? [[0, 880], [0.25, 880], [0.5, 1175]] : [[0, 1047], [0.18, 1319]]);
+    }
   } catch (e) {}
 }
-function restStart(sec, label) {
+function killBeeps() { if (RT) { (RT.osc || []).forEach((o) => { try { o.stop(); } catch (e) {} }); RT.osc = []; } }
+function runSeq(phases, title) {
   restStop(true);
-  RT = { end: Date.now() + sec * 1000, total: sec, label, osc: [] };
-  beepAt(sec);
+  RT = { title, phases, i: 0, end: Date.now() + phases[0].sec * 1000, osc: [] };
+  schedBeeps();
   rtTick = setInterval(restPaint, 250);
   restPaint();
 }
+function restStart(sec, label) { runSeq([{ sec, label, kind: "rest" }], "Descanso"); }
 function restAdd(d) {
-  if (!RT) return;
-  (RT.osc || []).forEach((o) => { try { o.stop(); } catch (e) {} }); RT.osc = [];
-  RT.end = Math.max(Date.now() + 5000, RT.end + d * 1000); RT.total = Math.max(5, RT.total + d); RT.done = false;
-  beepAt((RT.end - Date.now()) / 1000);
+  if (!RT || RT.left != null) return;
+  killBeeps();
+  RT.end = Math.max(Date.now() + 5000, RT.end + d * 1000); RT.phases[RT.i].sec = Math.max(5, RT.phases[RT.i].sec + d); RT.done = false;
+  schedBeeps(); restPaint();
+}
+function restPause() {
+  if (!RT || RT.done) return;
+  if (RT.left == null) { RT.left = Math.max(0, RT.end - Date.now()); killBeeps(); }
+  else { RT.end = Date.now() + RT.left; RT.left = null; schedBeeps(); }
   restPaint();
 }
 function restStop(quiet) {
-  if (RT) (RT.osc || []).forEach((o) => { try { o.stop(); } catch (e) {} });
+  killBeeps();
   RT = null; clearInterval(rtTick); rtTick = null;
   const el = document.getElementById("restbar"); if (el) el.classList.remove("show");
 }
@@ -762,13 +777,64 @@ function restPaint() {
   let el = document.getElementById("restbar");
   if (!el) { el = document.createElement("div"); el.id = "restbar"; el.className = "restbar"; el.setAttribute("role", "timer"); document.body.appendChild(el); }
   if (!RT) { el.classList.remove("show"); return; }
-  const left = Math.ceil((RT.end - Date.now()) / 1000);
-  if (left <= 0 && !RT.done) { RT.done = true; if (navigator.vibrate) try { navigator.vibrate([300, 150, 300, 150, 300]); } catch (e) {} setTimeout(() => { if (RT && RT.done) restStop(); }, 20000); }
-  const pct = Math.min(100, Math.max(0, 100 - (left / RT.total) * 100));
-  el.className = "restbar show" + (RT.done ? " done" : "");
+  let ms = RT.left != null ? RT.left : RT.end - Date.now();
+  while (ms <= 0 && !RT.done && RT.left == null) {            // pasa a la siguiente fase
+    if (RT.i < RT.phases.length - 1) { RT.i++; RT.end += RT.phases[RT.i].sec * 1000; ms = RT.end - Date.now(); if (navigator.vibrate) try { navigator.vibrate(200); } catch (e) {} }
+    else { RT.done = true; if (navigator.vibrate) try { navigator.vibrate([300, 150, 300, 150, 300]); } catch (e) {} setTimeout(() => { if (RT && RT.done) restStop(); }, 20000); }
+  }
+  const ph = RT.phases[RT.i], left = Math.max(0, Math.ceil(ms / 1000)), rest = ph.kind === "rest", multi = RT.phases.length > 1;
+  const pct = Math.min(100, Math.max(0, 100 - (ms / 1000 / ph.sec) * 100));
+  el.className = "restbar show" + (RT.done ? " done" : rest ? "" : " work");
+  const step = multi ? ` · ${RT.i + 1} de ${RT.phases.length}` : "";
   el.innerHTML = RT.done
-    ? `<div class="rtx"><b>¡A la siguiente serie!</b><small>${esc(RT.label)}</small></div><button type="button" class="btn pri sm" data-act="rt-stop">Listo</button>`
-    : `<div class="rtx"><small>Descanso · ${esc(RT.label)}</small><b>${fmtClock(left)}</b></div><div class="rtb"><button type="button" class="btn sm" data-act="rt-add" data-v="-15">−15 s</button><button type="button" class="btn sm" data-act="rt-add" data-v="15">+15 s</button><button type="button" class="btn sm" data-act="rt-stop">Saltar</button></div><i style="width:${pct}%"></i>`;
+    ? `<div class="rtx"><b>${RT.title === "Descanso" ? "¡A la siguiente serie!" : "¡Terminado!"}</b><small>${esc(RT.title === "Descanso" ? ph.label : RT.title)}</small></div><button type="button" class="btn pri sm" data-act="rt-stop">Listo</button>`
+    : `<div class="rtx"><small>${esc(rest ? (RT.title === "Descanso" ? "Descanso · " + ph.label : ph.label) : RT.title + " · " + ph.label)}${esc(step)}</small><b>${fmtClock(left)}</b></div><div class="rtb">${rest && !multi ? `<button type="button" class="btn sm" data-act="rt-add" data-v="-15">−15 s</button><button type="button" class="btn sm" data-act="rt-add" data-v="15">+15 s</button>` : `<button type="button" class="btn sm" data-act="rt-pause">${RT.left != null ? "Seguir" : "Pausa"}</button>`}<button type="button" class="btn sm" data-act="rt-stop">${rest && !multi ? "Saltar" : "Parar"}</button></div><i style="width:${pct}%"></i>`;
+}
+
+/* ---------- cronómetro de ejercicio: lo que se hace por tiempo ---------- */
+const HOLDS = {     // sostener: segundos, por lado, repeticiones por serie
+  "Plancha lateral": { sec: 30, sides: true, reps: 1, sets: 3 },
+  "Plancha": { sec: 40, reps: 1, sets: 3 },
+  "Bird dog": { sec: 10, sides: true, reps: 6, sets: 1 },
+  "Curl-up de McGill": { sec: 10, reps: 6, sets: 1 }
+};
+function holdSeq(name) {
+  const h = HOLDS[name]; if (!h) return null;
+  const out = [], sides = h.sides ? ["lado izquierdo", "lado derecho"] : [""];
+  for (let s = 0; s < h.sets; s++) {
+    sides.forEach((sd, si) => {
+      for (let r = 0; r < h.reps; r++) {
+        out.push({ sec: h.sec, kind: "work", label: `${h.reps > 1 ? "rep " + (r + 1) + (sd ? " · " : "") : ""}${sd || "sostenga"}` });
+        const lastOfSide = r === h.reps - 1;
+        if (!lastOfSide) out.push({ sec: 3, kind: "rest", label: "suelte y respire" });
+        else if (si < sides.length - 1) out.push({ sec: 5, kind: "rest", label: "cambie de lado" });
+      }
+    });
+    if (s < h.sets - 1) out.push({ sec: 30, kind: "rest", label: "descanso entre series" });
+  }
+  return out;
+}
+const holdTxt = (name) => { const h = HOLDS[name]; return h ? `${h.sets > 1 ? h.sets + " × " : ""}${h.reps > 1 ? h.reps + " × " : ""}${h.sec} s${h.sides ? " por lado" : ""}` : ""; };
+function stretchSeq(name) {
+  const o = [];
+  for (let r = 1; r <= 2; r++) { o.push({ sec: 30, kind: "work", label: `vez ${r} · un lado` }, { sec: 5, kind: "rest", label: "cambie de lado" }, { sec: 30, kind: "work", label: `vez ${r} · otro lado` }); if (r === 1) o.push({ sec: 10, kind: "rest", label: "suelte" }); }
+  return o;
+}
+function itemSeq(x) {   // cardio, movilidad, core y caminata: por minutos
+  if (/Intervalos/.test(x.t)) { const o = [{ sec: 300, kind: "work", label: "calentar suave" }]; for (let i = 1; i <= 8; i++) o.push({ sec: 60, kind: "work", label: `ronda ${i} de 8 · ¡FUERTE!` }, { sec: 120, kind: "rest", label: `ronda ${i} de 8 · suave` }); return o; }
+  const m = /(\d+)(?:\s*[–-]\s*(\d+))?\s*min/.exec(x.t); if (!m) return null;
+  return [{ sec: +m[1] * 60, kind: "work", label: m[2] ? `${m[1]} min (hasta ${m[2]} si se siente bien)` : `${m[1]} min` }];
+}
+function timerBtn(kind, name, label) { return `<button type="button" class="rtbtn go" data-act="wt-go" data-kind="${kind}" data-n="${esc(name)}">⏱ ${esc(label)}</button>`; }
+function startTimer(kind, name) {
+  const k = S.hDate;
+  let seq = null, title = name;
+  if (kind === "hold") seq = holdSeq(name);
+  else if (kind === "str") seq = stretchSeq(name);
+  else { const x = trainItems(k).find((y) => y.id === name); if (x) { seq = itemSeq(x); title = x.t.split(" · ")[0]; } }
+  if (!seq) return;
+  if (typeof closeSheet === "function" && $("sheet").classList.contains("open")) closeSheet();
+  runSeq(seq, title);
 }
 function restAfterSet(k, x, i, total, items) {
   if (k !== todayKey()) return;
@@ -1046,10 +1112,12 @@ function openItemInfo(id) {
   const k = S.hDate, x = trainItems(k).find((y) => y.id === id), key = infoKey(id), e = ITEM_INFO[key];
   if (!x || !e) return;
   const sw = (hOf(k).swap || {})[id];
-  const list = e.list ? `<table class="htbl"><tbody>${e.list().map(([a, b]) => `<tr><td>${EXI[a] ? `<button type="button" class="exlink" data-act="ex-how" data-ex="${esc(a)}">${esc(a)} ›</button>` : esc(a)}</td><td>${esc(b)}</td></tr>`).join("")}</tbody></table>` : "";
+  const tb = (a) => key === "str" ? timerBtn("str", a, "2 × 30 s") : HOLDS[a] ? timerBtn("hold", a, holdTxt(a)) : "";
+  const list = e.list ? `<table class="htbl"><tbody>${e.list().map(([a, b]) => `<tr><td>${EXI[a] ? `<button type="button" class="exlink" data-act="ex-how" data-ex="${esc(a)}">${esc(a)} ›</button>` : esc(a)}<div>${tb(a)}</div></td><td>${esc(b)}</td></tr>`).join("")}</tbody></table>` : "";
   openSheet(`<h3>${esc(x.t)}</h3><p class="hint">${esc(e.m)}</p>${list}
     <ol class="hol exhow">${e.how.map((h) => `<li>${esc(h)}</li>`).join("")}</ol>
     <p class="exerr"><b>Error común:</b> ${esc(e.err)}</p>
+    ${key !== "str" && itemSeq(x) ? `<div class="wtrow">${timerBtn("item", x.id, "Iniciar " + (/Intervalos/.test(x.t) ? "intervalos (29 min)" : fmtClock(itemSeq(x)[0].sec)))}</div>` : ""}
     ${e.swap ? `<div class="f"><label for="swT">${sw ? "Hoy lo cambió por" : "¿Hoy hace otra actividad en lugar de esto?"}</label><div class="row"><input id="swT" class="fi" maxlength="40" placeholder="Ej.: artes marciales, fútbol, natación" value="${esc(sw || "")}" style="flex:1"><button type="button" class="btn" data-act="sw-save" data-id="${esc(id)}">${sw ? "Guardar" : "Cambiar"}</button></div>${sw ? `<button type="button" class="exlink sm" data-act="sw-clear" data-id="${esc(id)}" style="margin-top:8px">Quitar el cambio</button>` : ""}</div>` : ""}
     <div class="acts"><button type="button" class="btn pri" data-act="close">Entendido</button></div>`, { type: "info", id });
 }
@@ -1081,7 +1149,7 @@ function renderTrain() {
   const list = items.map((x) => {
     const ns = nSets(x.r), rr = ns ? `${ns} series de ${repGoal(x.r)} repeticiones` : x.r;
     const nOk = ns ? setsOf(k, x.t).filter((y) => y && y.ok).length : 0;
-    return `<li class="hl${done["t_" + x.id] ? " ok" : ""}${ns ? " hasets" : ""}">${exThumb(x)}<div class="htx"><b class="ht">${esc(x.t)}</b>${rr ? `<span class="hr">${esc(rr)}${ns ? ` · ${nOk}/${ns}` : ""}</span>` : ""}${x.n ? `<span class="hn">${esc(x.n)}</span>` : ""}${EXI[x.t] ? `<button type="button" class="exlink sm" data-act="ex-how" data-ex="${esc(x.t)}">Cómo se hace ›</button>` : infoKey(x.id) ? `<button type="button" class="exlink sm" data-act="it-info" data-id="${esc(x.id)}">${(h.swap || {})[x.id] ? "Cambiado por: " + esc(h.swap[x.id]) + " ›" : infoKey(x.id) === "core" ? "Qué ejercicios hacer ›" : infoKey(x.id) === "str" ? "Cuáles hoy: " + esc(verOf(k).str[six].slice(0, 2).join(", ").toLowerCase()) + "… ›" : infoKey(x.id) === "mob" ? "Qué movimientos hacer ›" : ITEM_INFO[infoKey(x.id)].swap ? "Cómo se hace · o cámbielo por otra actividad ›" : "Cómo se hace ›"}</button>` : ""}</div>${tick(!!done["t_" + x.id], "h-tick", `data-key="t_${x.id}"`, x.t)}${ns ? setsBlock(k, x, ns) : ""}${altChip(k, x)}</li>`;
+    return `<li class="hl${done["t_" + x.id] ? " ok" : ""}${ns ? " hasets" : ""}">${exThumb(x)}<div class="htx"><b class="ht">${esc(x.t)}</b>${rr ? `<span class="hr">${esc(rr)}${ns ? ` · ${nOk}/${ns}` : ""}</span>` : ""}${x.n ? `<span class="hn">${esc(x.n)}</span>` : ""}${EXI[x.t] ? `<button type="button" class="exlink sm" data-act="ex-how" data-ex="${esc(x.t)}">Cómo se hace ›</button>` : infoKey(x.id) ? `<button type="button" class="exlink sm" data-act="it-info" data-id="${esc(x.id)}">${(h.swap || {})[x.id] ? "Cambiado por: " + esc(h.swap[x.id]) + " ›" : infoKey(x.id) === "core" ? "Qué ejercicios hacer ›" : infoKey(x.id) === "str" ? "Cuáles hoy: " + esc(verOf(k).str[six].slice(0, 2).join(", ").toLowerCase()) + "… ›" : infoKey(x.id) === "mob" ? "Qué movimientos hacer ›" : ITEM_INFO[infoKey(x.id)].swap ? "Cómo se hace · o cámbielo por otra actividad ›" : "Cómo se hace ›"}</button>` : ""}</div>${tick(!!done["t_" + x.id], "h-tick", `data-key="t_${x.id}"`, x.t)}${ns ? setsBlock(k, x, ns) : ""}${!ns && x.id !== "str" && !(h.swap || {})[x.id] && itemSeq(x) ? `<div class="wtrow">${timerBtn("item", x.id, /Intervalos/.test(x.t) ? "Iniciar intervalos (29 min, con aviso en cada cambio)" : "Iniciar " + fmtClock(itemSeq(x)[0].sec))}</div>` : ""}${altChip(k, x)}</li>`;
   }).join("");
 
   const checks = checksFor(k).map((c) => {

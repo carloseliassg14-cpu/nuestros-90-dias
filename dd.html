@@ -2116,6 +2116,14 @@ function renderFood() {
     <h2>Hábitos del día <span class="cnt">${habDone}/${FOOD.habits.length}</span></h2>
     <ul class="hlist2">${habits}</ul>
     <h2>Guía</h2>
+    <details class="hdet"><summary>Por qué este plan (la evidencia)</summary><ul class="hol">
+      <li><b>Proteína 165–175 g (≈ 2.0–2.2 g por kg):</b> la Sociedad Internacional de Nutrición Deportiva (ISSN) recomienda 1.4–2.0 g/kg para ganar músculo, y hasta 2.3–3.1 g/kg de masa magra cuando se pierde grasa. Usted está en la zona alta, que es la que protege el músculo mientras baja grasa.</li>
+      <li><b>3 comidas con 40–70 g de proteína:</b> cada comida pasa de 0.4 g/kg, la dosis que maximiza la síntesis de músculo por comida.</li>
+      <li><b>Ayuno 16:8:</b> los meta-análisis de comer en ventana con pesas muestran menos grasa y el músculo se mantiene, siempre que la proteína sea alta. Por eso la proteína es lo primero en cada plato.</li>
+      <li><b>Grasa 70–80 g (≈ 25–30 % de las calorías):</b> dentro del rango que recomiendan los estudios de recomposición (15–30 %). El resto es carbohidrato para rendir en el gym.</li>
+      <li><b>Calorías:</b> un poco por debajo de lo que gasta. Meta: bajar 0.25–0.5 kg por semana. Más rápido se pierde más músculo, según la revisión de Helms y cols. Cada 2 semanas se ajusta con su peso real.</li>
+      <li><b>Creatina 3–5 g:</b> el suplemento con más evidencia para fuerza y músculo (ISSN).</li>
+      <li><b>Magnesio en la noche:</b> la evidencia para el sueño es de baja calidad. Es barato y seguro en dosis normales; tómelo si le ayuda, pero no es lo que hace la diferencia: dormir 7.5 h o más sí.</li></ul></details>
     <details class="hdet"><summary>Cómo pesar con su balanza (Gynipot GY-A09)</summary><ol class="hol"><li>Enciéndala con ⏻/T y revise que diga <b>g</b>; si no, toque UNIT hasta que salga.</li><li>Ponga el plato vacío y toque ⏻/T: queda en 0 (tara).</li><li>Sirva la proteína hasta el número del plan; toque ⏻/T otra vez y sirva el carbohidrato.</li><li>Pese la comida ya cocida. Mide de 2 en 2 g y hasta 5 kg: sirve para todo, incluso los 15 g de maní.</li><li>Si los números saltan o se apaga sola, cambie las 2 baterías AAA.</li></ol></details>
     <details class="hdet"><summary>8 meriendas limpias</summary><ol class="hol">${FOOD.snacks.map((s) => `<li>${esc(s)}</li>`).join("")}</ol></details>
     <details class="hdet"><summary>Intercambios de carbohidrato (≈ 30 g cada uno)</summary>${tbl(FOOD.carbs, "Alimento", "Cocido")}</details>
@@ -2861,6 +2869,14 @@ function renderTrain() {
     <div class="row exp"><button type="button" class="btn" data-act="tr-exp" data-v="csv">Descargar entrenos (Excel)</button><button type="button" class="btn" data-act="tr-exp" data-v="copy">Copiar entrenos</button></div>
     <p class="hnote">Todas las series con fecha, sesión, peso y repeticiones, para mandárselas a quien las necesite.</p>
     <h2>Guía</h2>
+    <details class="hdet"><summary>Por qué este plan (la evidencia)</summary><ul class="hol">
+      <li><b>Cada músculo 2 veces por semana:</b> el meta-análisis de Schoenfeld, Ogborn y Krieger (2016) encontró que entrenar un músculo 2 veces a la semana da más músculo que 1 vez. Por eso desde el 25 de noviembre la rutina es torso / pierna.</li>
+      <li><b>≈ 10–20 series por músculo a la semana:</b> más series dan más músculo, hasta cierto punto (Schoenfeld 2017; Pelland y cols. 2024). El plan está en esa zona sin pasarse.</li>
+      <li><b>1 o 2 repeticiones en reserva:</b> se progresa sin ir al fallo en los ejercicios pesados, que es donde más se rompe la técnica.</li>
+      <li><b>Descansos de 1:30 a 2:30:</b> más de 60–90 s da más músculo (Singer, Schoenfeld y cols. 2024).</li>
+      <li><b>Core sin abdominales tradicionales:</b> el Dr. Stuart McGill (U. de Waterloo) demostró que doblar la columna una y otra vez es el mecanismo de lesión de disco. Por eso el core es plancha lateral, bird dog, dead bug, pallof y curl-up de McGill.</li>
+      <li><b>Nunca 2 días de pierna seguidos:</b> pierna A, circuito y pierna B quedan separados por 48 h para que el cuerpo recupere.</li>
+      <li><b>Seguridad:</b> el entrenamiento con pesas tradicional es de las formas de ejercicio con menos lesiones (≈ 0.2–1 por cada 1,000 horas). Lo que más protege es la técnica, la progresión gradual y no entrenar con dolor.</li></ul></details>
     <details class="hdet"><summary>Cuánto descansar entre series (y por qué)</summary>
       <table class="htbl"><thead><tr><th>Tipo de ejercicio</th><th>Descanso</th></tr></thead><tbody>
       <tr><td>Básicos pesados: press de banca e inclinado, dominadas, remo con barra, sentadilla, peso muerto, prensa, fondos, press militar</td><td>2:30</td></tr>

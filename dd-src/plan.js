@@ -90,7 +90,7 @@ const IDEAS = {
     I("Yogur griego, banano y maní", "calle", "Sin pesar", "2 vasos de yogur griego natural (≈300 g) + 1 banano + 1 bolsita de maní sin sal (≈30 g)", 39, 44, 14, 460, "Busque el yogur que diga 9 g o más de proteína por cada 100 g y sin azúcar añadida."),
     I("Pollo rostizado y fruta", "calle", "Sin pesar", "½ pechuga de pollo rostizado sin piel (≈150 g) + 1 banano + 1 manzana", 46, 52, 6, 440, "El pollo rostizado del súper (Maxi Palí, Más x Menos, Walmart) es de lo más fácil en la calle. Quítele la piel."),
     I("Atún, huevos duros y tortillas", "calle", "Sin pesar", "1 lata de atún en agua + 2 huevos duros + 4 tortillas de maíz", 43, 49, 14, 500, "Lleve los huevos ya hervidos de la casa. Busque latas de atún que abren sin abrelatas."),
-    I("Batido de proteína y banano", "calle", "Sin pesar", "1 medida de proteína en polvo (≈30 g) en 300 ml de leche descremada + 1 banano + 1 cucharada de maní", 39, 47, 9, 410, "Opcional. La proteína en polvo es práctica cuando no llega con comida (ISSN). Revise la etiqueta: 20–25 g de proteína por medida y poca azúcar."),
+    I("Batido de proteína y banano (opcional)", "calle", "Sin pesar", "1 medida de proteína en polvo (≈30 g) en 300 ml de leche descremada + 1 banano + 1 cucharada de maní", 39, 47, 9, 410, "Solo como opción: su plan es con proteína de comida natural. Si algún día la compra, que traiga 20–25 g de proteína por medida y poca azúcar."),
     I("Pavo, queso y tortillas", "calle", "Sin pesar", "100 g de jamón de pavo + 60 g de queso tierno o Turrialba + 3 tortillas + 1 fruta", 34, 59, 16, 520, "Escoja el jamón que diga pechuga de pavo y no tenga mucho sodio."),
     I("Huevos duros, leche y banano", "calle", "Sin pesar", "4 huevos duros + 1 cajita de leche descremada (250 ml) + 1 banano", 34, 41, 20, 480, ""),
     I("Huevos, yogur, banano y avena", "casa", "Con balanza", "3 huevos duros + 170 g de yogur griego + 1 banano + 40 g de avena", 41, 62, 18, 570, "La del plan. Ideal 1 a 2 horas antes del gym."),
@@ -120,7 +120,7 @@ const IDEAS = {
 };
 IDEAS.x = IDEAS.m2;
 const SHOP = [
-  ["Proteína", "pechuga de pollo, huevos, atún en agua, yogur griego natural sin azúcar, carne molida magra, pescado (tilapia o corvina), queso tierno o Turrialba, jamón de pechuga de pavo, leche descremada, proteína en polvo (opcional)"],
+  ["Proteína", "pechuga de pollo, huevos, atún en agua, yogur griego natural sin azúcar, carne molida magra, pescado (tilapia o corvina), queso tierno o Turrialba, jamón de pechuga de pavo, leche descremada, sin proteína en polvo: todo natural"],
   ["Carbohidrato", "papa, camote, yuca, plátano maduro, frijoles, tortillas de maíz, galletas de arroz inflado, avena, pan integral, banano, piña, papaya, manzana (nunca arroz)"],
   ["Grasa buena", "maní sin sal, aguacate, aceite de oliva"],
   ["Verdura", "espinaca, tomate, cebolla morada, chile dulce, brócoli, zanahoria, culantro y limón (sin pepino)"]

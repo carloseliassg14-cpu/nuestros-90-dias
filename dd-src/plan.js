@@ -119,10 +119,10 @@ const TRAIN = [
   { t: "Espalda y bíceps", kind: "gym", ex: [["Dominadas", "4 × 6–10"], ["Remo con barra", "4 × 8"], ["Jalón al pecho", "3 × 10–12"], ["Remo con mancuerna", "3 × 10 por lado"], ["Curl con barra", "3 × 8–10"], ["Curl martillo", "3 × 10–12"]], close: [{ id: "int", t: "Intervalos · 8 × (1 min fuerte + 2 min suave)" }] },
   { t: "Piernas", kind: "gym", ex: [["Sentadilla", "4 × 6–8"], ["Peso muerto rumano", "3 × 8"], ["Prensa", "3 × 10–12"], ["Zancadas", "3 × 10 por pierna"], ["Curl femoral", "3 × 12"], ["Pantorrilla", "4 × 12–15"]], close: [{ id: "mob15", t: "Movilidad · 15 min" }] },
   { t: "Zona 2 larga", kind: "cardio", items: [{ id: "z2l", t: "Zona 2 · 45–60 min", n: "Tope 140 lpm. Si trotando pasa de 140, camine en inclinación o use la bici" }, { id: "core15", t: "Core · 15 min" }, { id: "mob15", t: "Movilidad · 15 min" }], note: "Sin pesas." },
-  { t: "Hombros y abdomen", kind: "gym", ex: [["Press militar", "4 × 6–8"], ["Elevaciones laterales", "4 × 12–15"], ["Face pull", "3 × 15"], ["Pájaros (deltoide posterior)", "3 × 12–15"], ["Encogimientos", "3 × 10–12"], ["Elevación de piernas colgado", "3 × 10–12"]], close: [{ id: "z2", t: "Zona 2 · 20 min", n: "Tope 140 lpm: bici o caminata en inclinación" }] },
+  { t: "Hombros y abdomen", kind: "gym", ex: [["Press militar", "4 × 6–8"], ["Elevaciones laterales", "4 × 12–15"], ["Face pull", "3 × 15"], ["Pájaros (deltoide posterior)", "3 × 12–15"], ["Curl-up de McGill", "3 × 6 (10 s cada una)"], ["Elevación de piernas colgado", "3 × 10–12"]], close: [{ id: "z2", t: "Zona 2 · 20 min", n: "Tope 140 lpm: bici o caminata en inclinación" }] },
   { t: "Circuito híbrido tipo Hyrox", kind: "gym", ex: [["Remo 500 m o bici 1 km", "4–5 rondas"], ["Zancadas con peso", "20"], ["Wall balls", "15"], ["Burpees", "10"], ["Cargadas con kettlebell", "10"]], note: "Descanse 2 min entre rondas.", close: [{ id: "core", t: "Core · 10 min" }] }
 ];
-const CORE = [["Plancha", "3 × 40 s"], ["Dead bug", "3 × 10 por lado"], ["Pallof press", "3 × 10 por lado"], ["Rueda abdominal", "3 × 8–10"]];
+const CORE = [["Plancha lateral", "3 × 20–30 s por lado"], ["Bird dog", "3 × 6 por lado (10 s)"], ["Dead bug", "3 × 10 por lado"], ["Pallof press", "3 × 10 por lado"]];  // Core que protege la columna (McGill, U. de Waterloo): sin flexión repetida
 const RULES = [
   ["Baja más de 0.7 kg por semana", "+30 g de carbohidrato al día"],
   ["El peso y la cintura no se mueven", "−150 kcal (≈ −40 g de carbohidrato) o +10 min de zona 2"],
@@ -833,6 +833,14 @@ const STR = {   // 3 por sesión, según lo que se trabajó
 };
 
 
+/* ---------- core que protege la columna ---------- */
+Object.assign(EXI, {
+  "Curl-up de McGill": { img: "", m: "Abdomen sin doblar la espalda baja", how: ["Boca arriba, una rodilla doblada y la otra pierna estirada. Manos debajo de la espalda baja para mantener su curva.", "Despegue apenas la cabeza y los hombros del piso, sin doblar el cuello ni la espalda baja, y sostenga 10 segundos.", "Baje, respire y repita. Cambie de pierna a la mitad."], err: "Subir mucho: no es un abdominal tradicional, el movimiento es de pocos centímetros." },
+  "Plancha lateral": { img: "Side_Bridge", m: "Oblicuos y cuadrado lumbar (lo que estabiliza la espalda)", how: ["De lado, apoyado en el antebrazo, codo debajo del hombro.", "Suba la cadera hasta que el cuerpo quede recto.", "Sostenga y cambie de lado. Más fácil: con la rodilla de abajo en el piso."], err: "Dejar caer la cadera o girar el pecho hacia el piso." },
+  "Bird dog": { img: "", m: "Espalda baja, glúteos y control del core", how: ["En cuatro apoyos, espalda recta como una mesa.", "Estire un brazo al frente y la pierna contraria atrás, sin que se mueva la espalda, y sostenga 10 segundos.", "Vuelva y cambie de lado."], err: "Subir mucho la pierna y arquear la espalda." },
+  "Hip thrust con barra": { img: "Barbell_Hip_Thrust", eq: "Barra y banco", m: "Glúteos y femorales", why: "Mismo músculo sin cargar la espalda baja.", how: ["Espalda alta apoyada en un banco, barra sobre la cadera (con almohadilla).", "Empuje la cadera hacia arriba hasta quedar recto de rodillas a hombros.", "Apriete los glúteos 1 segundo arriba y baje controlado."], err: "Arquear la espalda baja arriba en vez de apretar glúteos." }
+});
+
 /* ---------- cambiar un ejercicio por otro (máquina ocupada) ---------- */
 // A(nombre, foto, equipo, músculo, por qué sirve, [pasos], error común)
 const A = (img, eq, m, why, how, err) => ({ img, eq, m, why, how, err });
@@ -916,7 +924,7 @@ const ALT = {
   "Curl con barra": ["Curl con mancuernas", "Curl en polea", "Curl predicador"],
   "Curl martillo": ["Curl martillo con cuerda", "Curl martillo cruzado", "Curl invertido"],
   "Sentadilla": ["Hack squat", "Sentadilla en Smith", "Sentadilla goblet"],
-  "Peso muerto rumano": ["Peso muerto rumano con mancuernas", "Pull through en polea", "Buenos días"],
+  "Peso muerto rumano": ["Peso muerto rumano con mancuernas", "Pull through en polea", "Hip thrust con barra"],
   "Prensa": ["Hack squat", "Sentadilla búlgara", "Extensión de cuádriceps"],
   "Zancadas": ["Sentadilla búlgara", "Zancada hacia atrás", "Step-up con mancuernas"],
   "Curl femoral": ["Curl femoral sentado", "Curl femoral de pie", "Peso muerto rumano con mancuernas"],
@@ -925,7 +933,7 @@ const ALT = {
   "Elevaciones laterales": ["Elevación lateral en polea", "Elevaciones laterales sentado", "Elevación lateral con banda"],
   "Face pull": ["Pájaros en polea", "Pec deck invertido", "Separación con banda"],
   "Pájaros (deltoide posterior)": ["Pec deck invertido", "Pájaros en polea", "Pájaros con pecho apoyado"],
-  "Encogimientos": ["Crunch en polea", "Crunch en máquina", "Bicicleta abdominal"],
+  "Curl-up de McGill": ["Dead bug", "Plancha lateral", "Bird dog"],
   "Elevación de piernas colgado": ["Elevación de rodillas en paralelas", "Elevación de piernas acostado", "Elevación de cadera acostado"]
 };
 const altOf = (k) => hOf(k).alt || {};

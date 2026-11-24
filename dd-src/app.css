@@ -330,3 +330,33 @@ textarea.fi{min-height:72px;resize:vertical}
 @media(max-width:420px){.up li{grid-template-columns:1fr;gap:2px}}
 
 .macro .eye{display:block;font-size:13px;font-weight:600;color:var(--soft)}
+
+/* gym a cualquier hora */
+.gymline{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;text-align:left;border:1px solid var(--line);background:var(--bg);border-radius:16px;padding:12px 14px;color:inherit;font:inherit}
+.gymline span:first-child{display:grid;gap:1px}
+.gymline small{font-size:13px;color:var(--soft);font-weight:600}
+.gymline b{font-size:20px}
+.gymline em{font-style:normal;font-size:13px;color:var(--soft)}
+.gymline .gch{font-weight:700;font-size:14px;border:1px solid var(--line);border-radius:999px;padding:6px 12px;white-space:nowrap}
+/* lo que comió */
+.eat{margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);display:grid;gap:8px}
+.eath{font-size:13px;font-weight:700;color:var(--soft)}
+.eat ul{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.eat li{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;background:var(--bg);border-radius:12px;padding:8px 10px}
+.eat li div{display:grid;gap:2px;font-size:15px}
+.eat li small{font-size:12.5px;color:var(--soft)}
+.eatx{border:0;background:none;font-size:20px;line-height:1;color:var(--soft);padding:2px 6px;min-width:32px;min-height:32px}
+.eatb{display:flex;gap:8px;flex-wrap:wrap}
+.btn.sm{min-height:36px;padding:0 12px;font-size:14px}
+.eatnum{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.eatnum label{display:grid;gap:4px;font-size:12.5px;font-weight:600;color:var(--soft)}
+.eatnum .fi{min-width:0}
+textarea.fi{resize:vertical;min-height:72px;font:inherit}
+.eatsum{display:grid;gap:8px;padding:12px 14px;border-radius:16px;background:var(--card,var(--bg));border:1px solid var(--line);margin-bottom:12px}
+.eatst{font-size:15px}
+.eatbar{display:grid;grid-template-columns:78px 1fr auto;align-items:center;gap:10px;font-size:14px}
+.eatbar i{height:8px;border-radius:999px;background:var(--line);overflow:hidden}
+.eatbar em{display:block;height:100%;background:var(--ink);border-radius:999px}
+.eatbar b small{font-weight:500;color:var(--soft)}
+@media(max-width:420px){.eatnum{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.eat .btn{background:var(--bg);border:1px solid var(--line)}

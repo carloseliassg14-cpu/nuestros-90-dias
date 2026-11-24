@@ -963,6 +963,13 @@ document.addEventListener("click", (ev) => {
     case "h-day": S.hDate = el.dataset.k; render(); break;
     case "h-tick": { hToggle(S.hDate, el.dataset.key); render(); if (navigator.vibrate) try { navigator.vibrate(15); } catch (e) {} break; }
     case "h-slot": { hSet(S.hDate, { slot: el.dataset.v }); applyToDay(S.hDate); render(); const g = daySched(S.hDate).gym; toast(g ? `Día armado: gym de ${fmtTime(g.s)} a ${fmtTime(g.e)}` : t.saved); break; }
+    case "g-open": openGymSheet(); break;
+    case "g-set": saveGym(el.dataset.v === "" ? null : +el.dataset.v); render(); break;
+    case "g-custom": { const v = toMin(($("gTime") || {}).value); if (isFinite(v) && v < 1440) { saveGym(v); render(); } else toast(t.writeErr); break; }
+    case "eat-open": openEatSheet(el.dataset.m); break;
+    case "eat-save": saveEat(); break;
+    case "eat-plan": { const m = el.dataset.m, rest = parseKey(S.hDate).getDay() === 0, mac = PLAN_MAC[m][rest ? "rest" : "train"]; eatAdd(S.hDate, Object.assign({ m, txt: "Lo del plan" }, mac)); render(); toast("Anotado: lo del plan"); break; }
+    case "eat-del": eatDel(S.hDate, el.dataset.id); render(); toast(t.deleted); break;
     case "f-open": openFastSheet(el.dataset.w); break;
     case "f-set": saveFast(+el.dataset.v); break;
     case "f-custom": { const v = toMin(($("fTime") || {}).value); if (isFinite(v)) saveFast(v); else toast(t.writeErr); break; }

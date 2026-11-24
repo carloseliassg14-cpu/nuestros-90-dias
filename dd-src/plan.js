@@ -50,6 +50,68 @@ const FOOD = {
   prots: [["Pechuga de pollo", "100 g", "1 palma"], ["Res magra (lomo, posta, molida 90/10)", "110 g", "1 palma"], ["Pescado blanco (tilapia, pargo, dorado)", "130 g", "1 palma grande"], ["Salmón", "110 g", "1 palma"], ["Atún en agua, escurrido", "1 lata (≈ 120 g)", "1 lata"], ["Huevos enteros", "5 (máximo 4 a 5 por día)", "5 huevos"], ["Yogur griego natural sin azúcar", "300 g", "1¼ tazas"]]
 };
 
+// Lo que trae cada comida del plan, aproximado (para "Comí lo del plan")
+const PLAN_MAC = {
+  m1: { train: { p: 71, c: 104, f: 18, kcal: 860 }, rest: { p: 70, c: 79, f: 18, kcal: 760 } },
+  m2: { train: { p: 45, c: 62, f: 25, kcal: 650 }, rest: { p: 40, c: 35, f: 22, kcal: 500 } },
+  m3: { train: { p: 69, c: 65, f: 21, kcal: 725 }, rest: { p: 69, c: 65, f: 21, kcal: 725 } }
+};
+const TGT_NUM = { train: { kcal: 2400, p: 170, c: 225, f: 75 }, rest: { kcal: 2050, p: 170, c: 150, f: 82 } };
+const MEAL_NAME = { m1: "Comida 1", m2: "Merienda", m3: "Cena", x: "Fuera del plan" };
+const eatOf = (k) => (Array.isArray(hOf(k).eat) ? hOf(k).eat : []);
+function eatTotals(k) {
+  const L = eatOf(k), t = { p: 0, c: 0, f: 0, kcal: 0, n: L.length, sinNum: 0 };
+  L.forEach((e) => {
+    const any = ["p", "c", "f", "kcal"].some((x) => has(e[x]));
+    if (!any) { t.sinNum++; return; }
+    ["p", "c", "f"].forEach((x) => { if (has(e[x])) t[x] += +e[x]; });
+    t.kcal += has(e.kcal) ? +e.kcal : (+e.p || 0) * 4 + (+e.c || 0) * 4 + (+e.f || 0) * 9;
+  });
+  return t;
+}
+function eatAdd(k, entry) {
+  const L = eatOf(k).map(clone);
+  const e = { id: uid(), m: MEAL_NAME[entry.m] ? entry.m : "x", txt: String(entry.txt || "").slice(0, 300), src: entry.src || "app", ts: Date.now() };
+  ["p", "c", "f", "kcal"].forEach((x) => { const v = Math.round(+entry[x]); if (entry[x] !== "" && entry[x] != null && isFinite(v) && v >= 0 && v < 5000) e[x] = v; });
+  if (has(entry.at) && entry.at >= 0 && entry.at < 1440) e.at = Math.round(+entry.at);
+  if (!e.txt && !["p", "c", "f", "kcal"].some((x) => has(e[x]))) return false;
+  L.push(e);
+  const done = Object.assign({}, hOf(k).done || {});
+  if (e.m !== "x") done[e.m] = true;
+  hSet(k, { eat: L.slice(-40), done });
+  return true;
+}
+function eatDel(k, id) { hSet(k, { eat: eatOf(k).filter((e) => e.id !== id) }); }
+function eatList(k, m) {
+  const L = eatOf(k).filter((e) => e.m === m);
+  const rows = L.map((e) => {
+    const nums = ["p", "c", "f"].filter((x) => has(e[x])).map((x) => `${({ p: "P", c: "C", f: "G" })[x]} ${e[x]} g`).concat(has(e.kcal) ? [`${e.kcal} kcal`] : []);
+    return `<li><div><span>${e.at != null ? `<b>${esc(fmtTime(e.at))}</b> · ` : ""}${esc(e.txt || "(sin descripción)")}</span><small>${nums.length ? esc(nums.join(" · ")) : "Sin números: dígale a Jarvis y él lo calcula"}${e.src === "jarvis" ? " · anotado por Jarvis" : ""}</small></div><button type="button" class="eatx" data-act="eat-del" data-id="${esc(e.id)}" aria-label="Borrar">×</button></li>`;
+  }).join("");
+  return `<div class="eat">${rows ? `<span class="eath">Lo que comió</span><ul>${rows}</ul>` : ""}<div class="eatb"><button type="button" class="btn sm" data-act="eat-open" data-m="${m}">+ Anotar lo que comí</button>${m !== "x" && !L.length ? `<button type="button" class="btn sm" data-act="eat-plan" data-m="${m}">Comí lo del plan</button>` : ""}</div></div>`;
+}
+function openEatSheet(m) {
+  const k = S.hDate, isToday = k === todayKey();
+  openSheet(`<h3>${esc(MEAL_NAME[m] || "Anotar comida")}: ¿qué comió?</h3><p class="hint">Escríbalo como se lo diría a alguien, por ejemplo: "2 empanadas de pollo y un café negro". Los números son opcionales: si no los sabe, déjelos vacíos y dígale a Jarvis, él lo calcula y lo anota aquí.</p>
+    <div class="f"><label for="eTxt">Qué comió</label><textarea id="eTxt" class="fi" rows="3" maxlength="300" placeholder="Ej.: casado de pollo con arroz, frijoles y ensalada"></textarea></div>
+    <div class="f"><label for="eAt">Hora (opcional)</label><input id="eAt" class="fi" type="time" value="${isToday ? toHHMM(nowMin()) : ""}"></div>
+    <div class="f"><span class="lb">Números (opcional)</span><div class="eatnum"><label>Proteína g<input id="eP" class="fi" type="number" inputmode="numeric" min="0"></label><label>Carbo g<input id="eC" class="fi" type="number" inputmode="numeric" min="0"></label><label>Grasa g<input id="eF" class="fi" type="number" inputmode="numeric" min="0"></label><label>kcal<input id="eK" class="fi" type="number" inputmode="numeric" min="0"></label></div></div>
+    <div class="acts"><button type="button" class="btn" data-act="close">Cancelar</button><button type="button" class="btn pri" data-act="eat-save">Guardar</button></div>`, { type: "eat", m });
+}
+function saveEat() {
+  const x = sheetCtx; if (!x || x.type !== "eat") return;
+  const v = (id) => ($(id) || {}).value;
+  const ok = eatAdd(S.hDate, { m: x.m, txt: (v("eTxt") || "").trim(), at: toMin(v("eAt")), p: v("eP"), c: v("eC"), f: v("eF"), kcal: v("eK") });
+  if (!ok) { toast("Escriba qué comió o algún número"); return; }
+  closeSheet(); render(); toast("Anotado");
+}
+function eatSummary(k, rest) {
+  const t = eatTotals(k), g = TGT_NUM[rest ? "rest" : "train"];
+  if (!t.n) return `<p class="hnote">Todavía no ha anotado nada hoy. Debajo de cada comida puede tocar <b>Comí lo del plan</b> o anotar lo que comió de verdad.</p>`;
+  const bar = (lb, v, goal, u) => `<div class="eatbar"><span>${lb}</span><i><em style="width:${Math.min(100, Math.round((v / goal) * 100))}%"></em></i><b>${Math.round(v)}${u} <small>de ${goal}${u}</small></b></div>`;
+  return `<div class="eatsum"><b class="eatst">Lo anotado ${k === todayKey() ? "hoy" : "este día"}</b>${bar("Calorías", t.kcal, g.kcal, "")}${bar("Proteína", t.p, g.p, " g")}${bar("Carbo", t.c, g.c, " g")}${bar("Grasa", t.f, g.f, " g")}${t.sinNum ? `<p class="hnote">${t.sinNum} ${t.sinNum === 1 ? "anotación no tiene" : "anotaciones no tienen"} números todavía: no cuentan en el total hasta que Jarvis las calcule.</p>` : ""}</div>`;
+}
+
 const MOB = { id: "mob", t: "Movilidad de entrada · 10 min", n: "Cadera, tobillo, columna torácica, hombro" };
 const TRAIN = [
   { t: "Descanso activo", kind: "rest", items: [{ id: "walk", t: "Caminar suave · 30–60 min" }, { id: "mob20", t: "Movilidad · 20 min" }], note: "Nada de pesas ni cardio fuerte. Cuenta como su día de descanso." },
@@ -94,31 +156,48 @@ function plannedOpen(k) {
   const pc = hOf(prevKey(k)).closeAt;
   return has(pc) ? Math.min(1439, Math.max(0, pc + FAST_M - 1440)) : DEF_OPEN;
 }
+const GYM_DEF = { am: 390, pm: 960 };        // 6:30 am en ayunas · 4:00 pm ya comido
+function gymStart(k) {                       // null = hoy no va
+  const h = hOf(k);
+  if (h.gymAt === -1) return null;
+  if (has(h.gymAt)) return h.gymAt;
+  return GYM_DEF[h.slot === "am" ? "am" : "pm"];
+}
 function daySched(k) {
   const h = hOf(k), wd = parseKey(k).getDay();
-  const slot = h.slot === "am" ? "am" : "pm";
   const open = has(h.breakAt) ? h.breakAt : plannedOpen(k);
   const closeT = Math.max(open + 240, Math.min(open + WIN_M, MAX_CLOSE));
-  let gym = null, m2, m3;
-  if (slot === "am") {
-    gym = { s: 390, e: 450 };                             // 6:30 – 7:30 am en ayunas, antes del trading
-    m2 = open + 210;
-    m3 = closeT - 60;
-  } else {
-    gym = { s: 960, e: 1050 };                            // 4:00 – 5:30 pm, ya comido
-    if (open + 150 > 870) gym = { s: open + 240, e: open + 330 };
-    m2 = Math.max(open + 150, gym.s - 90);
-    m3 = Math.min(gym.e + 30, closeT - 45);
+  const gs = wd === 0 ? null : gymStart(k), set = has(h.gymAt) && h.gymAt >= 0;
+  let gym = null, m2 = open + 210, m3 = closeT - 60, slot = "pm", mode = "none";
+  if (gs != null) {
+    if (gs < open) {                                     // antes de comer: en ayunas
+      slot = "am"; mode = "fasted";
+      gym = { s: gs, e: Math.min(gs + 75, 1439) };
+      m2 = open + 210; m3 = closeT - 60;
+    } else if (gs >= closeT - 30) {                      // después de cerrar la ventana
+      mode = "late"; gym = { s: gs, e: Math.min(gs + 90, 1439) };
+      m2 = open + 210; m3 = closeT - 45;
+    } else {
+      gym = { s: gs, e: gs + 90 };
+      if (gs - open >= 150) {                            // merienda antes del gym (pre-entreno)
+        mode = "pre"; m2 = Math.max(open + 150, gs - 90);
+        m3 = Math.max(Math.min(gym.e + 30, closeT - 45), m2 + 120);
+      } else {                                           // gym poco después de la comida 1: merienda de recuperación
+        mode = "post"; m2 = gym.e + 20;
+        m3 = Math.max(m2 + 150, closeT - 45);
+      }
+      m3 = Math.min(m3, closeT - 30);
+      if (m2 > m3 - 90) m2 = Math.max(open + 120, m3 - 90);
+    }
   }
-  if (wd === 0) gym = null;
-  return { slot, open, closeT, gym, m: [open, m2, m3], walk: wd === 0 ? { s: 960, e: 1020 } : null };
+  return { slot, mode, set, open, closeT, gym, m: [open, m2, m3], walk: wd === 0 ? { s: 960, e: 1020 } : null };
 }
 function planBlocks(k) {
   const sc = daySched(k), day = TRAIN[parseKey(k).getDay()], B = [];
   B.push({ id: "pl_m1", t: "Comida 1 · romper el ayuno", s: sc.m[0], e: sc.m[0] + 45, c: "health" });
   B.push({ id: "pl_m2", t: "Merienda", s: sc.m[1], e: sc.m[1] + 30, c: "health" });
-  if (sc.gym) B.push({ id: "pl_gym", t: "Gym: " + day.t, s: sc.gym.s, e: sc.gym.e, c: "train", n: sc.slot === "am" ? "En ayunas" : "" });
-  if (sc.gym) { const s2 = sc.slot === "pm" ? 360 : 1020; B.push({ id: "pl_s2", t: "Sesión 2 (opcional) · zona 2 suave o movilidad", s: s2, e: s2 + 40, c: "train", n: "Tope 140 lpm (bici o caminata, no correr fuerte). Solo si durmió 7.5 h o más y WHOOP está en verde" }); }
+  if (sc.gym) { const g = { id: "pl_gym", t: "Gym: " + day.t, s: sc.gym.s, e: sc.gym.e, c: "train", n: sc.mode === "fasted" ? "En ayunas" : sc.mode === "post" ? "Merienda de recuperación al salir" : "" }; if (sc.set) g.fx = true; B.push(g); }
+  if (sc.gym) { const s2 = sc.gym.s >= 720 ? 360 : 1020; B.push({ id: "pl_s2", t: "Sesión 2 (opcional) · zona 2 suave o movilidad", s: s2, e: s2 + 40, c: "train", n: "Tope 140 lpm (bici o caminata, no correr fuerte). Solo si durmió 7.5 h o más y WHOOP está en verde" }); }
   if (sc.walk) B.push({ id: "pl_walk", t: "Caminar suave + movilidad", s: sc.walk.s, e: sc.walk.e, c: "train" });
   const ca = hOf(k).closeAt, cEnd = has(ca) ? ca : sc.closeT;
   B.push({ id: "pl_m3", t: "Cena · cerrar la ventana", s: Math.min(sc.m[2], cEnd - 30), e: Math.max(Math.min(sc.m[2], cEnd - 30) + 30, cEnd), c: "health", n: (has(ca) ? "Terminó a las " : "Terminar a las ") + fmtTime(cEnd) });
@@ -156,9 +235,28 @@ function fastPast(k) {
   return { cls: "", h: dayLabel(k), d: `${has(h.breakAt) ? "Rompió el ayuno a las " + fmtTime(h.breakAt) : "Sin hora de romper el ayuno"}${fl != null ? ` (ayuno de ${fmtDur(fl)})` : ""} · ${has(h.closeAt) ? "terminó a las " + fmtTime(h.closeAt) : "sin hora de cierre"}.` };
 }
 function slotSeg(k) {
-  const sc = daySched(k);
+  const sc = daySched(k), h = hOf(k);
   if (parseKey(k).getDay() === 0) return `<p class="hnote"><b>Domingo:</b> descanso activo, sin gym.</p>`;
-  return `<div class="seg" style="margin:0" role="group" aria-label="Hora del gym"><button type="button" data-act="h-slot" data-v="am" aria-pressed="${sc.slot === "am"}">Gym en la mañana</button><button type="button" data-act="h-slot" data-v="pm" aria-pressed="${sc.slot === "pm"}">Gym en la tarde</button></div>`;
+  const lbl = h.gymAt === -1 ? "Hoy no voy" : sc.gym ? fmtTime(sc.gym.s) + (sc.set ? "" : " (sugerido)") : "—";
+  const why = { fasted: "en ayunas, antes de comer", pre: "merienda antes del gym", post: "merienda de recuperación al salir", late: "después de cerrar la ventana", none: "" }[sc.mode];
+  return `<button type="button" class="gymline" data-act="g-open"><span><small>¿A qué hora va hoy al gym?</small><b>${esc(lbl)}</b>${why ? `<em>${esc(why)}</em>` : ""}</span><span class="gch">Cambiar</span></button>`;
+}
+function openGymSheet() {
+  const k = S.hDate, h = hOf(k), sc = daySched(k), cur = h.gymAt;
+  const opts = [360, 390, 420, 720, 750, 780, 810, 900, 960, 1020];
+  const chips = opts.map((v) => `<button type="button" class="chip" data-act="g-set" data-v="${v}" aria-pressed="${cur === v}">${esc(fmtTime(v))}</button>`).join("");
+  openSheet(`<h3>¿A qué hora va al gym?</h3><p class="hint">Las comidas y el resto del día se acomodan solos a esa hora. Hoy come de ${esc(fmtTime(sc.open))} a ${esc(fmtTime(sc.closeT))}.</p>
+    <div class="f"><span class="lb">Horas rápidas</span><div class="chips">${chips}</div></div>
+    <div class="f"><label for="gTime">Otra hora</label><div class="row"><input id="gTime" class="fi" type="time" value="${has(cur) && cur >= 0 ? toHHMM(cur) : ""}" style="flex:1"><button type="button" class="btn" data-act="g-custom">Guardar</button></div></div>
+    <div class="acts"><button type="button" class="btn" data-act="g-set" data-v="-1">Hoy no voy</button>${has(cur) ? `<button type="button" class="btn" data-act="g-set" data-v="">Volver a la sugerida</button>` : ""}<button type="button" class="btn" data-act="close">Cancelar</button></div>`, { type: "gym" });
+}
+function saveGym(v) {
+  const k = S.hDate;
+  hSet(k, { gymAt: v });
+  applyToDay(k);
+  closeSheet();
+  const sc = daySched(k);
+  toast(v === -1 ? "Listo: hoy sin gym" : sc.gym ? `Día armado: gym a las ${fmtTime(sc.gym.s)}, merienda a las ${fmtTime(sc.m[1])}, cena a las ${fmtTime(sc.m[2])}` : T().saved);
 }
 function timeline(k) {
   const act = blocksOf({ kind: "plan", date: k }).filter((b) => /^pl_(m[123]|gym|walk)$/.test(b.id));
@@ -248,6 +346,7 @@ function renderFood() {
       <div class="hrow"><div class="htx"><span class="hk">${esc(fmtTime(sc.m[i]))}${x.id === "m3" ? " – " + esc(fmtTime(sc.closeT)) : ""}</span><b class="ht">${esc(x.t)}</b></div>${tick(!!done[x.id], "h-tick", `data-key="${x.id}"`, x.t)}</div>
       <p class="sug"><span class="muted">Hoy:</span> ${esc(sug)}</p>
       ${x.id === "m2" ? `<dl class="macro"><div><dt>Meta</dt><dd>35–40 g de proteína y algo de carbohidrato${rest ? " (domingo: sin avena)" : ""}. Puede usar cualquiera de las 8 meriendas de la guía.</dd></div></dl>` : `<dl class="macro"><div><dt>Proteína</dt><dd>${esc(x.p)}<span class="eye">A ojo: ${esc(x.pE)}</span></dd></div><div><dt>Carbohidrato</dt><dd>${esc(rest ? x.cRest : x.c)}<span class="eye">A ojo: ${esc(rest ? x.cRestE : x.cE)}</span></dd></div>${x.v ? `<div><dt>Verdura</dt><dd>${esc(x.v)}<span class="eye">A ojo: ${esc(x.vE)}</span></dd></div>` : ""}<div><dt>Grasa</dt><dd>${esc(x.f)}<span class="eye">A ojo: ${esc(x.fE)}</span></dd></div></dl>`}
+      ${eatList(k, x.id)}
     </li>`;
   }).join("");
 
@@ -269,7 +368,8 @@ function renderFood() {
     ${timeline(k)}
     <div class="row" style="margin-top:10px"><button type="button" class="btn" data-act="to-day">${hasPlanBlocks(k) ? "Actualizar Mi día con este horario" : "Poner este horario en Mi día"}</button></div>
     <h2>Comidas de ${esc(dayLabel(k).toLowerCase())} <span class="cnt">${mealsDone}/3</span></h2>
-    <ul class="hlist">${meals}</ul>
+    ${eatSummary(k, rest)}
+    <ul class="hlist">${meals}<li class="hcard"><div class="hrow"><div class="htx"><span class="hk">Cuando sea</span><b class="ht">Algo fuera del plan</b></div></div><p class="sug muted">Algo rápido mientras trabajaba, un fresco, una galleta… todo cuenta.</p>${eatList(k, "x")}</li></ul>
     <h2>Hábitos del día <span class="cnt">${habDone}/${FOOD.habits.length}</span></h2>
     <ul class="hlist2">${habits}</ul>
     <h2>Guía</h2>
@@ -379,7 +479,7 @@ const KIND_INFO = {
 let calMsg = { kind: "", text: "" };
 
 const isGc = (b) => String(b.id).startsWith("gc_");
-const isMovable = (b) => /^(pl_|cb_)/.test(String(b.id)) && !FIXED_IDS.includes(b.id) && !isGc(b);
+const isMovable = (b) => /^(pl_|cb_)/.test(String(b.id)) && !FIXED_IDS.includes(b.id) && !isGc(b) && !b.fx;
 const isMeal = (b) => /^pl_m[123]$/.test(b.id);
 
 function calKind(ev) {
@@ -437,8 +537,8 @@ function reconcile(k, input) {
   fixed.sort((a, b) => a.s - b.s);
   fixed.forEach((b) => {
     const hit = overlaps(b.s, b.e, false);
-    if (hit && isGc(b) && hit[4]) notes.push(`Choque: "${b.t}" y "${hit[3]}" son a la misma hora. Escoja uno.`);
-    occ.push([b.s, b.e, isGc(b) && (b.k === "class" || b.k === "english"), b.t, isGc(b)]);
+    if (hit && (isGc(b) || b.fx) && (hit[4] || hit[5])) notes.push(`Choque: "${b.t}" y "${hit[3]}" son a la misma hora. Escoja uno.`);
+    occ.push([b.s, b.e, isGc(b) && (b.k === "class" || b.k === "english"), b.t, isGc(b), !!b.fx]);
   });
   fixed.filter((b) => isGc(b) && b.e > 1290).forEach((b) => notes.push(`"${b.t}" termina a las ${fmtTime(b.e)}: acuéstese apenas termine.`));
 
@@ -523,7 +623,7 @@ function applyCalDay_(k, list) {
   if (JSON.stringify(hOf(k).notes || []) !== JSON.stringify(r.notes)) hSet(k, { notes: r.notes });
   return true;
 }
-/* Cambios que Carlos le pide a Jarvis en el chat: item "op_<n>" con { date, add:[{t,s,e,c,n}], remove:["título o id"], slot:"am"|"pm" } */
+/* Cambios que Carlos le pide a Jarvis en el chat: item "op_<n>" con { date, add:[{t,s,e,c,n}], remove:["título o id"], slot:"am"|"pm", gym:<minutos>|-1, eat:[{m:"m1|m2|m3|x",txt,at,p,c,f,kcal}], eatReplace:["m1"] } */
 function applyOp(o) {
   // Semana base nueva: { tpl: { "0": [bloques], … "6": [bloques] } }
   if (o && o.tpl && typeof o.tpl === "object") {
@@ -543,6 +643,12 @@ function applyOp(o) {
   try {
     const tg = { kind: "plan", date: k };
     if (o.slot === "am" || o.slot === "pm") { hSet(k, { slot: o.slot }); applyToDay(k); }
+    if (o.gym === -1 || (isFinite(+o.gym) && o.gym !== null && o.gym !== "" && +o.gym >= 0 && +o.gym < 1440)) { hSet(k, { gymAt: Math.round(+o.gym) }); applyToDay(k); }
+    if (Array.isArray(o.eat)) {
+      if (Array.isArray(o.eatReplace)) hSet(k, { eat: eatOf(k).filter((e) => !(e.src === "jarvis" && o.eatReplace.includes(e.m))) });
+      o.eat.slice(0, 20).forEach((e) => eatAdd(k, Object.assign({}, e, { src: "jarvis" })));
+      if (!o.add && !o.remove && !o.slot && o.gym == null) return true;
+    }
     let bl = blocksOf(tg);
     if (!bl.length) bl = blocksOf({ kind: "tpl", wd: parseKey(k).getDay() }).map((b) => Object.assign(clone(b), { id: /^(pl_|cb_)/.test(String(b.id)) ? b.id : uid(), done: false }));
     const rm = (Array.isArray(o.remove) ? o.remove : []).map((x) => String(x).toLowerCase());

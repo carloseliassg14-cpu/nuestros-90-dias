@@ -548,6 +548,60 @@ function delExtra(id) {
   hSet(k, { extra: (h.extra || []).filter((y) => y.id !== id), sets, done });
 }
 
+
+/* ---------- cómo se hace cada ejercicio ---------- */
+// Fotos: Free Exercise DB (dominio público, Unlicense), copiadas en /ex/<id>_0.jpg y _1.jpg
+const EXI = {
+  "Press de banca": { img: "Barbell_Bench_Press_-_Medium_Grip", m: "Pecho, tríceps y hombro delantero", how: ["Acostado, ojos debajo de la barra, pies firmes en el piso y omóplatos juntos y hacia abajo.", "Agarre un poco más ancho que los hombros. Baje la barra controlada hasta la parte baja del pecho, codos a unos 45° del cuerpo.", "Empuje hacia arriba y un poco hacia atrás, sin despegar los glúteos del banco."], err: "Abrir los codos a 90° (lastima el hombro) o rebotar la barra en el pecho." },
+  "Press inclinado con mancuernas": { img: "Incline_Dumbbell_Press", m: "Parte alta del pecho y hombro delantero", how: ["Banco a 30°, no más: más inclinado trabaja sobre todo hombro.", "Mancuernas a los lados del pecho, codos un poco por debajo de los hombros.", "Empuje hacia arriba juntando las mancuernas sin chocarlas. Baje en 2 segundos."], err: "Banco muy inclinado o bajar las mancuernas sin control." },
+  "Fondos": { img: "Dips_-_Chest_Version", m: "Pecho bajo y tríceps", how: ["En las paralelas, brazos estirados, cuerpo un poco inclinado hacia adelante.", "Baje doblando los codos hasta que los brazos queden paralelos al piso.", "Suba empujando sin bloquear de golpe los codos."], err: "Bajar demasiado: si le molesta el hombro, quédese más arriba." },
+  "Aperturas en polea": { img: "Cable_Crossover", m: "Pecho", how: ["Poleas arriba, un paso adelante, codos un poco doblados y fijos.", "Junte las manos al frente y abajo como si abrazara un árbol.", "Regrese lento hasta sentir el estiramiento del pecho."], err: "Doblar y estirar los codos: se vuelve un press y deja de trabajar el pecho." },
+  "Extensión de tríceps en polea": { img: "Triceps_Pushdown", m: "Tríceps", how: ["De frente a la polea alta, codos pegados al cuerpo.", "Empuje hacia abajo hasta estirar por completo los brazos.", "Suba solo hasta que el antebrazo quede paralelo al piso. Los codos no se mueven."], err: "Separar los codos del cuerpo o tirar con el peso del cuerpo." },
+  "Press francés": { img: "Lying_Triceps_Press", m: "Tríceps", how: ["Acostado en el banco, barra Z o mancuernas arriba con los brazos estirados.", "Doble solo los codos y baje el peso hacia la frente o un poco detrás de la cabeza.", "Estire los brazos sin mover los codos de su sitio."], err: "Abrir los codos hacia los lados o mover los hombros." },
+  "Dominadas": { img: "Pullups", m: "Espalda (dorsal) y bíceps", how: ["Agarre un poco más ancho que los hombros, palmas hacia adelante.", "Baje los hombros primero y jale los codos hacia las costillas hasta pasar la barbilla de la barra.", "Baje controlado hasta estirar los brazos."], err: "Balancearse o hacer medias repeticiones. Si no salen, use la máquina asistida o una banda." },
+  "Remo con barra": { img: "Bent_Over_Barbell_Row", m: "Espalda media, dorsal y bíceps", how: ["Rodillas un poco dobladas, torso inclinado a unos 45°, espalda recta.", "Jale la barra hacia el ombligo llevando los codos atrás.", "Apriete la espalda un segundo arriba y baje controlado."], err: "Redondear la espalda baja o levantar el torso para subir más peso." },
+  "Jalón al pecho": { img: "Wide-Grip_Lat_Pulldown", m: "Dorsal ancho y bíceps", how: ["Sentado con las piernas trabadas, agarre ancho.", "Saque el pecho y jale la barra hasta la parte alta del pecho, codos hacia abajo y atrás.", "Suba lento hasta estirar los brazos."], err: "Echarse muy hacia atrás o jalar detrás de la nuca." },
+  "Remo con mancuerna": { img: "One-Arm_Dumbbell_Row", m: "Dorsal y espalda media", how: ["Una rodilla y una mano en el banco, espalda plana.", "Jale la mancuerna hacia la cadera, no hacia el hombro.", "Baje hasta estirar el brazo y sentir la espalda."], err: "Girar el torso para subir el peso." },
+  "Curl con barra": { img: "Barbell_Curl", m: "Bíceps", how: ["De pie, codos pegados al cuerpo, agarre al ancho de los hombros.", "Suba la barra doblando solo los codos.", "Baje en 2 a 3 segundos hasta estirar los brazos."], err: "Balancear el cuerpo para subir la barra." },
+  "Curl martillo": { img: "Hammer_Curls", m: "Bíceps y antebrazo (braquial)", how: ["Mancuernas con las palmas mirándose, como si agarrara un martillo.", "Suba sin girar la muñeca, codos fijos.", "Baje controlado."], err: "Mover los codos hacia adelante." },
+  "Sentadilla": { img: "Barbell_Squat", m: "Cuádriceps, glúteos y core", how: ["Barra sobre la parte alta de la espalda, pies al ancho de los hombros, puntas un poco abiertas.", "Respire, apriete el abdomen y baje como si se sentara, rodillas en la dirección de los pies.", "Baje hasta que el muslo quede paralelo al piso o un poco más, y suba empujando con todo el pie."], err: "Que las rodillas se vayan hacia adentro o que la espalda baja se redondee abajo." },
+  "Peso muerto rumano": { img: "Romanian_Deadlift", m: "Femorales, glúteos y espalda baja", how: ["De pie con la barra, rodillas apenas dobladas y fijas.", "Lleve la cadera hacia atrás y baje la barra pegada a las piernas, espalda recta.", "Baje hasta sentir que estiran los femorales (más o menos debajo de la rodilla) y suba empujando la cadera al frente."], err: "Redondear la espalda o convertirlo en sentadilla doblando mucho las rodillas." },
+  "Prensa": { img: "Leg_Press", m: "Cuádriceps y glúteos", how: ["Espalda y cadera pegadas al respaldo, pies al ancho de los hombros en la mitad de la plataforma.", "Baje hasta que las rodillas lleguen a unos 90° sin que se despegue la cadera.", "Empuje sin bloquear las rodillas arriba."], err: "Bajar tanto que la cadera se despega del asiento: carga la espalda baja." },
+  "Zancadas": { img: "Dumbbell_Lunges", m: "Cuádriceps y glúteos", how: ["Mancuernas a los lados, un paso largo al frente.", "Baje hasta que la rodilla de atrás casi toque el piso, torso recto.", "Empuje con el talón de adelante para volver o avanzar."], err: "Paso muy corto: la rodilla de adelante se va muy por delante del pie." },
+  "Curl femoral": { img: "Lying_Leg_Curls", m: "Femorales", how: ["Acostado boca abajo, el rodillo justo arriba de los talones.", "Doble las rodillas llevando los talones hacia los glúteos.", "Baje lento, sin dejar caer el peso."], err: "Levantar la cadera del banco para ayudarse." },
+  "Pantorrilla": { img: "Standing_Calf_Raises", m: "Pantorrillas", how: ["Puntas en el borde de un escalón o la máquina, talones al aire.", "Baje los talones lo más que pueda y sostenga 1 segundo.", "Suba lo más alto posible y apriete arriba."], err: "Rebotar rápido: la pantorrilla crece con el estiramiento y la pausa." },
+  "Press militar": { img: "Standing_Military_Press", m: "Hombros y tríceps", how: ["De pie, barra a la altura de la clavícula, glúteos y abdomen apretados.", "Empuje la barra hacia arriba y meta la cabeza por debajo cuando pase la cara.", "Baje controlado a la clavícula."], err: "Arquear mucho la espalda baja para empujar." },
+  "Elevaciones laterales": { img: "Side_Lateral_Raise", m: "Hombro lateral", how: ["De pie, mancuernas a los lados, codos un poco doblados.", "Suba los brazos hacia los lados hasta la altura de los hombros, como si echara agua de una jarra.", "Baje en 2 a 3 segundos."], err: "Subir con impulso o pasar de la altura del hombro con mucho peso." },
+  "Face pull": { img: "Face_Pull", m: "Hombro posterior y manguito rotador", how: ["Polea a la altura de la cara con cuerda.", "Jale hacia la cara separando las manos, codos altos.", "Termine con las manos a los lados de las orejas y regrese lento."], err: "Jalar hacia el pecho con los codos abajo: se vuelve un remo." },
+  "Pájaros (deltoide posterior)": { img: "Seated_Bent-Over_Rear_Delt_Raise", m: "Hombro posterior", how: ["Sentado e inclinado hacia adelante con el pecho cerca de las piernas.", "Abra los brazos hacia los lados con los codos un poco doblados.", "Baje controlado. Peso liviano."], err: "Jalar con la espalda en vez del hombro." },
+  "Encogimientos": { img: "Crunches", m: "Abdomen", how: ["Encogimiento abdominal (crunch): acostado, rodillas dobladas, manos a los lados de la cabeza.", "Despegue los hombros del piso apretando el abdomen, sin jalar el cuello.", "Baje lento sin descansar del todo arriba."], err: "Jalar la cabeza con las manos." },
+  "Elevación de piernas colgado": { img: "Hanging_Leg_Raise", m: "Abdomen bajo", how: ["Colgado de la barra, brazos estirados.", "Suba las piernas (dobladas o rectas) inclinando la pelvis hacia arriba.", "Baje lento sin balancearse."], err: "Balancearse: el impulso hace el trabajo y no el abdomen." },
+  "Remo 500 m o bici 1 km": { img: "Rowing_Stationary", m: "Cuerpo completo y cardio", how: ["En el remo: primero empujan las piernas, después se inclina un poco el torso y al final jalan los brazos.", "Regrese al revés: brazos, torso y piernas.", "Ritmo que pueda sostener en todas las rondas."], err: "Jalar solo con los brazos." },
+  "Zancadas con peso": { img: "Dumbbell_Lunges", m: "Piernas y glúteos", how: ["Mancuernas o kettlebells a los lados.", "Pasos largos, rodilla de atrás cerca del piso.", "Torso recto todo el tiempo."], err: "Pasos cortos y torso inclinado." },
+  "Wall balls": { img: "", m: "Piernas, hombros y cardio", how: ["De frente a la pared con una pelota medicinal al pecho.", "Haga una sentadilla completa y, al subir, lance la pelota a una marca alta en la pared.", "Atrápela y baje directo a la siguiente sentadilla."], err: "No bajar completo en la sentadilla." },
+  "Burpees": { img: "", m: "Cuerpo completo y cardio", how: ["De pie, baje y ponga las manos en el piso.", "Salte con los pies atrás, pecho al piso.", "Suba, traiga los pies a las manos y salte con las manos arriba."], err: "Arquear la espalda baja al llegar al piso." },
+  "Cargadas con kettlebell": { img: "One-Arm_Kettlebell_Clean", m: "Cadera, espalda y hombros", how: ["Kettlebell entre los pies, cadera atrás, espalda recta.", "Empuje la cadera al frente con fuerza y lleve la pesa pegada al cuerpo hasta el hombro.", "La pesa rueda alrededor de la mano, sin golpear el antebrazo."], err: "Subirla con el brazo en vez de con la cadera." },
+  "Plancha": { img: "Plank", m: "Core", how: ["Antebrazos en el piso, codos debajo de los hombros.", "Cuerpo recto de la cabeza a los talones, glúteos y abdomen apretados.", "Respire normal y aguante el tiempo."], err: "Cadera muy alta o hundida." },
+  "Dead bug": { img: "Dead_Bug", m: "Core (abdomen profundo)", how: ["Boca arriba, brazos al techo, rodillas a 90°.", "Pegue la espalda baja al piso y estire un brazo y la pierna contraria.", "Vuelva y cambie de lado, lento."], err: "Que la espalda baja se despegue del piso." },
+  "Pallof press": { img: "Pallof_Press", m: "Core (antirrotación)", how: ["De lado a la polea a la altura del pecho, agarre con las dos manos.", "Estire los brazos al frente sin dejar que el cuerpo gire.", "Sostenga 2 segundos y regrese."], err: "Girar el torso hacia la polea." },
+  "Rueda abdominal": { img: "Ab_Roller", m: "Core completo", how: ["De rodillas con la rueda bajo los hombros.", "Ruede hacia adelante con el abdomen apretado y la espalda sin hundirse.", "Vuelva jalando con el abdomen."], err: "Ir más lejos de lo que puede controlar: la espalda baja se hunde." }
+};
+const exImg = (id, n) => `ex/${id}_${n}.jpg`;
+function exThumb(x) {
+  const e = EXI[x.t]; if (!e) return "";
+  return `<button type="button" class="exth" data-act="ex-how" data-ex="${esc(x.t)}" aria-label="Cómo se hace ${esc(x.t)}">${e.img ? `<img src="${exImg(e.img, 1)}" alt="" loading="lazy">` : `<span>?</span>`}</button>`;
+}
+function openExHow(name) {
+  const e = EXI[name]; if (!e) return;
+  const yt = "https://www.youtube.com/results?search_query=" + encodeURIComponent("cómo hacer " + name + " técnica correcta");
+  openSheet(`<h3>${esc(name)}</h3><p class="hint">${esc(e.m)}</p>
+    ${e.img ? `<div class="exanim"><img src="${exImg(e.img, 0)}" alt="Posición inicial de ${esc(name)}"><img src="${exImg(e.img, 1)}" alt="Posición final de ${esc(name)}"></div>` : ""}
+    <ol class="hol exhow">${e.how.map((h) => `<li>${esc(h)}</li>`).join("")}</ol>
+    <p class="exerr"><b>Error común:</b> ${esc(e.err)}</p>
+    <div class="acts"><a class="btn" href="${yt}" target="_blank" rel="noopener">Ver videos</a><button type="button" class="btn pri" data-act="close">Entendido</button></div>
+    ${e.img ? `<p class="hfoot muted">Fotos: Free Exercise DB (dominio público).</p>` : ""}`, { type: "exhow" });
+}
+
 /* ---------- series: peso y repeticiones de cada serie ---------- */
 // h.sets = { "Press de banca": [{ w, r, ok }] } · h.wu = "kg" | "lb"
 const nSets = (r) => { const m = /^(\d+)\s*×/.exec(String(r || "")); return m ? +m[1] : 0; };
@@ -715,7 +769,7 @@ function renderTrain() {
   const list = items.map((x) => {
     const ns = nSets(x.r), rr = ns ? `${ns} series de ${repGoal(x.r)} repeticiones` : x.r;
     const nOk = ns ? setsOf(k, x.t).filter((y) => y && y.ok).length : 0;
-    return `<li class="hl${done["t_" + x.id] ? " ok" : ""}${ns ? " hasets" : ""}"><div class="htx"><b class="ht">${esc(x.t)}</b>${rr ? `<span class="hr">${esc(rr)}${ns ? ` · ${nOk}/${ns}` : ""}</span>` : ""}${x.n ? `<span class="hn">${esc(x.n)}</span>` : ""}</div>${tick(!!done["t_" + x.id], "h-tick", `data-key="t_${x.id}"`, x.t)}${ns ? setsBlock(k, x, ns) : ""}</li>`;
+    return `<li class="hl${done["t_" + x.id] ? " ok" : ""}${ns ? " hasets" : ""}">${exThumb(x)}<div class="htx"><b class="ht">${esc(x.t)}</b>${rr ? `<span class="hr">${esc(rr)}${ns ? ` · ${nOk}/${ns}` : ""}</span>` : ""}${x.n ? `<span class="hn">${esc(x.n)}</span>` : ""}${EXI[x.t] ? `<button type="button" class="exlink sm" data-act="ex-how" data-ex="${esc(x.t)}">Cómo se hace ›</button>` : ""}</div>${tick(!!done["t_" + x.id], "h-tick", `data-key="t_${x.id}"`, x.t)}${ns ? setsBlock(k, x, ns) : ""}</li>`;
   }).join("");
 
   const checks = checksFor(k).map((c) => {
@@ -765,7 +819,7 @@ function renderTrain() {
       ${coachTip(k)}
     </div>
     <h2>Sesión <span class="cnt">${nDone}/${items.length}</span></h2>
-    <div class="shead"><p class="hnote">Anote el peso y las repeticiones de cada serie y toque ✓. Si deja vacío, ✓ copia lo de la vez pasada. Al marcar ✓ arranca el descanso: 2:30 en los pesados, 1:30 en los demás.</p>${unitSeg(k)}</div>
+    <div class="shead"><p class="hnote">Anote el peso y las repeticiones de cada serie y toque ✓. Si deja vacío, ✓ copia lo de la vez pasada. Al marcar ✓ arranca el descanso: 2:30 en los pesados, 1:30 en los demás. Toque la foto de un ejercicio para ver cómo se hace.</p>${unitSeg(k)}</div>
     <ul class="hlist2">${list}</ul>
     ${xList ? `<h2>Extra <span class="cnt">fuera del plan</span></h2><ul class="hlist2">${xList}</ul><p class="hnote">Extras del mismo músculo de hoy: máximo 2 o 3 series en total.</p>` : ""}
     <div class="row" style="margin-top:10px"><button type="button" class="btn" data-act="x-open">+ Agregar ejercicio extra</button></div>
@@ -791,7 +845,7 @@ function renderTrain() {
       <li><b>El cronómetro</b> arranca solo cuando marca ✓ en una serie. Al terminar suena y vibra (el teléfono no puede estar en silencio). También lo puede arrancar con el botón ⏱ de cada ejercicio.</li></ul></details>
     <details class="hdet"><summary>Ejercicios extra con amigos</summary><ul class="hol"><li>Anótelos con "+ Agregar ejercicio extra": nombre, máquina y series. Quedan guardados con peso y repeticiones, y salen marcados como "(extra)" al descargar sus entrenos.</li>
       <li><b>Consejo de entrenador:</b> si el extra es del mismo músculo del día, máximo 2 o 3 series. Más que eso le quita recuperación para la sesión siguiente del plan.</li></ul></details>
-    <details class="hdet"><summary>Core (cierre de lunes, jueves y sábado)</summary><table class="htbl"><tbody>${CORE.map(([a, b]) => `<tr><td>${esc(a)}</td><td>${esc(b)}</td></tr>`).join("")}</tbody></table></details>
+    <details class="hdet"><summary>Core (cierre de lunes, jueves y sábado)</summary><table class="htbl"><tbody>${CORE.map(([a, b]) => `<tr><td>${EXI[a] ? `<button type="button" class="exlink" data-act="ex-how" data-ex="${esc(a)}">${esc(a)} ›</button>` : esc(a)}</td><td>${esc(b)}</td></tr>`).join("")}</tbody></table></details>
     <details class="hdet"><summary>Cómo progresar</summary><ul class="hol">
       <li>Descanso entre series: 2:30 min en los básicos pesados (press, dominadas, remos, sentadilla, peso muerto, prensa, fondos), 1:30 min en los de aislamiento y 1 min en el core. Al cambiar de ejercicio, 2 min. El cronómetro arranca solo cuando marca ✓ en una serie.</li>
       <li>Deje 1 o 2 repeticiones en reserva en cada serie. No entrene al fallo, salvo en la última serie de los ejercicios de aislamiento.</li>

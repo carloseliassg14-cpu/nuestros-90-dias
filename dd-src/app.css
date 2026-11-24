@@ -427,3 +427,17 @@ textarea.fi{resize:vertical;min-height:72px;font:inherit}
 body:has(.restbar.show) .toast{bottom:calc(var(--tabh) + 110px + env(safe-area-inset-bottom,0px))}
 body:has(.restbar.show) .wrap{padding-bottom:calc(var(--tabh) + 120px + env(safe-area-inset-bottom,0px))}
 .sheet .coach{margin:-4px 0 14px}
+/* cómo se hace */
+.exth{flex:none;width:52px;height:52px;border-radius:12px;overflow:hidden;border:0;padding:0;background:var(--bg);display:grid;place-items:center;align-self:flex-start;margin-top:2px}
+.exth img{width:100%;height:100%;object-fit:cover}
+.exth span{font-weight:800;color:var(--soft);font-size:18px}
+.exanim{position:relative;aspect-ratio:3/2;border-radius:16px;overflow:hidden;background:var(--card);margin:4px 0 12px}
+.exanim img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.exanim img:last-child{animation:exflip 2.4s steps(1) infinite}
+@keyframes exflip{0%{opacity:0}50%{opacity:1}}
+@media(prefers-reduced-motion:reduce){.exanim img:last-child{animation:none;opacity:0}}
+.exhow{margin:0 0 10px}
+.exerr{font-size:14.5px;padding:10px 12px;border-radius:14px;background:color-mix(in srgb,var(--warn) 12%,var(--bg));margin:0 0 14px}
+.exlink{border:0;background:none;padding:0;font:inherit;font-weight:600;color:inherit;text-decoration:underline;text-underline-offset:3px}
+.sheet .acts a.btn{text-decoration:none;color:inherit}
+.exlink.sm{font-size:13px;color:var(--soft);justify-self:start;text-align:left;margin-top:2px}

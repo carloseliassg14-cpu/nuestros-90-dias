@@ -967,6 +967,7 @@ document.addEventListener("click", (ev) => {
     case "set-ok": S.svUntil = 0; S.dirty = false; setOk(S.hDate, el.dataset.ex, +el.dataset.i, +el.dataset.n, el.dataset.id); render(); break;
     case "wu": { lsSet("dd.wu", el.dataset.v); hSet(S.hDate, { wu: el.dataset.v }); render(); break; }
     case "tr-exp": exportTrain(el.dataset.v); break;
+    case "ex-how": openExHow(el.dataset.ex); break;
     case "x-open": openExtraSheet(); break;
     case "x-ns": sheetCtx.ns = +el.dataset.v; document.querySelectorAll("[data-act=x-ns]").forEach((b) => b.setAttribute("aria-pressed", String(b === el))); break;
     case "x-rg": sheetCtx.rg = el.dataset.v; document.querySelectorAll("[data-act=x-rg]").forEach((b) => b.setAttribute("aria-pressed", String(b === el))); break;

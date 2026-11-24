@@ -489,3 +489,15 @@ body:has(.restbar.show) .wrap{padding-bottom:calc(var(--tabh) + 120px + env(safe
 .wtrow{flex-basis:100%;margin-top:8px}
 .rtbtn.go{border-style:solid;border-color:var(--ink);color:var(--ink);background:var(--bg);font-weight:700}
 .htbl .rtbtn.go{margin-top:6px;padding:4px 10px;font-size:12.5px}
+/* ideas de comida */
+.btn.idea{background:color-mix(in srgb,var(--warn) 16%,var(--bg));border-color:color-mix(in srgb,var(--warn) 45%,transparent)}
+.ilist{display:grid;gap:10px;margin-bottom:12px}
+.icard{border:1px solid var(--line);background:var(--card);border-radius:16px;padding:12px;display:grid;gap:6px;justify-items:start}
+.icard .ih{display:grid;gap:4px}
+.icard .ih b{font-size:15.5px}
+.icard p{margin:0;font-size:14.5px}
+.icard .imac{font-size:13.5px;color:var(--soft)}
+.icard .imac b{color:var(--ink)}
+.icard .itip{font-size:13px;color:var(--soft);font-style:italic}
+.icard .tg{background:var(--bg)}
+.icard .btn{background:var(--ink);color:var(--bg);border-color:var(--ink)}

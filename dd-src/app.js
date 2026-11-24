@@ -990,6 +990,9 @@ document.addEventListener("click", (ev) => {
     case "g-open": openGymSheet(); break;
     case "g-set": saveGym(el.dataset.v === "" ? null : +el.dataset.v); render(); break;
     case "g-custom": { const v = toMin(($("gTime") || {}).value); if (isFinite(v) && v < 1440) { saveGym(v); render(); } else toast(t.writeErr); break; }
+    case "idea-open": openIdeas(el.dataset.m); break;
+    case "idea-f": openIdeas(el.dataset.m, el.dataset.v); break;
+    case "idea-eat": eatIdea(el.dataset.m, +el.dataset.i); break;
     case "eat-open": openEatSheet(el.dataset.m); break;
     case "eat-save": saveEat(); break;
     case "eat-plan": { const m = el.dataset.m, rest = parseKey(S.hDate).getDay() === 0, mac = PLAN_MAC[m][rest ? "rest" : "train"]; eatAdd(S.hDate, Object.assign({ m, txt: "Lo del plan" }, mac)); render(); toast("Anotado: lo del plan"); break; }

@@ -81,6 +81,72 @@ function eatAdd(k, entry) {
   hSet(k, { eat: L.slice(-40), done });
   return true;
 }
+
+/* ---------- ideas de comida (Costa Rica): en la calle o en la casa ----------
+   Números aproximados con valores estándar de los alimentos (cocidos). Meta por comida: 40–70 g de proteína. */
+const I = (t, where, w, what, p, c, f, kcal, tip) => ({ t, where, w, what, p, c, f, kcal, tip });
+const IDEAS = {
+  m2: [
+    I("Yogur griego, banano y maní", "calle", "Sin pesar", "2 vasos de yogur griego natural (≈300 g) + 1 banano + 1 bolsita de maní sin sal (≈30 g)", 39, 44, 14, 460, "Busque el yogur que diga 9 g o más de proteína por cada 100 g y sin azúcar añadida."),
+    I("Pollo rostizado y fruta", "calle", "Sin pesar", "½ pechuga de pollo rostizado sin piel (≈150 g) + 1 banano + 1 manzana", 46, 52, 6, 440, "El pollo rostizado del súper (Maxi Palí, Más x Menos, Walmart) es de lo más fácil en la calle. Quítele la piel."),
+    I("Atún, huevos duros y tortillas", "calle", "Sin pesar", "1 lata de atún en agua + 2 huevos duros + 4 tortillas de maíz", 43, 49, 14, 500, "Lleve los huevos ya hervidos de la casa. Busque latas de atún que abren sin abrelatas."),
+    I("Batido de proteína y banano", "calle", "Sin pesar", "1 medida de proteína en polvo (≈30 g) en 300 ml de leche descremada + 1 banano + 1 cucharada de maní", 39, 47, 9, 410, "Opcional. La proteína en polvo es práctica cuando no llega con comida (ISSN). Revise la etiqueta: 20–25 g de proteína por medida y poca azúcar."),
+    I("Pavo, queso y tortillas", "calle", "Sin pesar", "100 g de jamón de pavo + 60 g de queso tierno o Turrialba + 3 tortillas + 1 fruta", 34, 59, 16, 520, "Escoja el jamón que diga pechuga de pavo y no tenga mucho sodio."),
+    I("Huevos duros, leche y banano", "calle", "Sin pesar", "4 huevos duros + 1 cajita de leche descremada (250 ml) + 1 banano", 34, 41, 20, 480, ""),
+    I("Huevos, yogur, banano y avena", "casa", "Con balanza", "3 huevos duros + 170 g de yogur griego + 1 banano + 40 g de avena", 41, 62, 18, 570, "La del plan. Ideal 1 a 2 horas antes del gym."),
+    I("Pollo desmechado con plátano maduro", "casa", "Con balanza", "130 g de pollo desmechado + 100 g de plátano maduro al horno", 41, 31, 5, 335, ""),
+    I("Pechuga, frijoles y aguacate", "casa", "Con balanza", "100 g de pechuga a la plancha + ¾ de taza de frijoles + ¼ de aguacate", 41, 33, 9, 390, ""),
+    I("Gallo pinto con huevo y leche", "casa", "A ojo", "1 taza de gallo pinto + 3 huevos revueltos (con poco aceite) + 1 vaso de leche descremada", 36, 58, 22, 570, "Lo tico de siempre: con 3 huevos y la leche llega a la proteína."),
+    I("Yogur griego con piña y maní", "casa", "Con balanza", "300 g de yogur griego + 1 taza de piña + 15 g de maní", 35, 36, 7, 350, ""),
+    I("Omelette con queso y banano", "casa", "A ojo", "3 huevos + 2 claras + 40 g de queso tierno, espinaca y tomate + 1 banano", 33, 30, 20, 475, ""),
+    I("Tostadas con atún y aguacate", "casa", "A ojo", "2 rebanadas de pan integral + 1 lata de atún + ¼ de aguacate + tomate y limón", 32, 29, 8, 320, "Si el gym es pesado, agregue 1 fruta."),
+    I("Ceviche de pescado con galletas", "casa", "Con balanza", "Ceviche de 150 g de pescado (sin pepino) + 1 taza de papaya + 4 galletas de soda", 34, 39, 5, 330, ""),
+    I("Carne molida con yuca", "casa", "Con balanza", "110 g de carne molida magra + 80 g de yuca + pico de gallo", 30, 34, 9, 345, "")
+  ],
+  m1: [
+    I("Casado limpio en la soda", "calle", "A ojo", "Pida pollo o pescado a la plancha (porción doble si se puede), arroz, frijoles y ensalada sin aderezo. Sin frito ni maduro frito.", 65, 100, 22, 890, "Números estimados: en la soda no se puede pesar. Pida la ensalada sin mayonesa."),
+    I("Pollo rostizado con papas", "calle", "Sin pesar", "1 pechuga de pollo rostizado sin piel + papas asadas o en puré (sin mantequilla) + ensalada + 1 fruta", 66, 95, 10, 760, ""),
+    I("Casado limpio en la casa", "casa", "Con balanza", "200 g de pechuga a la plancha + 150 g de arroz + 130 g de frijoles + 50 g de plátano maduro + ensalada con 1 cucharadita de aceite", 76, 92, 14, 840, ""),
+    I("Bistec de res con yuca", "casa", "Con balanza", "200 g de bistec de res magro + 250 g de yuca + ensalada + 1 fruta", 60, 118, 15, 880, ""),
+    I("Pescado con camote", "casa", "Con balanza", "220 g de pescado (tilapia o corvina) + 350 g de camote + verdura + ½ aguacate", 56, 82, 13, 680, "Agregue 1 fruta en días de gym fuerte.")
+  ],
+  m3: [
+    I("Pollo rostizado con ensalada y papa", "calle", "Sin pesar", "1 pechuga de pollo rostizado sin piel + ensalada del súper (sin aderezo cremoso) + 1 papa asada", 60, 40, 10, 500, "Si entrenó fuerte hoy, agregue 1 tortilla o 1 fruta."),
+    I("Arroz con pollo casero", "casa", "Con balanza", "200 g de pollo desmechado + 200 g de arroz + chile dulce, zanahoria y culantro + 1 cucharadita de aceite", 67, 64, 13, 675, ""),
+    I("Tacos de carne molida", "casa", "Con balanza", "180 g de carne molida magra + 4 tortillas de maíz + pico de gallo + ¼ de aguacate", 53, 54, 23, 650, ""),
+    I("Pescado al ajillo con papa", "casa", "Con balanza", "200 g de pescado + 300 g de papa + verdura + 1 cucharada de aceite de oliva con ajo", 50, 65, 17, 610, ""),
+    I("Huevos rancheros con frijoles", "casa", "A ojo", "4 huevos + 3 claras + ¾ de taza de frijoles + 2 tortillas + pico de gallo", 48, 57, 22, 650, "")
+  ]
+};
+IDEAS.x = IDEAS.m2;
+const SHOP = [
+  ["Proteína", "pechuga de pollo, huevos, atún en agua, yogur griego natural sin azúcar, carne molida magra, pescado (tilapia o corvina), queso tierno o Turrialba, jamón de pechuga de pavo, leche descremada, proteína en polvo (opcional)"],
+  ["Carbohidrato", "papa, camote, yuca, plátano maduro, arroz, frijoles, tortillas de maíz, avena, pan integral, banano, piña, papaya, manzana"],
+  ["Grasa buena", "maní sin sal, aguacate, aceite de oliva"],
+  ["Verdura", "espinaca, tomate, cebolla morada, chile dulce, brócoli, zanahoria, culantro y limón (sin pepino)"]
+];
+function ideasBtn(m) { return IDEAS[m] ? `<button type="button" class="btn sm idea" data-act="idea-open" data-m="${m}">💡 Ideas</button>` : ""; }
+function openIdeas(m, flt) {
+  const L = IDEAS[m] || [], f = flt || "all";
+  const meta = { m1: "Comida 1: 60–75 g de proteína", m2: "Merienda: 35–45 g de proteína", m3: "Cena: 50–70 g de proteína", x: "Algo rápido: apunte a 30 g o más de proteína" }[m];
+  const chips = [["all", "Todas"], ["calle", "En la calle"], ["casa", "En la casa"]].map(([v, l]) => `<button type="button" class="chip" data-act="idea-f" data-m="${m}" data-v="${v}" aria-pressed="${f === v}">${l}</button>`).join("");
+  const cards = L.map((x, i) => ({ x, i })).filter(({ x }) => f === "all" || x.where === f).map(({ x, i }) => `<div class="icard">
+      <div class="ih"><b>${esc(x.t)}</b><span class="tgs"><i class="tg">${x.where === "calle" ? "En la calle" : "En la casa"}</i><i class="tg">${esc(x.w)}</i></span></div>
+      <p>${esc(x.what)}</p>
+      <p class="imac">Proteína <b>${x.p} g</b> · Carbo ${x.c} g · Grasa ${x.f} g · ${x.kcal} kcal <small>(aprox.)</small></p>
+      ${x.tip ? `<p class="itip">${esc(x.tip)}</p>` : ""}
+      <button type="button" class="btn sm" data-act="idea-eat" data-m="${m}" data-i="${i}">Comí esto</button></div>`).join("");
+  const shop = `<details class="hdet"><summary>Lista del súper para tener en la casa</summary><ul class="hol">${SHOP.map(([a, b]) => `<li><b>${esc(a)}:</b> ${esc(b)}</li>`).join("")}</ul><p class="hnote">Todo se consigue en Maxi Palí, Compre Bien, Más x Menos, Walmart o Pequeño Mundo.</p></details>`;
+  openSheet(`<h3>Ideas: ${esc(MEAL_NAME[m] || "comida")}</h3><p class="hint">${esc(meta)}. Toque "Comí esto" y queda anotado con sus números.</p>
+    <div class="chips" style="margin-bottom:12px">${chips}</div><div class="ilist">${cards}</div>${shop}
+    <div class="acts"><button type="button" class="btn" data-act="close">Cerrar</button></div>`, { type: "ideas", m });
+}
+function eatIdea(m, i) {
+  const x = (IDEAS[m] || [])[i]; if (!x) return;
+  eatAdd(S.hDate, { m, txt: x.t + ": " + x.what, p: x.p, c: x.c, f: x.f, kcal: x.kcal, at: S.hDate === todayKey() ? nowMin() : null });
+  closeSheet(); render(); toast("Anotado: " + x.t);
+}
+
 function eatDel(k, id) { hSet(k, { eat: eatOf(k).filter((e) => e.id !== id) }); }
 function eatList(k, m) {
   const L = eatOf(k).filter((e) => e.m === m);
@@ -88,7 +154,7 @@ function eatList(k, m) {
     const nums = ["p", "c", "f"].filter((x) => has(e[x])).map((x) => `${({ p: "P", c: "C", f: "G" })[x]} ${e[x]} g`).concat(has(e.kcal) ? [`${e.kcal} kcal`] : []);
     return `<li><div><span>${e.at != null ? `<b>${esc(fmtTime(e.at))}</b> · ` : ""}${esc(e.txt || "(sin descripción)")}</span><small>${nums.length ? esc(nums.join(" · ")) : "Sin números: dígale a Jarvis y él lo calcula"}${e.src === "jarvis" ? " · anotado por Jarvis" : ""}</small></div><button type="button" class="eatx" data-act="eat-del" data-id="${esc(e.id)}" aria-label="Borrar">×</button></li>`;
   }).join("");
-  return `<div class="eat">${rows ? `<span class="eath">Lo que comió</span><ul>${rows}</ul>` : ""}<div class="eatb"><button type="button" class="btn sm" data-act="eat-open" data-m="${m}">+ Anotar lo que comí</button>${m !== "x" && !L.length ? `<button type="button" class="btn sm" data-act="eat-plan" data-m="${m}">Comí lo del plan</button>` : ""}</div></div>`;
+  return `<div class="eat">${rows ? `<span class="eath">Lo que comió</span><ul>${rows}</ul>` : ""}<div class="eatb"><button type="button" class="btn sm" data-act="eat-open" data-m="${m}">+ Anotar lo que comí</button>${m !== "x" && !L.length ? `<button type="button" class="btn sm" data-act="eat-plan" data-m="${m}">Comí lo del plan</button>` : ""}${ideasBtn(m)}</div></div>`;
 }
 function openEatSheet(m) {
   const k = S.hDate, isToday = k === todayKey();
@@ -402,6 +468,7 @@ function renderFood() {
       <li><b>Calorías:</b> un poco por debajo de lo que gasta. Meta: bajar 0.25–0.5 kg por semana. Más rápido se pierde más músculo, según la revisión de Helms y cols. Cada 2 semanas se ajusta con su peso real.</li>
       <li><b>Creatina 3–5 g:</b> el suplemento con más evidencia para fuerza y músculo (ISSN).</li>
       <li><b>Magnesio en la noche:</b> la evidencia para el sueño es de baja calidad. Es barato y seguro en dosis normales; tómelo si le ayuda, pero no es lo que hace la diferencia: dormir 7.5 h o más sí.</li></ul></details>
+    <details class="hdet"><summary>Lista del súper para tener en la casa</summary><ul class="hol">${SHOP.map(([a, b]) => `<li><b>${esc(a)}:</b> ${esc(b)}</li>`).join("")}</ul><p class="hnote">En cada comida, el botón 💡 Ideas le da opciones para la calle y para la casa.</p></details>
     <details class="hdet"><summary>Cómo pesar con su balanza (Gynipot GY-A09)</summary><ol class="hol"><li>Enciéndala con ⏻/T y revise que diga <b>g</b>; si no, toque UNIT hasta que salga.</li><li>Ponga el plato vacío y toque ⏻/T: queda en 0 (tara).</li><li>Sirva la proteína hasta el número del plan; toque ⏻/T otra vez y sirva el carbohidrato.</li><li>Pese la comida ya cocida. Mide de 2 en 2 g y hasta 5 kg: sirve para todo, incluso los 15 g de maní.</li><li>Si los números saltan o se apaga sola, cambie las 2 baterías AAA.</li></ol></details>
     <details class="hdet"><summary>8 meriendas limpias</summary><ol class="hol">${FOOD.snacks.map((s) => `<li>${esc(s)}</li>`).join("")}</ol></details>
     <details class="hdet"><summary>Intercambios de carbohidrato (≈ 30 g cada uno)</summary>${tbl(FOOD.carbs, "Alimento", "Cocido")}</details>

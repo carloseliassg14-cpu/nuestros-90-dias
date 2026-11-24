@@ -390,3 +390,23 @@ textarea.fi{resize:vertical;min-height:72px;font:inherit}
 .wkskip{font-size:14px;margin:10px 0 0;color:var(--soft)}
 .jcard.wk .advb{margin-top:12px}
 .coach{margin:0;font-size:14.5px;padding:10px 12px;border-radius:14px;background:var(--bg)}
+/* series */
+.hl.hasets{flex-wrap:wrap}
+.hl.hasets .sets{flex-basis:100%;width:100%}
+.sets{display:grid;gap:6px;margin-top:8px}
+.slast{margin:0 0 2px;font-size:13px;color:var(--soft)}
+.set{display:grid;grid-template-columns:26px 1fr 1fr 40px;gap:8px;align-items:center}
+.set .sn{width:26px;height:26px;border-radius:50%;background:var(--bg);display:grid;place-items:center;font-weight:700;font-size:13px;color:var(--soft)}
+.set.ok .sn{background:var(--good);color:#fff}
+.sf{position:relative;display:block}
+.sf .fi{width:100%;min-height:42px;padding:0 44px 0 12px;font-size:17px;font-weight:600}
+.sf small{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:12px;font-weight:600;color:var(--soft);pointer-events:none}
+.sf .fi::placeholder{color:var(--soft);opacity:.55;font-weight:500}
+.hchk.sm{width:40px;height:40px}
+.shead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:-4px 0 10px}
+.shead .hnote{margin:0;flex:1}
+.useg{display:flex;align-items:center;gap:4px;background:var(--card);border-radius:999px;padding:3px}
+.useg span{font-size:12px;font-weight:600;color:var(--soft);padding:0 6px}
+.useg button{border:0;background:none;border-radius:999px;min-height:32px;min-width:38px;font-weight:700;font-size:14px;color:inherit}
+.useg button[aria-pressed=true]{background:var(--ink);color:var(--bg)}
+.row.exp{flex-wrap:wrap;gap:8px}

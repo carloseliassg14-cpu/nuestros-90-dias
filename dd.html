@@ -406,6 +406,26 @@ textarea.fi{resize:vertical;min-height:72px;font:inherit}
 .wkskip{font-size:14px;margin:10px 0 0;color:var(--soft)}
 .jcard.wk .advb{margin-top:12px}
 .coach{margin:0;font-size:14.5px;padding:10px 12px;border-radius:14px;background:var(--bg)}
+/* series */
+.hl.hasets{flex-wrap:wrap}
+.hl.hasets .sets{flex-basis:100%;width:100%}
+.sets{display:grid;gap:6px;margin-top:8px}
+.slast{margin:0 0 2px;font-size:13px;color:var(--soft)}
+.set{display:grid;grid-template-columns:26px 1fr 1fr 40px;gap:8px;align-items:center}
+.set .sn{width:26px;height:26px;border-radius:50%;background:var(--bg);display:grid;place-items:center;font-weight:700;font-size:13px;color:var(--soft)}
+.set.ok .sn{background:var(--good);color:#fff}
+.sf{position:relative;display:block}
+.sf .fi{width:100%;min-height:42px;padding:0 44px 0 12px;font-size:17px;font-weight:600}
+.sf small{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:12px;font-weight:600;color:var(--soft);pointer-events:none}
+.sf .fi::placeholder{color:var(--soft);opacity:.55;font-weight:500}
+.hchk.sm{width:40px;height:40px}
+.shead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:-4px 0 10px}
+.shead .hnote{margin:0;flex:1}
+.useg{display:flex;align-items:center;gap:4px;background:var(--card);border-radius:999px;padding:3px}
+.useg span{font-size:12px;font-weight:600;color:var(--soft);padding:0 6px}
+.useg button{border:0;background:none;border-radius:999px;min-height:32px;min-width:38px;font-weight:700;font-size:14px;color:inherit}
+.useg button[aria-pressed=true]{background:var(--ink);color:var(--bg)}
+.row.exp{flex-wrap:wrap;gap:8px}
 
 </style>
 </head>
@@ -2139,6 +2159,90 @@ function coachTip(k) {
   return `<p class="coach"><b>Jarvis:</b> ${esc(SESS_TIP[ix] || "")}</p>`;
 }
 
+
+/* ---------- series: peso y repeticiones de cada serie ---------- */
+// h.sets = { "Press de banca": [{ w, r, ok }] } · h.wu = "kg" | "lb"
+const nSets = (r) => { const m = /^(\d+)\s*×/.exec(String(r || "")); return m ? +m[1] : 0; };
+const repGoal = (r) => { const m = /×\s*([\d–-]+)/.exec(String(r || "")); return m ? m[1] : ""; };
+const wUnit = (k) => hOf(k).wu || lsGet("dd.wu", "kg");
+const setsOf = (k, name) => ((hOf(k).sets || {})[name] || []);
+function lastSets(name, beforeKey) {          // la última vez que hizo ese ejercicio
+  let best = null;
+  Object.entries(D.plans).forEach(([id, v]) => {
+    if (!id.startsWith("h_carlos_") || !v || !v.sets || !v.date || v.date >= beforeKey) return;
+    const L = (v.sets[name] || []).filter((x) => has(x.w) || has(x.r));
+    if (L.length && (!best || v.date > best.date)) best = { date: v.date, sets: L, u: v.wu || "kg" };
+  });
+  return best;
+}
+function setPut(k, name, i, patch, total) {
+  const all = clone(hOf(k).sets || {}), L = (all[name] || []).slice();
+  while (L.length < total) L.push({});
+  L[i] = Object.assign({}, L[i], patch);
+  Object.keys(L[i]).forEach((x) => { if (L[i][x] == null || L[i][x] === "") delete L[i][x]; });
+  all[name] = L;
+  const patchH = { sets: all };
+  if (!hOf(k).wu) patchH.wu = wUnit(k);
+  hSet(k, patchH);
+}
+function setsBlock(k, x, total) {
+  const L = setsOf(k, x.t), last = lastSets(x.t, k), u = wUnit(k), goal = repGoal(x.r);
+  const lastTxt = last ? `La vez pasada (${esc(shortDate(last.date))}): ${esc(last.sets.map((s) => `${has(s.w) ? fmtNum(s.w, s.w % 1 ? 1 : 0) : "—"}${last.u === u ? "" : " " + last.u} × ${has(s.r) ? s.r : "—"}`).join(" · "))}${last.u === u ? " " + u : ""}` : "Primera vez: escoja un peso con el que llegue a " + esc(goal) + " repeticiones dejando 1 o 2 en reserva.";
+  const rows = Array.from({ length: total }, (_, i) => {
+    const c = L[i] || {}, ph = (last && last.sets[i]) || L[i - 1] || {};
+    return `<div class="set${c.ok ? " ok" : ""}"><span class="sn">${i + 1}</span>
+      <label class="sf"><input class="fi" type="number" inputmode="decimal" step="0.5" min="0" data-sv="w" data-ex="${esc(x.t)}" data-i="${i}" data-n="${total}" value="${has(c.w) ? esc(c.w) : ""}" placeholder="${has(ph.w) ? esc(ph.w) : ""}" aria-label="Peso serie ${i + 1}"><small>${u}</small></label>
+      <label class="sf"><input class="fi" type="number" inputmode="numeric" step="1" min="0" data-sv="r" data-ex="${esc(x.t)}" data-i="${i}" data-n="${total}" value="${has(c.r) ? esc(c.r) : ""}" placeholder="${has(ph.r) ? esc(ph.r) : esc(String(goal).split(/[–-]/).pop())}" aria-label="Repeticiones serie ${i + 1}"><small>reps</small></label>
+      <button type="button" class="hchk sm${c.ok ? " on" : ""}" data-act="set-ok" data-ex="${esc(x.t)}" data-i="${i}" data-n="${total}" data-id="${x.id}" aria-pressed="${!!c.ok}" aria-label="Serie ${i + 1} hecha">${IC.check}</button></div>`;
+  }).join("");
+  return `<div class="sets"><p class="slast">${lastTxt}</p>${rows}</div>`;
+}
+function setOk(k, name, i, total, exId) {
+  const L = setsOf(k, name), c = L[i] || {}, on = !c.ok;
+  const patch = { ok: on };
+  if (on) {                       // si no escribió nada, toma lo de la vez pasada o la serie anterior
+    const last = lastSets(name, k), ph = (last && last.sets[i]) || L[i - 1] || {};
+    const row = document.querySelector(`.set input[data-sv="w"][data-i="${i}"][data-ex="${CSS.escape(name)}"]`);
+    const rowR = document.querySelector(`.set input[data-sv="r"][data-i="${i}"][data-ex="${CSS.escape(name)}"]`);
+    const tw = row && row.value !== "" ? parseFloat(row.value) : null, tr = rowR && rowR.value !== "" ? parseInt(rowR.value, 10) : null;
+    patch.w = has(tw) ? tw : has(c.w) ? c.w : has(ph.w) ? ph.w : null;
+    patch.r = has(tr) ? tr : has(c.r) ? c.r : has(ph.r) ? ph.r : null;
+  }
+  setPut(k, name, i, patch, total);
+  const after = setsOf(k, name), all = after.length >= total && after.slice(0, total).every((x) => x && x.ok);
+  const done = Object.assign({}, hOf(k).done || {});
+  if (all) done["t_" + exId] = true; else delete done["t_" + exId];
+  hSet(k, { done });
+  if (on && navigator.vibrate) try { navigator.vibrate(15); } catch (e) {}
+}
+function unitSeg(k) {
+  const u = wUnit(k);
+  return `<div class="useg" role="group" aria-label="Unidad de peso"><span>Peso en</span><button type="button" data-act="wu" data-v="kg" aria-pressed="${u === "kg"}">kg</button><button type="button" data-act="wu" data-v="lb" aria-pressed="${u === "lb"}">lb</button></div>`;
+}
+function trainRows() {            // todas las series guardadas, para exportar
+  const out = [["Fecha", "Sesión", "Ejercicio", "Serie", "Peso", "Unidad", "Repeticiones", "Hecha"]];
+  Object.entries(D.plans).filter(([id, v]) => id.startsWith("h_carlos_") && v && v.sets).sort((a, b) => (a[1].date < b[1].date ? -1 : 1)).forEach(([, v]) => {
+    const ses = TRAIN[Number.isInteger(v.sess) ? v.sess : parseKey(v.date).getDay()].t;
+    Object.entries(v.sets).forEach(([ex, L]) => (L || []).forEach((x, i) => { if (x && (has(x.w) || has(x.r) || x.ok)) out.push([v.date, ses, ex, i + 1, has(x.w) ? x.w : "", v.wu || "kg", has(x.r) ? x.r : "", x.ok ? "sí" : "no"]); }));
+  });
+  return out;
+}
+function exportTrain(mode) {
+  const rows = trainRows();
+  if (rows.length < 2) { toast("Todavía no hay series anotadas"); return; }
+  if (mode === "copy") {
+    const txt = rows.map((r) => r.join("\t")).join("\n");
+    (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast(`Copiado: ${rows.length - 1} series. Péguelo en el chat o en una hoja`), () => toast(T().writeErr));
+    return;
+  }
+  const csv = "﻿" + rows.map((r) => r.map((c) => /[",;\n]/.test(String(c)) ? `"${String(c).replace(/"/g, '""')}"` : c).join(",")).join("\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+  a.download = `entrenos-carlos-${todayKey()}.csv`;
+  document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  toast(`Descargado: ${rows.length - 1} series`);
+}
+
 /* ---------- ENTRENAMIENTO ---------- */
 function renderTrain() {
   const t = T();
@@ -2151,7 +2255,11 @@ function renderTrain() {
   (day.items || []).forEach((x) => items.push(x));
   (day.close || []).forEach((x) => items.push(x));
   const nDone = items.filter((x) => done["t_" + x.id]).length;
-  const list = items.map((x) => `<li class="hl${done["t_" + x.id] ? " ok" : ""}"><div class="htx"><b class="ht">${esc(x.t)}</b>${x.r ? `<span class="hr">${esc(x.r)}</span>` : ""}${x.n ? `<span class="hn">${esc(x.n)}</span>` : ""}</div>${tick(!!done["t_" + x.id], "h-tick", `data-key="t_${x.id}"`, x.t)}</li>`).join("");
+  const list = items.map((x) => {
+    const ns = nSets(x.r), rr = ns ? `${ns} series de ${repGoal(x.r)} repeticiones` : x.r;
+    const nOk = ns ? setsOf(k, x.t).filter((y) => y && y.ok).length : 0;
+    return `<li class="hl${done["t_" + x.id] ? " ok" : ""}${ns ? " hasets" : ""}"><div class="htx"><b class="ht">${esc(x.t)}</b>${rr ? `<span class="hr">${esc(rr)}${ns ? ` · ${nOk}/${ns}` : ""}</span>` : ""}${x.n ? `<span class="hn">${esc(x.n)}</span>` : ""}</div>${tick(!!done["t_" + x.id], "h-tick", `data-key="t_${x.id}"`, x.t)}${ns ? setsBlock(k, x, ns) : ""}</li>`;
+  }).join("");
 
   const checks = checksFor(k).map((c) => {
     const ok = checkDone(k, c);
@@ -2200,6 +2308,7 @@ function renderTrain() {
       ${coachTip(k)}
     </div>
     <h2>Sesión <span class="cnt">${nDone}/${items.length}</span></h2>
+    <div class="shead"><p class="hnote">Anote el peso y las repeticiones de cada serie y toque ✓. Si deja vacío, ✓ copia lo de la vez pasada.</p>${unitSeg(k)}</div>
     <ul class="hlist2">${list}</ul>
     <h2>Chequeos de ${esc(dayLabel(k).toLowerCase())}</h2>
     <ul class="hlist2">${checks}</ul>
@@ -2208,6 +2317,9 @@ function renderTrain() {
     <ul class="up">${up.join("")}</ul>
     <h2>La semana</h2>
     <div class="wtrs">${week}</div>
+    <h2>Mis datos</h2>
+    <div class="row exp"><button type="button" class="btn" data-act="tr-exp" data-v="csv">Descargar entrenos (Excel)</button><button type="button" class="btn" data-act="tr-exp" data-v="copy">Copiar entrenos</button></div>
+    <p class="hnote">Todas las series con fecha, sesión, peso y repeticiones, para mandárselas a quien las necesite.</p>
     <h2>Guía</h2>
     <details class="hdet"><summary>Core (cierre de lunes, jueves y sábado)</summary><table class="htbl"><tbody>${CORE.map(([a, b]) => `<tr><td>${esc(a)}</td><td>${esc(b)}</td></tr>`).join("")}</tbody></table></details>
     <details class="hdet"><summary>Cómo progresar</summary><ul class="hol">
@@ -2576,6 +2688,9 @@ document.addEventListener("click", (ev) => {
     case "h-tick": { hToggle(S.hDate, el.dataset.key); render(); if (navigator.vibrate) try { navigator.vibrate(15); } catch (e) {} break; }
     case "h-slot": { hSet(S.hDate, { slot: el.dataset.v }); applyToDay(S.hDate); render(); const g = daySched(S.hDate).gym; toast(g ? `Día armado: gym de ${fmtTime(g.s)} a ${fmtTime(g.e)}` : t.saved); break; }
     case "s-open": openSessSheet(); break;
+    case "set-ok": S.svUntil = 0; S.dirty = false; setOk(S.hDate, el.dataset.ex, +el.dataset.i, +el.dataset.n, el.dataset.id); render(); break;
+    case "wu": { lsSet("dd.wu", el.dataset.v); hSet(S.hDate, { wu: el.dataset.v }); render(); break; }
+    case "tr-exp": exportTrain(el.dataset.v); break;
     case "wk-ok": applyWeek(el.dataset.sig); render(); break;
     case "wk-no": hSet(todayKey(), { wkNo: el.dataset.sig }); render(); break;
     case "s-set": saveSess(+el.dataset.v); render(); break;
@@ -2638,6 +2753,15 @@ document.addEventListener("change", (ev) => {
     else { toast(T().writeErr); return; }
     render(); return;
   }
+  const sv = ev.target.dataset && ev.target.dataset.sv;
+  if (sv) {
+    const d = ev.target.dataset, raw = String(ev.target.value || "").replace(",", ".").trim(), v = sv === "w" ? parseFloat(raw) : parseInt(raw, 10);
+    if (raw !== "" && !(isFinite(v) && v >= 0 && v < (sv === "w" ? 1000 : 200))) { toast(T().writeErr); return; }
+    S.svUntil = Date.now() + 500;
+    setPut(S.hDate, d.ex, +d.i, { [sv]: raw === "" ? null : Math.round(v * 10) / 10 }, +d.n);
+    setTimeout(flushSet, 550);
+    return;
+  }
   const f = ev.target.dataset && ev.target.dataset.hnum; if (!f) return;
   const raw = String(ev.target.value || "").replace(",", ".").trim(), v = parseFloat(raw);
   if (raw === "") hSet(S.hDate, { [f]: null });
@@ -2645,6 +2769,9 @@ document.addEventListener("change", (ev) => {
   else { toast(T().writeErr); return; }
   render();
 });
+const typingSet = () => Date.now() < (S.svUntil || 0) || !!(document.activeElement && document.activeElement.dataset && document.activeElement.dataset.sv);
+const flushSet = () => { if (S.dirty && !typingSet()) { S.dirty = false; if (!$("sheet").classList.contains("open")) render(); } };
+document.addEventListener("focusout", () => { setTimeout(flushSet, 80); setTimeout(flushSet, 600); });
 document.addEventListener("input", (ev) => { if (ev.target.id === "bS" || ev.target.id === "bE") checkBlock(); });
 $("scrim").addEventListener("click", closeSheet);
 document.addEventListener("keydown", (e) => { if (e.key === "Escape" && $("sheet").classList.contains("open")) closeSheet(); });
@@ -2655,7 +2782,7 @@ let lastToday = todayKey();
 setInterval(() => {
   const tk = todayKey();
   if (tk !== lastToday) { if (S.date === lastToday) S.date = tk; if (S.hDate === lastToday) S.hDate = tk; lastToday = tk; }
-  if ((S.tab === "day" || S.tab === "food") && !$("sheet").classList.contains("open") && !(document.activeElement && document.activeElement.dataset && (document.activeElement.dataset.hnum || document.activeElement.dataset.cnum))) render();
+  if ((S.tab === "day" || S.tab === "food") && !$("sheet").classList.contains("open") && !(document.activeElement && document.activeElement.dataset && (document.activeElement.dataset.hnum || document.activeElement.dataset.cnum || document.activeElement.dataset.sv))) render();
 }, 60000);
 window.addEventListener("message", (e) => {
   if (e.origin !== location.origin || !e.data || e.data.dd === undefined) return;
@@ -2684,7 +2811,8 @@ document.addEventListener("visibilitychange", () => { if (document.visibilitySta
       D[coll] = data;
       Object.entries(keep).forEach(([id, v]) => { if (v === null) delete D[coll][id]; else D[coll][id] = v; });
       if (!S.ready) { mark(coll, meta); if (S.ready) setTimeout(importInbox, 300); }
-      if (!$("sheet").classList.contains("open")) render(); else renderChrome();
+      if (typingSet()) { S.dirty = true; renderChrome(); }
+      else if (!$("sheet").classList.contains("open")) render(); else renderChrome();
     }, (err) => { S.slow = true; renderChrome(); });
   });
 })();

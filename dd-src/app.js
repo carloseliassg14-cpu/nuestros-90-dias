@@ -964,6 +964,9 @@ document.addEventListener("click", (ev) => {
     case "h-tick": { hToggle(S.hDate, el.dataset.key); render(); if (navigator.vibrate) try { navigator.vibrate(15); } catch (e) {} break; }
     case "h-slot": { hSet(S.hDate, { slot: el.dataset.v }); applyToDay(S.hDate); render(); const g = daySched(S.hDate).gym; toast(g ? `Día armado: gym de ${fmtTime(g.s)} a ${fmtTime(g.e)}` : t.saved); break; }
     case "s-open": openSessSheet(); break;
+    case "set-ok": S.svUntil = 0; S.dirty = false; setOk(S.hDate, el.dataset.ex, +el.dataset.i, +el.dataset.n, el.dataset.id); render(); break;
+    case "wu": { lsSet("dd.wu", el.dataset.v); hSet(S.hDate, { wu: el.dataset.v }); render(); break; }
+    case "tr-exp": exportTrain(el.dataset.v); break;
     case "wk-ok": applyWeek(el.dataset.sig); render(); break;
     case "wk-no": hSet(todayKey(), { wkNo: el.dataset.sig }); render(); break;
     case "s-set": saveSess(+el.dataset.v); render(); break;
@@ -1026,6 +1029,15 @@ document.addEventListener("change", (ev) => {
     else { toast(T().writeErr); return; }
     render(); return;
   }
+  const sv = ev.target.dataset && ev.target.dataset.sv;
+  if (sv) {
+    const d = ev.target.dataset, raw = String(ev.target.value || "").replace(",", ".").trim(), v = sv === "w" ? parseFloat(raw) : parseInt(raw, 10);
+    if (raw !== "" && !(isFinite(v) && v >= 0 && v < (sv === "w" ? 1000 : 200))) { toast(T().writeErr); return; }
+    S.svUntil = Date.now() + 500;
+    setPut(S.hDate, d.ex, +d.i, { [sv]: raw === "" ? null : Math.round(v * 10) / 10 }, +d.n);
+    setTimeout(flushSet, 550);
+    return;
+  }
   const f = ev.target.dataset && ev.target.dataset.hnum; if (!f) return;
   const raw = String(ev.target.value || "").replace(",", ".").trim(), v = parseFloat(raw);
   if (raw === "") hSet(S.hDate, { [f]: null });
@@ -1033,6 +1045,9 @@ document.addEventListener("change", (ev) => {
   else { toast(T().writeErr); return; }
   render();
 });
+const typingSet = () => Date.now() < (S.svUntil || 0) || !!(document.activeElement && document.activeElement.dataset && document.activeElement.dataset.sv);
+const flushSet = () => { if (S.dirty && !typingSet()) { S.dirty = false; if (!$("sheet").classList.contains("open")) render(); } };
+document.addEventListener("focusout", () => { setTimeout(flushSet, 80); setTimeout(flushSet, 600); });
 document.addEventListener("input", (ev) => { if (ev.target.id === "bS" || ev.target.id === "bE") checkBlock(); });
 $("scrim").addEventListener("click", closeSheet);
 document.addEventListener("keydown", (e) => { if (e.key === "Escape" && $("sheet").classList.contains("open")) closeSheet(); });
@@ -1043,7 +1058,7 @@ let lastToday = todayKey();
 setInterval(() => {
   const tk = todayKey();
   if (tk !== lastToday) { if (S.date === lastToday) S.date = tk; if (S.hDate === lastToday) S.hDate = tk; lastToday = tk; }
-  if ((S.tab === "day" || S.tab === "food") && !$("sheet").classList.contains("open") && !(document.activeElement && document.activeElement.dataset && (document.activeElement.dataset.hnum || document.activeElement.dataset.cnum))) render();
+  if ((S.tab === "day" || S.tab === "food") && !$("sheet").classList.contains("open") && !(document.activeElement && document.activeElement.dataset && (document.activeElement.dataset.hnum || document.activeElement.dataset.cnum || document.activeElement.dataset.sv))) render();
 }, 60000);
 window.addEventListener("message", (e) => {
   if (e.origin !== location.origin || !e.data || e.data.dd === undefined) return;
@@ -1072,7 +1087,8 @@ document.addEventListener("visibilitychange", () => { if (document.visibilitySta
       D[coll] = data;
       Object.entries(keep).forEach(([id, v]) => { if (v === null) delete D[coll][id]; else D[coll][id] = v; });
       if (!S.ready) { mark(coll, meta); if (S.ready) setTimeout(importInbox, 300); }
-      if (!$("sheet").classList.contains("open")) render(); else renderChrome();
+      if (typingSet()) { S.dirty = true; renderChrome(); }
+      else if (!$("sheet").classList.contains("open")) render(); else renderChrome();
     }, (err) => { S.slow = true; renderChrome(); });
   });
 })();

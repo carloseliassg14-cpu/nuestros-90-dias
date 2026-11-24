@@ -14,9 +14,9 @@ const FOOD = {
     rest: { kcal: "≈ 2,050", p: "165–175 g", c: "140–160 g", f: "80–85 g" }
   },
   meals: [
-    { id: "m1", t: "Comida 1", at: 690, p: "200 g de pollo, res magra o pescado", c: "350 g de papa o camote + 1 fruta", cRest: "350 g de papa o camote (sin fruta)", v: "1–2 tazas de verdura", f: "½ aguacate pequeño" },
-    { id: "m2", t: "Merienda", at: 870, p: "3 huevos + 170 g de yogur griego natural", c: "1 banano + 40 g de avena", cRest: "1 banano (sin avena)", v: "", f: "15 g de maní natural" },
-    { id: "m3", t: "Cena", at: 1080, p: "200 g de pollo, res magra o pescado", c: "300 g de camote o papa, o 200 g de arroz", cRest: "300 g de camote o papa, o 200 g de arroz", v: "1–2 tazas de verdura", f: "1 cucharada de aceite de oliva", end: 1170 }
+    { id: "m1", t: "Comida 1", at: 690, p: "200 g de pollo, res magra o pescado", pE: "2 palmas de su mano (grosor de la palma, sin dedos)", c: "350 g de papa o camote + 1 fruta", cE: "2 puños cerrados + 1 fruta mediana", cRest: "350 g de papa o camote (sin fruta)", cRestE: "2 puños cerrados (sin fruta)", v: "1–2 tazas de verdura", vE: "2 puños o medio plato", f: "½ aguacate pequeño", fE: "½ aguacate pequeño" },
+    { id: "m2", t: "Merienda", at: 870, p: "3 huevos + 170 g de yogur griego natural", pE: "3 huevos + ¾ de taza de yogur", c: "1 banano + 40 g de avena", cE: "1 banano + ½ taza de avena en crudo", cRest: "1 banano (sin avena)", cRestE: "1 banano (sin avena)", v: "", f: "15 g de maní natural", fE: "1 puñito (2 cucharadas)" },
+    { id: "m3", t: "Cena", at: 1080, p: "200 g de pollo, res magra o pescado", pE: "2 palmas de su mano", c: "300 g de camote o papa, o 200 g de arroz", cE: "2 puños, o 1¼ tazas de arroz cocido", cRest: "300 g de camote o papa, o 200 g de arroz", cRestE: "2 puños, o 1¼ tazas de arroz cocido", v: "1–2 tazas de verdura", vE: "2 puños o medio plato", f: "1 cucharada de aceite de oliva", fE: "1 cucharada sopera", end: 1170 }
   ],
   // 0 = domingo … 6 = sábado
   menu: [
@@ -46,8 +46,8 @@ const FOOD = {
     { id: "verd", t: "Verdura en las 3 comidas", n: "Sin límite" },
     { id: "cafe", t: "Último café antes de las 12:00 pm", n: "Se acuesta a las 9:00 pm: así no le daña el sueño" }
   ],
-  carbs: [["Papa", "175 g"], ["Camote", "150 g"], ["Yuca, ñampí o tiquisque", "80 g"], ["Arroz", "105 g"], ["Plátano maduro, al horno o cocido", "100 g"], ["Avena (en crudo)", "45 g"], ["Banano", "1 mediano"], ["Papaya o piña", "2 tazas"], ["Frijoles", "¾ de taza (+11 g de proteína)"]],
-  prots: [["Pechuga de pollo", "100 g"], ["Res magra (lomo, posta, molida 90/10)", "110 g"], ["Pescado blanco (tilapia, pargo, dorado)", "130 g"], ["Salmón", "110 g"], ["Atún en agua, escurrido", "1 lata (≈ 120 g)"], ["Huevos enteros", "5 (máximo 4 a 5 por día)"], ["Yogur griego natural sin azúcar", "300 g"]]
+  carbs: [["Papa", "175 g", "1 puño grande"], ["Camote", "150 g", "1 puño"], ["Yuca, ñampí o tiquisque", "80 g", "½ puño"], ["Arroz", "105 g", "⅔ de taza"], ["Plátano maduro, al horno o cocido", "100 g", "½ plátano mediano"], ["Avena (en crudo)", "45 g", "½ taza"], ["Banano", "1 mediano", "1 mediano"], ["Papaya o piña", "2 tazas", "2 puños"], ["Frijoles", "¾ de taza (+11 g de proteína)", "¾ de taza"]],
+  prots: [["Pechuga de pollo", "100 g", "1 palma"], ["Res magra (lomo, posta, molida 90/10)", "110 g", "1 palma"], ["Pescado blanco (tilapia, pargo, dorado)", "130 g", "1 palma grande"], ["Salmón", "110 g", "1 palma"], ["Atún en agua, escurrido", "1 lata (≈ 120 g)", "1 lata"], ["Huevos enteros", "5 (máximo 4 a 5 por día)", "5 huevos"], ["Yogur griego natural sin azúcar", "300 g", "1¼ tazas"]]
 };
 
 const MOB = { id: "mob", t: "Movilidad de entrada · 10 min", n: "Cadera, tobillo, columna torácica, hombro" };
@@ -247,12 +247,12 @@ function renderFood() {
     return `<li class="hcard${done[x.id] ? " ok" : ""}">
       <div class="hrow"><div class="htx"><span class="hk">${esc(fmtTime(sc.m[i]))}${x.id === "m3" ? " – " + esc(fmtTime(sc.closeT)) : ""}</span><b class="ht">${esc(x.t)}</b></div>${tick(!!done[x.id], "h-tick", `data-key="${x.id}"`, x.t)}</div>
       <p class="sug"><span class="muted">Hoy:</span> ${esc(sug)}</p>
-      ${x.id === "m2" ? `<dl class="macro"><div><dt>Meta</dt><dd>35–40 g de proteína y algo de carbohidrato${rest ? " (domingo: sin avena)" : ""}. Puede usar cualquiera de las 8 meriendas de la guía.</dd></div></dl>` : `<dl class="macro"><div><dt>Proteína</dt><dd>${esc(x.p)}</dd></div><div><dt>Carbohidrato</dt><dd>${esc(rest ? x.cRest : x.c)}</dd></div>${x.v ? `<div><dt>Verdura</dt><dd>${esc(x.v)}</dd></div>` : ""}<div><dt>Grasa</dt><dd>${esc(x.f)}</dd></div></dl>`}
+      ${x.id === "m2" ? `<dl class="macro"><div><dt>Meta</dt><dd>35–40 g de proteína y algo de carbohidrato${rest ? " (domingo: sin avena)" : ""}. Puede usar cualquiera de las 8 meriendas de la guía.</dd></div></dl>` : `<dl class="macro"><div><dt>Proteína</dt><dd>${esc(x.p)}<span class="eye">A ojo: ${esc(x.pE)}</span></dd></div><div><dt>Carbohidrato</dt><dd>${esc(rest ? x.cRest : x.c)}<span class="eye">A ojo: ${esc(rest ? x.cRestE : x.cE)}</span></dd></div>${x.v ? `<div><dt>Verdura</dt><dd>${esc(x.v)}<span class="eye">A ojo: ${esc(x.vE)}</span></dd></div>` : ""}<div><dt>Grasa</dt><dd>${esc(x.f)}<span class="eye">A ojo: ${esc(x.fE)}</span></dd></div></dl>`}
     </li>`;
   }).join("");
 
   const habits = FOOD.habits.map((x) => `<li class="hl${done[x.id] ? " ok" : ""}"><div class="htx"><b class="ht">${esc(x.t)}</b><span class="hn">${esc(x.n)}</span></div>${tick(!!done[x.id], "h-tick", `data-key="${x.id}"`, x.t)}</li>`).join("");
-  const tbl = (rows, h1, h2) => `<table class="htbl"><thead><tr><th>${h1}</th><th>${h2}</th></tr></thead><tbody>${rows.map(([a, b]) => `<tr><td>${esc(a)}</td><td>${esc(b)}</td></tr>`).join("")}</tbody></table>`;
+  const tbl = (rows, h1, h2) => `<table class="htbl"><thead><tr><th>${h1}</th><th>${h2}</th><th>A ojo</th></tr></thead><tbody>${rows.map(([a, b, c]) => `<tr><td>${esc(a)}</td><td>${esc(b)}</td><td>${esc(c || "")}</td></tr>`).join("")}</tbody></table>`;
 
   $("v-food").innerHTML = `
     <h1>${esc(t.tabFoodLong)}</h1>
@@ -263,7 +263,7 @@ function renderFood() {
       <div class="fbtns"><button type="button" class="btn${has(h2.breakAt) ? "" : " pri"}" data-act="f-open" data-w="break">${has(h2.breakAt) ? "Rompí el ayuno · " + esc(fmtTime(h2.breakAt)) : "Rompí el ayuno"}</button><button type="button" class="btn${has(h2.breakAt) && !has(h2.closeAt) ? " pri" : ""}" data-act="f-open" data-w="close">${has(h2.closeAt) ? "Terminé · " + esc(fmtTime(h2.closeAt)) : "Terminé de comer"}</button></div>
       ${slotSeg(k)}
       <div class="tgt"><div><small>Calorías</small><b>${esc(tg.kcal)}</b></div><div><small>Proteína</small><b>${esc(tg.p)}</b></div><div><small>Carbohidrato</small><b>${esc(tg.c)}</b></div><div><small>Grasa</small><b>${esc(tg.f)}</b></div></div>
-      <p class="hnote">${rest ? "Domingo: sin fruta en la comida 1 ni avena en la merienda." : "Todo se pesa ya cocido. El carbohidrato va sobre todo en la comida 1 y la merienda."}</p>
+      <p class="hnote">${rest ? "Domingo: sin fruta en la comida 1 ni avena en la merienda." : "Con balanza: todo se pesa ya cocido. Sin balanza: use su mano (palma = proteína, puño = carbohidrato, pulgar = grasa)."}</p>
     </div>
     <h2>Horario de ${esc(dayLabel(k).toLowerCase())}</h2>
     ${timeline(k)}
@@ -273,6 +273,7 @@ function renderFood() {
     <h2>Hábitos del día <span class="cnt">${habDone}/${FOOD.habits.length}</span></h2>
     <ul class="hlist2">${habits}</ul>
     <h2>Guía</h2>
+    <details class="hdet"><summary>Cómo pesar con su balanza (Gynipot GY-A09)</summary><ol class="hol"><li>Enciéndala con ⏻/T y revise que diga <b>g</b>; si no, toque UNIT hasta que salga.</li><li>Ponga el plato vacío y toque ⏻/T: queda en 0 (tara).</li><li>Sirva la proteína hasta el número del plan; toque ⏻/T otra vez y sirva el carbohidrato.</li><li>Pese la comida ya cocida. Mide de 2 en 2 g y hasta 5 kg: sirve para todo, incluso los 15 g de maní.</li><li>Si los números saltan o se apaga sola, cambie las 2 baterías AAA.</li></ol></details>
     <details class="hdet"><summary>8 meriendas limpias</summary><ol class="hol">${FOOD.snacks.map((s) => `<li>${esc(s)}</li>`).join("")}</ol></details>
     <details class="hdet"><summary>Intercambios de carbohidrato (≈ 30 g cada uno)</summary>${tbl(FOOD.carbs, "Alimento", "Cocido")}</details>
     <details class="hdet"><summary>Intercambios de proteína (≈ 30 g cada uno)</summary>${tbl(FOOD.prots, "Alimento", "Cocido")}</details>

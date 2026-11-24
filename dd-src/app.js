@@ -971,6 +971,8 @@ document.addEventListener("click", (ev) => {
     case "it-info": openItemInfo(el.dataset.id); break;
     case "sw-save": saveSwap(el.dataset.id, (($("swT") || {}).value || "").trim()); break;
     case "sw-clear": saveSwap(el.dataset.id, ""); break;
+    case "alt-open": openAltSheet(el.dataset.ex); break;
+    case "alt-set": setAlt(el.dataset.ex, el.dataset.v); break;
     case "ex-how": openExHow(el.dataset.ex); break;
     case "x-open": openExtraSheet(); break;
     case "x-ns": sheetCtx.ns = +el.dataset.v; document.querySelectorAll("[data-act=x-ns]").forEach((b) => b.setAttribute("aria-pressed", String(b === el))); break;

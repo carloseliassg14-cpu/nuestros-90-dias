@@ -478,6 +478,27 @@ body:has(.restbar.show) .wrap{padding-bottom:calc(var(--tabh) + 120px + env(safe
 .shd .slast{flex:1;margin:0}
 .useg.sm{padding:2px;background:var(--bg)}
 .useg.sm button{min-height:30px;min-width:34px;font-size:13px}
+/* cambiar ejercicio */
+.altchip{flex-basis:100%;display:flex;align-items:center;gap:12px;text-align:left;margin-top:10px;padding:10px 12px;border-radius:14px;border:1.5px dashed var(--line);background:none;color:inherit;font:inherit}
+.altchip .ai{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--ink);color:var(--bg);font-size:17px;font-weight:800}
+.altchip span:last-child{display:grid;gap:1px}
+.altchip b{font-size:14.5px}
+.altchip small{font-size:12.5px;color:var(--soft)}
+.altchip.on{border-style:solid;border-color:var(--ink);background:var(--bg)}
+.altchip:active{transform:scale(.98)}
+.altlist{display:grid;gap:10px;margin-bottom:12px}
+.altback{margin-bottom:12px;padding-top:12px;border-top:1px solid var(--line)}
+.altcard{display:grid;grid-template-columns:84px 1fr auto;gap:12px;align-items:center;width:100%;text-align:left;border:1px solid var(--line);background:var(--card);border-radius:16px;padding:8px;color:inherit;font:inherit}
+.altcard.cur{border:2px solid var(--ink);padding:7px}
+.altimg{position:relative;width:84px;height:64px;border-radius:12px;overflow:hidden;background:var(--bg)}
+.altimg img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.altimg img:last-child{animation:exflip 2.4s steps(1) infinite}
+.altt{display:grid;gap:3px;justify-items:start}
+.altt b{font-size:15px}
+.altt small{font-size:12.5px;color:var(--soft)}
+.altgo{font-weight:700;font-size:13px;padding:6px 12px;border-radius:999px;background:var(--ink);color:var(--bg)}
+.altcard.cur .altgo{background:var(--good)}
+@media(prefers-reduced-motion:reduce){.altimg img:last-child{animation:none;opacity:0}}
 
 </style>
 </head>
@@ -2215,7 +2236,8 @@ function coachTip(k) {
 function trainItems(k) {
   const day = sessDay(k), items = [];
   if (day.kind !== "rest") items.push(MOB);
-  (day.ex || []).forEach(([n, r], i) => items.push({ id: "ex" + i, t: n, r }));
+  const alt = hOf(k).alt || {};
+  (day.ex || []).forEach(([n, r], i) => items.push(alt[n] ? { id: "ex" + i, t: alt[n], r, orig: n } : { id: "ex" + i, t: n, r }));
   (day.items || []).forEach((x) => items.push(x));
   (day.close || []).forEach((x) => items.push(x));
   items.push(STR_ITEM);
@@ -2404,7 +2426,7 @@ function exportTrain(mode) {
 // Evidencia: más de 60 s da algo más de músculo; pasar de 90 s ya casi no cambia la hipertrofia (Singer, Schoenfeld y cols., 2024).
 // En básicos pesados de 6–8 repeticiones se descansa más para mantener el peso (2.5 min); en aislamiento, 90 s; core, 60 s.
 const HEAVY_RE = /press de banca|press inclinado|dominadas|remo con barra|sentadilla|peso muerto|press militar|prensa|fondos/i;
-const restFor = (x) => /plancha|dead bug|pallof|rueda|core/i.test(x.t) ? 60 : HEAVY_RE.test(x.t) ? 150 : 90;
+const restFor = (x) => /plancha|dead bug|pallof|rueda|core/i.test(x.t) ? 60 : HEAVY_RE.test(x.orig || x.t) ? 150 : 90;
 const NEXT_EX_REST = 120;           // al cambiar de ejercicio: 2 min para preparar la máquina y calentar
 const fmtClock = (sec) => `${Math.floor(sec / 60)}:${String(Math.max(0, sec % 60)).padStart(2, "0")}`;
 let RT = null, rtTick = null, actx = null;
@@ -2532,6 +2554,130 @@ const STR = {   // 3 por sesión, según lo que se trabajó
   6: ["Flexor de cadera arrodillado", "Cuádriceps con pie en banco", "Postura del niño"]
 };
 
+
+/* ---------- cambiar un ejercicio por otro (máquina ocupada) ---------- */
+// A(nombre, foto, equipo, músculo, por qué sirve, [pasos], error común)
+const A = (img, eq, m, why, how, err) => ({ img, eq, m, why, how, err });
+Object.assign(EXI, {
+  "Press de banca con mancuernas": A("Dumbbell_Bench_Press", "Mancuernas", "Pecho y tríceps", "El mismo empuje, con más recorrido.", ["Acostado, mancuernas a los lados del pecho, omóplatos juntos.", "Empuje hacia arriba juntándolas sin chocarlas.", "Baje en 2 segundos hasta sentir el pecho estirado."], "Bajar sin control o abrir los codos a 90°."),
+  "Press de pecho en máquina": A("Machine_Bench_Press", "Máquina", "Pecho y tríceps", "Más estable: puede ir pesado sin compañero.", ["Ajuste el asiento para que los agarres queden a la altura media del pecho.", "Empuje sin bloquear los codos.", "Regrese lento hasta sentir el estiramiento."], "Asiento muy alto: el hombro hace el trabajo."),
+  "Flexiones": A("Pushups", "Sin máquina", "Pecho, tríceps y core", "Se hace en cualquier lado. Si salen fácil, póngase un disco en la espalda.", ["Manos un poco más anchas que los hombros, cuerpo recto.", "Baje el pecho casi al piso, codos a 45°.", "Empuje sin dejar caer la cadera."], "Cadera hundida o medias repeticiones."),
+  "Press inclinado con barra": A("Barbell_Incline_Bench_Press_-_Medium_Grip", "Barra", "Parte alta del pecho", "El mismo ángulo, con barra.", ["Banco a 30°, agarre un poco más ancho que los hombros.", "Baje la barra a la parte alta del pecho.", "Empuje hacia arriba sin despegar los glúteos."], "Banco muy inclinado: trabaja más el hombro."),
+  "Press inclinado en Smith": A("Smith_Machine_Incline_Bench_Press", "Máquina Smith", "Parte alta del pecho", "Guiado: más seguro si entrena solo.", ["Banco a 30° debajo de la barra.", "Baje a la parte alta del pecho.", "Empuje y trabe la barra al terminar."], "Banco mal ubicado: la barra baja al cuello."),
+  "Aperturas inclinadas": A("Incline_Dumbbell_Flyes", "Mancuernas", "Parte alta del pecho", "Aísla el pecho alto si el press está ocupado.", ["Banco a 30°, mancuernas arriba con codos un poco doblados.", "Abra los brazos en arco hasta sentir el pecho.", "Cierre como si abrazara un árbol."], "Doblar mucho los codos: se vuelve un press."),
+  "Fondos en banco": A("Bench_Dips", "Banco", "Tríceps y pecho", "Sin paralelas: solo un banco.", ["Manos en el borde del banco, piernas al frente.", "Baje doblando los codos hasta 90°.", "Empuje hasta estirar los brazos."], "Bajar demasiado: carga el hombro."),
+  "Press cerrado": A("Close-Grip_Barbell_Bench_Press", "Barra", "Tríceps y pecho", "Tríceps con barra: se puede ir pesado y progresar fácil.", ["Agarre al ancho de los hombros, codos pegados.", "Baje la barra a la parte baja del pecho.", "Empuje con los tríceps."], "Agarre demasiado cerrado: lastima las muñecas."),
+  "Fondos en máquina": A("Dip_Machine", "Máquina", "Tríceps y pecho", "Puede escoger el peso.", ["Siéntese con los agarres a los lados.", "Empuje hacia abajo hasta estirar los brazos.", "Suba lento hasta 90°."], "Encoger los hombros hacia las orejas."),
+  "Aperturas con mancuernas": A("Dumbbell_Flyes", "Mancuernas", "Pecho", "Mismo movimiento, sin polea.", ["Acostado en banco plano, mancuernas arriba, codos un poco doblados.", "Abra en arco hasta sentir el pecho estirado.", "Cierre sin chocar las mancuernas."], "Bajar demasiado con mucho peso."),
+  "Pec deck (mariposa)": A("Butterfly", "Máquina", "Pecho", "Muy estable, ideal para terminar el pecho.", ["Asiento con los agarres a la altura del pecho.", "Junte los brazos al frente apretando el pecho.", "Abra lento hasta sentir el estiramiento."], "Dejar que el peso jale los brazos atrás de golpe."),
+  "Cruce en polea baja": A("Low_Cable_Crossover", "Polea", "Parte alta del pecho", "La misma polea pero desde abajo.", ["Poleas abajo, un paso adelante.", "Suba las manos al frente hasta la altura de los ojos.", "Baje lento."], "Jalar con los bíceps."),
+  "Extensión con cuerda": A("Triceps_Pushdown_-_Rope_Attachment", "Polea", "Tríceps", "Misma polea, otro agarre.", ["Codos pegados al cuerpo.", "Empuje hacia abajo y separe la cuerda al final.", "Suba hasta 90°."], "Mover los codos."),
+  "Patada de tríceps": A("Tricep_Dumbbell_Kickback", "Mancuerna", "Tríceps", "Solo necesita una mancuerna y un banco.", ["Apoyado en un banco, brazo pegado al cuerpo y codo a 90°.", "Estire el brazo hacia atrás.", "Vuelva lento sin mover el codo."], "Balancear el brazo."),
+  "Extensión sobre la cabeza con mancuerna": A("Standing_Dumbbell_Triceps_Extension", "Mancuerna", "Tríceps (cabeza larga)", "Estira mucho el tríceps: muy buena para crecer.", ["Mancuerna con las dos manos detrás de la cabeza.", "Estire los brazos hacia el techo.", "Baje lento, codos apuntando al frente."], "Abrir los codos hacia los lados."),
+  "Extensión sobre la cabeza en polea": A("Cable_Rope_Overhead_Triceps_Extension", "Polea", "Tríceps (cabeza larga)", "Lo más parecido al press francés.", ["De espaldas a la polea, cuerda detrás de la cabeza.", "Estire los brazos al frente y arriba.", "Regrese lento hasta sentir el tríceps."], "Mover los hombros en vez de los codos."),
+  "Dominadas supinas": A("Chin-Up", "Barra", "Dorsal y bíceps", "Palmas hacia usted: un poco más fácil.", ["Agarre al ancho de los hombros, palmas hacia usted.", "Jale hasta pasar la barbilla.", "Baje controlado."], "Balancearse."),
+  "Dominadas asistidas": A("Band_Assisted_Pull-Up", "Banda o máquina", "Dorsal y bíceps", "Si no le salen las repeticiones completas.", ["Banda en la barra y debajo de la rodilla, o máquina asistida.", "Jale hasta pasar la barbilla.", "Baje lento."], "Usar tanta ayuda que no cuesta."),
+  "Jalón agarre neutro": A("V-Bar_Pulldown", "Polea", "Dorsal", "El jalón más amigable con el hombro.", ["Agarre en V, pecho afuera.", "Jale hasta el pecho llevando los codos abajo.", "Suba lento."], "Echarse muy atrás."),
+  "Remo en polea sentado": A("Seated_Cable_Rows", "Polea", "Espalda media y dorsal", "Sin cargar la espalda baja.", ["Sentado, espalda recta, rodillas un poco dobladas.", "Jale hacia el ombligo apretando la espalda.", "Regrese estirando los brazos sin encorvarse."], "Balancear el torso."),
+  "Remo en T": A("T-Bar_Row_with_Handle", "Barra T o máquina", "Espalda media", "El mismo remo, más estable.", ["Pecho afuera, torso inclinado.", "Jale el agarre hacia el pecho bajo.", "Baje controlado."], "Redondear la espalda."),
+  "Remo con mancuernas en banco inclinado": A("Dumbbell_Incline_Row", "Mancuernas", "Espalda media", "El pecho apoyado: cero carga en la espalda baja.", ["Boca abajo en banco a 30°.", "Jale las mancuernas hacia la cadera.", "Apriete arriba y baje."], "Despegar el pecho del banco."),
+  "Jalón agarre cerrado": A("Close-Grip_Front_Lat_Pulldown", "Polea", "Dorsal", "Mismo jalón, otro agarre.", ["Agarre cerrado, pecho afuera.", "Jale hasta el pecho.", "Suba lento."], "Jalar con los brazos y no con la espalda."),
+  "Pullover en polea": A("Straight-Arm_Pulldown", "Polea", "Dorsal", "Aísla el dorsal sin bíceps.", ["De pie frente a la polea alta, brazos casi rectos.", "Lleve la barra hasta los muslos.", "Suba lento."], "Doblar los codos."),
+  "Remo en polea a una mano": A("Seated_One-arm_Cable_Pulley_Rows", "Polea", "Dorsal", "Igual al remo con mancuerna, con polea.", ["Sentado, un brazo a la vez.", "Jale hacia la cadera.", "Estire el brazo al regresar."], "Girar el torso."),
+  "Remo alto en máquina": A("Leverage_High_Row", "Máquina", "Espalda", "Estable, sin buscar mancuerna.", ["Pecho contra el apoyo.", "Jale los agarres hacia atrás.", "Regrese lento."], "Encoger los hombros."),
+  "Remo invertido": A("Inverted_Row", "Barra o Smith", "Espalda y bíceps", "Con su peso corporal.", ["Debajo de una barra baja, cuerpo recto.", "Jale el pecho hacia la barra.", "Baje lento."], "Cadera caída."),
+  "Curl con mancuernas": A("Dumbbell_Bicep_Curl", "Mancuernas", "Bíceps", "Lo mismo, con mancuernas.", ["Codos pegados.", "Suba girando la palma hacia arriba.", "Baje lento."], "Balancear el cuerpo."),
+  "Curl en polea": A("Standing_Biceps_Cable_Curl", "Polea", "Bíceps", "Tensión constante en todo el recorrido.", ["De frente a la polea baja.", "Suba doblando los codos.", "Baje lento."], "Mover los codos al frente."),
+  "Curl predicador": A("Preacher_Curl", "Banco predicador", "Bíceps", "No se puede hacer trampa.", ["Brazos apoyados en el cojín.", "Suba la barra sin despegar los brazos.", "Baje casi hasta estirar."], "Bajar de golpe al final."),
+  "Curl martillo con cuerda": A("Cable_Hammer_Curls_-_Rope_Attachment", "Polea", "Bíceps y antebrazo", "Martillo en polea.", ["Cuerda en la polea baja, palmas mirándose.", "Suba sin girar las muñecas.", "Baje lento."], "Codos adelante."),
+  "Curl martillo cruzado": A("Cross_Body_Hammer_Curl", "Mancuernas", "Braquial y antebrazo", "Variante del martillo.", ["Suba la mancuerna cruzando hacia el hombro contrario.", "Codo fijo.", "Alterne brazos."], "Girar el torso."),
+  "Curl invertido": A("Reverse_Barbell_Curl", "Barra", "Antebrazo y braquial", "Trabaja lo mismo que el martillo.", ["Agarre la barra con palmas hacia abajo.", "Suba sin mover los codos.", "Baje lento."], "Usar mucho peso."),
+  "Sentadilla goblet": A("Goblet_Squat", "Mancuerna", "Cuádriceps y glúteos", "Con una sola mancuerna, técnica más fácil.", ["Mancuerna pegada al pecho.", "Baje entre las piernas, torso recto.", "Suba empujando con los talones."], "Rodillas hacia adentro."),
+  "Sentadilla en Smith": A("Smith_Machine_Squat", "Máquina Smith", "Cuádriceps y glúteos", "Guiada: puede ir pesado solo.", ["Pies un poco adelante de la barra.", "Baje hasta paralelo.", "Suba sin bloquear las rodillas."], "Pies muy atrás: carga las rodillas."),
+  "Hack squat": A("Hack_Squat", "Máquina", "Cuádriceps", "Mucho cuádriceps sin cargar la espalda.", ["Espalda pegada al respaldo, pies al ancho de los hombros.", "Baje hasta 90° o más.", "Empuje sin bloquear."], "Despegar los talones."),
+  "Peso muerto rumano con mancuernas": A("Stiff-Legged_Dumbbell_Deadlift", "Mancuernas", "Femorales y glúteos", "El mismo movimiento, con mancuernas.", ["Mancuernas al frente de los muslos, rodillas apenas dobladas.", "Cadera atrás, espalda recta, baje hasta sentir los femorales.", "Suba empujando la cadera."], "Redondear la espalda."),
+  "Buenos días": A("Good_Morning", "Barra", "Femorales y espalda baja", "Mismo patrón de cadera, con barra en la espalda.", ["Barra en la espalda alta, rodillas un poco dobladas.", "Incline el torso llevando la cadera atrás.", "Suba apretando glúteos. Peso liviano."], "Mucho peso o espalda redonda."),
+  "Pull through en polea": A("Pull_Through", "Polea", "Glúteos y femorales", "Patrón de cadera muy seguro.", ["De espaldas a la polea baja, cuerda entre las piernas.", "Cadera atrás con la espalda recta.", "Empuje la cadera al frente apretando glúteos."], "Jalar con los brazos."),
+  "Sentadilla búlgara": A("Split_Squat_with_Dumbbells", "Mancuernas y banco", "Cuádriceps y glúteos", "Una pierna a la vez: trabaja mucho con poco peso.", ["Pie de atrás apoyado en un banco.", "Baje hasta que la rodilla de atrás casi toque el piso.", "Suba con la pierna de adelante."], "Pie de adelante muy cerca del banco."),
+  "Extensión de cuádriceps": A("Leg_Extensions", "Máquina", "Cuádriceps", "Aísla el cuádriceps.", ["Rodilla alineada con el eje de la máquina.", "Estire las piernas y apriete arriba 1 segundo.", "Baje lento."], "Subir con impulso."),
+  "Step-up con mancuernas": A("Dumbbell_Step_Ups", "Mancuernas y cajón", "Cuádriceps y glúteos", "Cambia las zancadas por subir a un cajón.", ["Un pie completo arriba del cajón.", "Suba empujando con esa pierna.", "Baje controlado."], "Impulsarse con la pierna de abajo."),
+  "Zancada hacia atrás": A("Dumbbell_Rear_Lunge", "Mancuernas", "Cuádriceps y glúteos", "Más fácil para las rodillas.", ["Dé un paso largo hacia atrás.", "Baje hasta casi tocar la rodilla.", "Vuelva empujando con la pierna de adelante."], "Paso corto."),
+  "Curl femoral sentado": A("Seated_Leg_Curl", "Máquina", "Femorales", "Igual, en otra máquina.", ["Rodillas alineadas con el eje, cojín arriba de los talones.", "Doble las rodillas hacia abajo.", "Suba lento."], "Mover la cadera."),
+  "Curl femoral de pie": A("Standing_Leg_Curl", "Máquina", "Femorales", "Una pierna a la vez.", ["De pie en la máquina.", "Lleve el talón hacia el glúteo.", "Baje lento."], "Inclinar el torso."),
+  "Pantorrilla sentado": A("Seated_Calf_Raise", "Máquina", "Pantorrilla (sóleo)", "Otra máquina de pantorrilla.", ["Cojín sobre los muslos, puntas en el borde.", "Baje los talones y suba al máximo.", "Pausa arriba."], "Rebotar."),
+  "Pantorrilla en prensa": A("Calf_Press_On_The_Leg_Press_Machine", "Prensa", "Pantorrilla", "Use la prensa si está libre.", ["Puntas en el borde de la plataforma, piernas estiradas.", "Empuje con las puntas.", "Baje lento."], "Doblar las rodillas."),
+  "Pantorrilla con mancuerna": A("Dumbbell_Seated_One-Leg_Calf_Raise", "Mancuerna", "Pantorrilla", "Solo una mancuerna y un escalón.", ["Sentado, mancuerna sobre la rodilla, punta en un escalón.", "Suba el talón al máximo.", "Baje lento."], "Recorrido corto."),
+  "Press de hombro con mancuernas": A("Dumbbell_Shoulder_Press", "Mancuernas", "Hombros y tríceps", "El mismo empuje, sentado.", ["Sentado, mancuernas a la altura de las orejas.", "Empuje hacia arriba.", "Baje controlado."], "Arquear la espalda."),
+  "Press de hombro en máquina": A("Machine_Shoulder_Military_Press", "Máquina", "Hombros", "Estable y seguro.", ["Agarres a la altura de los hombros.", "Empuje sin bloquear.", "Baje lento."], "Asiento muy bajo."),
+  "Press Arnold": A("Arnold_Dumbbell_Press", "Mancuernas", "Hombros completos", "Trabaja también el hombro de adelante.", ["Mancuernas al frente con palmas hacia usted.", "Suba girando las palmas hacia afuera.", "Baje girando de vuelta."], "Ir muy rápido."),
+  "Elevaciones laterales sentado": A("Seated_Side_Lateral_Raise", "Mancuernas", "Hombro lateral", "Sin poder hacer trampa con el cuerpo.", ["Sentado, mancuernas a los lados.", "Suba hasta la altura de los hombros.", "Baje lento."], "Subir con impulso."),
+  "Elevación lateral en polea": A("Cable_Seated_Lateral_Raise", "Polea", "Hombro lateral", "Tensión constante.", ["Polea baja al lado contrario.", "Suba el brazo hacia el lado hasta el hombro.", "Baje lento."], "Encoger el hombro."),
+  "Elevación lateral con banda": A("Lateral_Raise_-_With_Bands", "Banda", "Hombro lateral", "Se hace en cualquier lado.", ["Pise la banda.", "Suba los brazos hacia los lados.", "Baje lento."], "Banda muy dura."),
+  "Pájaros en polea": A("Cable_Rear_Delt_Fly", "Polea", "Hombro posterior", "Lo mismo que el face pull, en polea cruzada.", ["Poleas a la altura de los hombros, cruzadas.", "Abra los brazos hacia atrás.", "Regrese lento."], "Jalar con la espalda."),
+  "Pec deck invertido": A("Reverse_Machine_Flyes", "Máquina", "Hombro posterior", "Muy estable.", ["De frente al respaldo.", "Abra los brazos hacia atrás.", "Regrese lento."], "Mucho peso."),
+  "Separación con banda": A("Band_Pull_Apart", "Banda", "Hombro posterior y espalda alta", "Sin máquina.", ["Banda al frente, brazos estirados.", "Separe las manos hasta tocar el pecho.", "Regrese lento."], "Doblar los codos."),
+  "Pájaros con pecho apoyado": A("Bent_Over_Dumbbell_Rear_Delt_Raise_With_Head_On_Bench", "Mancuernas", "Hombro posterior", "Cabeza apoyada: no se puede hacer trampa.", ["Inclinado con la frente en un banco.", "Abra los brazos.", "Baje lento."], "Jalar con la espalda."),
+  "Crunch en polea": A("Cable_Crunch", "Polea", "Abdomen", "Le puede subir peso.", ["De rodillas frente a la polea alta, cuerda a los lados de la cabeza.", "Doble el torso hacia las rodillas con el abdomen.", "Suba lento."], "Jalar con los brazos."),
+  "Crunch en máquina": A("Ab_Crunch_Machine", "Máquina", "Abdomen", "Estable.", ["Ajuste el asiento.", "Doble el torso con el abdomen.", "Regrese lento."], "Usar impulso."),
+  "Bicicleta abdominal": A("Air_Bike", "Sin máquina", "Abdomen y oblicuos", "Sin máquina.", ["Boca arriba, manos en la cabeza.", "Lleve el codo a la rodilla contraria y alterne.", "Lento y controlado."], "Jalar el cuello."),
+  "Elevación de rodillas en paralelas": A("Knee_Hip_Raise_On_Parallel_Bars", "Paralelas", "Abdomen bajo", "Más estable que colgado.", ["Apoyado en los antebrazos.", "Suba las rodillas al pecho.", "Baje lento."], "Balancearse."),
+  "Elevación de piernas acostado": A("Flat_Bench_Lying_Leg_Raise", "Banco", "Abdomen bajo", "Sin barra.", ["Acostado en un banco, manos detrás de la cabeza agarrando el banco.", "Suba las piernas hasta 90°.", "Baje lento sin tocar."], "Arquear la espalda baja."),
+  "Elevación de cadera acostado": A("Bent-Knee_Hip_Raise", "Piso", "Abdomen bajo", "La más fácil de las tres.", ["Boca arriba, rodillas dobladas.", "Suba la cadera del piso llevando las rodillas al pecho.", "Baje lento."], "Usar impulso.")
+});
+const ALT = {
+  "Press de banca": ["Press de banca con mancuernas", "Press de pecho en máquina", "Flexiones"],
+  "Press inclinado con mancuernas": ["Press inclinado con barra", "Press inclinado en Smith", "Aperturas inclinadas"],
+  "Fondos": ["Fondos en máquina", "Press cerrado", "Fondos en banco"],
+  "Aperturas en polea": ["Pec deck (mariposa)", "Aperturas con mancuernas", "Cruce en polea baja"],
+  "Extensión de tríceps en polea": ["Extensión con cuerda", "Extensión sobre la cabeza con mancuerna", "Patada de tríceps"],
+  "Press francés": ["Extensión sobre la cabeza en polea", "Extensión sobre la cabeza con mancuerna", "Press cerrado"],
+  "Dominadas": ["Dominadas supinas", "Jalón agarre neutro", "Dominadas asistidas"],
+  "Remo con barra": ["Remo en polea sentado", "Remo en T", "Remo con mancuernas en banco inclinado"],
+  "Jalón al pecho": ["Jalón agarre cerrado", "Dominadas asistidas", "Pullover en polea"],
+  "Remo con mancuerna": ["Remo en polea a una mano", "Remo alto en máquina", "Remo invertido"],
+  "Curl con barra": ["Curl con mancuernas", "Curl en polea", "Curl predicador"],
+  "Curl martillo": ["Curl martillo con cuerda", "Curl martillo cruzado", "Curl invertido"],
+  "Sentadilla": ["Hack squat", "Sentadilla en Smith", "Sentadilla goblet"],
+  "Peso muerto rumano": ["Peso muerto rumano con mancuernas", "Pull through en polea", "Buenos días"],
+  "Prensa": ["Hack squat", "Sentadilla búlgara", "Extensión de cuádriceps"],
+  "Zancadas": ["Sentadilla búlgara", "Zancada hacia atrás", "Step-up con mancuernas"],
+  "Curl femoral": ["Curl femoral sentado", "Curl femoral de pie", "Peso muerto rumano con mancuernas"],
+  "Pantorrilla": ["Pantorrilla en prensa", "Pantorrilla sentado", "Pantorrilla con mancuerna"],
+  "Press militar": ["Press de hombro con mancuernas", "Press de hombro en máquina", "Press Arnold"],
+  "Elevaciones laterales": ["Elevación lateral en polea", "Elevaciones laterales sentado", "Elevación lateral con banda"],
+  "Face pull": ["Pájaros en polea", "Pec deck invertido", "Separación con banda"],
+  "Pájaros (deltoide posterior)": ["Pec deck invertido", "Pájaros en polea", "Pájaros con pecho apoyado"],
+  "Encogimientos": ["Crunch en polea", "Crunch en máquina", "Bicicleta abdominal"],
+  "Elevación de piernas colgado": ["Elevación de rodillas en paralelas", "Elevación de piernas acostado", "Elevación de cadera acostado"]
+};
+const altOf = (k) => hOf(k).alt || {};
+function altChip(k, x) {
+  const orig = x.orig || x.t; if (!ALT[orig]) return "";
+  if (x.orig) return `<button type="button" class="altchip on" data-act="alt-open" data-ex="${esc(orig)}"><span class="ai">⇄</span><span><b>Cambiado</b><small>En lugar de ${esc(orig)} · tocar para cambiar o volver</small></span></button>`;
+  return `<button type="button" class="altchip" data-act="alt-open" data-ex="${esc(orig)}"><span class="ai">⇄</span><span><b>¿Máquina ocupada?</b><small>Toque y le doy 3 opciones para el mismo músculo</small></span></button>`;
+}
+function openAltSheet(orig) {
+  const k = S.hDate, cur = altOf(k)[orig] || orig, e0 = EXI[orig];
+  const card = (n, isOrig) => {
+    const e = EXI[n] || {};
+    return `<button type="button" class="altcard${cur === n ? " cur" : ""}" data-act="alt-set" data-ex="${esc(orig)}" data-v="${esc(isOrig ? "" : n)}">
+      <span class="altimg">${e.img ? `<img src="${exImg(e.img, 0)}" alt="" loading="lazy"><img src="${exImg(e.img, 1)}" alt="" loading="lazy">` : ""}</span>
+      <span class="altt"><b>${esc(n)}</b>${e.eq ? `<i class="tg">${esc(e.eq)}</i>` : ""}<small>${esc(isOrig ? "El del plan" : e.why || e.m || "")}</small></span>
+      <span class="altgo">${cur === n ? "Hoy" : "Usar"}</span></button>`;
+  };
+  openSheet(`<h3>Cambiar ${esc(orig)}</h3><p class="hint">Mismo músculo${e0 ? " (" + esc(e0.m.toLowerCase()) + ")" : ""}, mismas series y repeticiones. Solo cambia la máquina.</p>
+    <div class="altlist">${ALT[orig].map((n) => card(n, false)).join("")}</div>
+    ${cur !== orig ? `<div class="altback">${card(orig, true)}</div>` : ""}
+    <p class="hnote">El cambio es solo para hoy. Sus pesos se guardan con el nombre del ejercicio que hizo, así "La vez pasada" no se mezcla.</p>
+    <div class="acts"><button type="button" class="btn" data-act="close">Cerrar</button></div>`, { type: "alt", orig });
+}
+function setAlt(orig, v) {
+  const k = S.hDate, alt = Object.assign({}, altOf(k));
+  if (v) alt[orig] = v; else delete alt[orig];
+  hSet(k, { alt });
+  closeSheet(); render(); toast(v ? `Hoy: ${v} en lugar de ${orig}` : `De vuelta a ${orig}`);
+}
+
 /* ---------- explicación de cardio, core y movilidad, y "lo cambié por otra actividad" ---------- */
 const MOB_EX = [["Gato-vaca", "10 lentas, columna completa"], ["Rotación torácica en 4 apoyos", "8 por lado"], ["Cadera 90/90", "6 por lado"], ["Sentadilla profunda sostenida", "30–45 s, talones al piso"], ["Tobillo a la pared", "10 por lado, rodilla pasa la punta del pie"], ["Círculos de hombro con banda o palo", "10 adelante y 10 atrás"]];
 const ITEM_INFO = {
@@ -2569,7 +2715,8 @@ function renderTrain() {
   const sc0 = daySched(k), ag = blocksOf({ kind: "plan", date: k }).find((b) => b.id === "pl_gym"), sc = Object.assign({}, sc0, { gym: ag ? { s: ag.s, e: ag.e } : sc0.gym }), wi = weekInfo(k), deload = wi.cyc === 4 && daysBetween(PLAN_START, k) >= 0;
   const items = [];
   if (day.kind !== "rest") items.push(MOB);
-  (day.ex || []).forEach(([n, r], i) => items.push({ id: "ex" + i, t: n, r }));
+  const alt = hOf(k).alt || {};
+  (day.ex || []).forEach(([n, r], i) => items.push(alt[n] ? { id: "ex" + i, t: alt[n], r, orig: n } : { id: "ex" + i, t: n, r }));
   (day.items || []).forEach((x) => items.push(x));
   (day.close || []).forEach((x) => items.push(x));
   items.push(STR_ITEM);
@@ -2581,7 +2728,7 @@ function renderTrain() {
   const list = items.map((x) => {
     const ns = nSets(x.r), rr = ns ? `${ns} series de ${repGoal(x.r)} repeticiones` : x.r;
     const nOk = ns ? setsOf(k, x.t).filter((y) => y && y.ok).length : 0;
-    return `<li class="hl${done["t_" + x.id] ? " ok" : ""}${ns ? " hasets" : ""}">${exThumb(x)}<div class="htx"><b class="ht">${esc(x.t)}</b>${rr ? `<span class="hr">${esc(rr)}${ns ? ` · ${nOk}/${ns}` : ""}</span>` : ""}${x.n ? `<span class="hn">${esc(x.n)}</span>` : ""}${EXI[x.t] ? `<button type="button" class="exlink sm" data-act="ex-how" data-ex="${esc(x.t)}">Cómo se hace ›</button>` : infoKey(x.id) ? `<button type="button" class="exlink sm" data-act="it-info" data-id="${esc(x.id)}">${(h.swap || {})[x.id] ? "Cambiado por: " + esc(h.swap[x.id]) + " ›" : infoKey(x.id) === "core" ? "Qué ejercicios hacer ›" : infoKey(x.id) === "str" ? "Cuáles hoy: " + esc(STR[six].slice(0, 2).join(", ").toLowerCase()) + "… ›" : infoKey(x.id) === "mob" ? "Qué movimientos hacer ›" : ITEM_INFO[infoKey(x.id)].swap ? "Cómo se hace · o cámbielo por otra actividad ›" : "Cómo se hace ›"}</button>` : ""}</div>${tick(!!done["t_" + x.id], "h-tick", `data-key="t_${x.id}"`, x.t)}${ns ? setsBlock(k, x, ns) : ""}</li>`;
+    return `<li class="hl${done["t_" + x.id] ? " ok" : ""}${ns ? " hasets" : ""}">${exThumb(x)}<div class="htx"><b class="ht">${esc(x.t)}</b>${rr ? `<span class="hr">${esc(rr)}${ns ? ` · ${nOk}/${ns}` : ""}</span>` : ""}${x.n ? `<span class="hn">${esc(x.n)}</span>` : ""}${EXI[x.t] ? `<button type="button" class="exlink sm" data-act="ex-how" data-ex="${esc(x.t)}">Cómo se hace ›</button>` : infoKey(x.id) ? `<button type="button" class="exlink sm" data-act="it-info" data-id="${esc(x.id)}">${(h.swap || {})[x.id] ? "Cambiado por: " + esc(h.swap[x.id]) + " ›" : infoKey(x.id) === "core" ? "Qué ejercicios hacer ›" : infoKey(x.id) === "str" ? "Cuáles hoy: " + esc(STR[six].slice(0, 2).join(", ").toLowerCase()) + "… ›" : infoKey(x.id) === "mob" ? "Qué movimientos hacer ›" : ITEM_INFO[infoKey(x.id)].swap ? "Cómo se hace · o cámbielo por otra actividad ›" : "Cómo se hace ›"}</button>` : ""}</div>${tick(!!done["t_" + x.id], "h-tick", `data-key="t_${x.id}"`, x.t)}${ns ? setsBlock(k, x, ns) : ""}${altChip(k, x)}</li>`;
   }).join("");
 
   const checks = checksFor(k).map((c) => {
@@ -3034,6 +3181,8 @@ document.addEventListener("click", (ev) => {
     case "it-info": openItemInfo(el.dataset.id); break;
     case "sw-save": saveSwap(el.dataset.id, (($("swT") || {}).value || "").trim()); break;
     case "sw-clear": saveSwap(el.dataset.id, ""); break;
+    case "alt-open": openAltSheet(el.dataset.ex); break;
+    case "alt-set": setAlt(el.dataset.ex, el.dataset.v); break;
     case "ex-how": openExHow(el.dataset.ex); break;
     case "x-open": openExtraSheet(); break;
     case "x-ns": sheetCtx.ns = +el.dataset.v; document.querySelectorAll("[data-act=x-ns]").forEach((b) => b.setAttribute("aria-pressed", String(b === el))); break;

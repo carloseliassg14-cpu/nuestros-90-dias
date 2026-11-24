@@ -462,3 +462,24 @@ body:has(.restbar.show) .wrap{padding-bottom:calc(var(--tabh) + 120px + env(safe
 .shd .slast{flex:1;margin:0}
 .useg.sm{padding:2px;background:var(--bg)}
 .useg.sm button{min-height:30px;min-width:34px;font-size:13px}
+/* cambiar ejercicio */
+.altchip{flex-basis:100%;display:flex;align-items:center;gap:12px;text-align:left;margin-top:10px;padding:10px 12px;border-radius:14px;border:1.5px dashed var(--line);background:none;color:inherit;font:inherit}
+.altchip .ai{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--ink);color:var(--bg);font-size:17px;font-weight:800}
+.altchip span:last-child{display:grid;gap:1px}
+.altchip b{font-size:14.5px}
+.altchip small{font-size:12.5px;color:var(--soft)}
+.altchip.on{border-style:solid;border-color:var(--ink);background:var(--bg)}
+.altchip:active{transform:scale(.98)}
+.altlist{display:grid;gap:10px;margin-bottom:12px}
+.altback{margin-bottom:12px;padding-top:12px;border-top:1px solid var(--line)}
+.altcard{display:grid;grid-template-columns:84px 1fr auto;gap:12px;align-items:center;width:100%;text-align:left;border:1px solid var(--line);background:var(--card);border-radius:16px;padding:8px;color:inherit;font:inherit}
+.altcard.cur{border:2px solid var(--ink);padding:7px}
+.altimg{position:relative;width:84px;height:64px;border-radius:12px;overflow:hidden;background:var(--bg)}
+.altimg img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.altimg img:last-child{animation:exflip 2.4s steps(1) infinite}
+.altt{display:grid;gap:3px;justify-items:start}
+.altt b{font-size:15px}
+.altt small{font-size:12.5px;color:var(--soft)}
+.altgo{font-weight:700;font-size:13px;padding:6px 12px;border-radius:999px;background:var(--ink);color:var(--bg)}
+.altcard.cur .altgo{background:var(--good)}
+@media(prefers-reduced-motion:reduce){.altimg img:last-child{animation:none;opacity:0}}

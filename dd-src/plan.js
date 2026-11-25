@@ -1257,7 +1257,7 @@ function renderTrain() {
     <h1>${esc(t.tabTrainLong)}</h1>
     <p class="sub">Semana ${wi.n} · bloque ${wi.cyc} de 4${sc.gym ? " · gym de " + esc(fmtTime(sc.gym.s)) + " a " + esc(fmtTime(sc.gym.e)) : ""}</p>
     ${dayPicker(k, "h-day")}
-    ${advOnly(k)}
+    ${trainReady(k)}
     ${pendBanner(k)}
     ${pendingSess(k).length && k === todayKey() ? "" : weekCard(k)}
     ${weekBar(k)}
@@ -1567,10 +1567,9 @@ function applyAdvice(k, id) {
   hSet(k, { adv });
 }
 const fmtSleep = (x) => { const H = Math.floor(x + 1e-6), M = Math.round((x - H) * 60); return M ? `${H} h ${M} min` : `${H} h`; };
-function jarvisCard(k) {
-  if (S.person !== "carlos" || S.base !== null) return "";
-  const h = hOf(k), isToday = k === todayKey(), notes = h.notes || [], adv = advice(k);
-  const last = +((D.cfg.carlos || {}).lastCal || 0);
+function ciBlock(k) {
+  if (S.person !== "carlos" || k !== todayKey()) return "";
+  const h = hOf(k), isToday = true;
   const filled = !!(h.mood || has(h.rec) || has(h.sleepH) || has(h.sleepP));
   const moodTxt = (MOODS.find(([v]) => v === h.mood) || [, ""])[1];
   let ci = "";
@@ -1581,9 +1580,35 @@ function jarvisCard(k) {
       <div class="chips">${MOODS.map(([v, l]) => `<button type="button" class="chip" data-act="ci-mood" data-k="${k}" data-v="${v}" aria-pressed="${h.mood === v}">${esc(l)}</button>`).join("")}</div>
       <div class="two"><label class="cin"><span>Recuperación WHOOP</span><span class="numin"><input type="number" inputmode="numeric" min="0" max="100" class="fi" data-cnum="rec" data-k="${k}" value="${has(h.rec) ? esc(h.rec) : ""}" aria-label="Recuperación WHOOP en %"><span>%</span></span></label>
       <label class="cin"><span>Sueño WHOOP</span><span class="numin"><input type="number" inputmode="numeric" min="0" max="100" class="fi" data-cnum="sleepP" data-k="${k}" value="${has(h.sleepP) ? esc(h.sleepP) : ""}" aria-label="Rendimiento del sueño WHOOP en %"><span>%</span></span></label></div>
-      <div class="cin"><span>Horas que durmió</span><div class="hm"><span class="numin"><input type="number" inputmode="numeric" min="0" max="14" step="1" class="fi" id="slH" data-cnum="slH" data-k="${k}" value="${has(h.sleepH) ? Math.floor(+h.sleepH + 1e-6) : ""}" aria-label="Horas de sueño"><span>h</span></span><span class="numin"><input type="number" inputmode="numeric" min="0" max="59" step="1" class="fi" id="slM" data-cnum="slM" data-k="${k}" value="${has(h.sleepH) ? Math.round((+h.sleepH - Math.floor(+h.sleepH + 1e-6)) * 60) : ""}" aria-label="Minutos de sueño"><span>min</span></span></div><small class="hint">Como lo dice WHOOP: por ejemplo 7 h 25 min.</small></div>
+      <div class="cin"><span>Horas que durmió</span><div class="hm"><span class="numin"><input type="number" inputmode="numeric" min="0" max="14" step="1" class="fi" data-cnum="slH" data-k="${k}" value="${has(h.sleepH) ? Math.floor(+h.sleepH + 1e-6) : ""}" aria-label="Horas de sueño"><span>h</span></span><span class="numin"><input type="number" inputmode="numeric" min="0" max="59" step="1" class="fi" data-cnum="slM" data-k="${k}" value="${has(h.sleepH) ? Math.round((+h.sleepH - Math.floor(+h.sleepH + 1e-6)) * 60) : ""}" aria-label="Minutos de sueño"><span>min</span></span></div><small class="hint">Como lo dice WHOOP: por ejemplo 7 h 25 min.</small></div>
       ${filled ? `<div><button type="button" class="btn" data-act="ci-edit">Listo</button></div>` : ""}</div>`;
   }
+  return ci;
+}
+function readiness(k) {
+  const h = hOf(k), rec = has(h.rec) ? +h.rec : null, sl = has(h.sleepH) ? +h.sleepH : null, sp = has(h.sleepP) ? +h.sleepP : null;
+  if (rec == null && sl == null && sp == null && !h.mood) return null;
+  if ((rec != null && rec < 34) || (sl != null && sl < 6) || h.mood === "stress")
+    return { lvl: "red", t: "Rojo: hoy no entrene pesado", d: "Su cuerpo no está recuperado. Hoy: 30–40 min de caminata suave, movilidad y estiramientos. Mañana vuelve con todo. Entrenar pesado así suma cansancio y riesgo de lesión, no músculo." };
+  if ((rec != null && rec < 67) || (sl != null && sl < 7) || (sp != null && sp < 70) || h.mood === "tired")
+    return { lvl: "yellow", t: "Amarillo: entrene normal, sin buscar récords", d: "Haga la sesión del plan con los mismos pesos de la vez pasada (sin subir) y deje 2 repeticiones en reserva. Sin sesión 2. Si en el calentamiento se siente muy pesado, quite la última serie de cada ejercicio." };
+  return { lvl: "green", t: "Verde: entrene con todo", d: "Buen día para subir peso donde completó todas las repeticiones la vez pasada. Sesión 2 permitida si durmió 7.5 h o más." };
+}
+function trainReady(k) {
+  if (S.person !== "carlos") return "";
+  const r = k === todayKey() ? readiness(k) : null, adv = advice(k), isToday = k === todayKey();
+  if (!isToday && !adv.length) return "";
+  const advH = adv.map((a) => `<div class="adv"><b>${esc(a.t)}</b><p>${esc(a.d)}</p><div class="advb"><button type="button" class="btn pri" data-act="adv-ok" data-k="${k}" data-id="${a.id}">${esc(a.act)}</button><button type="button" class="btn" data-act="adv-no" data-k="${k}" data-id="${a.id}">Lo voy a hacer igual</button></div></div>`).join("");
+  const rH = r ? `<div class="ready ${r.lvl}"><b>${esc(r.t)}</b><p>${esc(r.d)}</p></div>` : isToday ? `<p class="hnote">Llene cómo amaneció y Jarvis le dice cómo entrenar hoy: con todo, normal o suave.</p>` : "";
+  return `<section class="jcard" aria-label="Jarvis"><div class="jh"><span class="jdot" aria-hidden="true">J</span><b>Cómo amaneció → su entreno de hoy</b></div>${rH}${advH}${ciBlock(k)}</section>`;
+}
+function jarvisCard(k) {
+  if (S.person !== "carlos" || S.base !== null) return "";
+  const h = hOf(k), isToday = k === todayKey(), notes = h.notes || [], adv = advice(k);
+  const last = +((D.cfg.carlos || {}).lastCal || 0);
+  const filled = !!(h.mood || has(h.rec) || has(h.sleepH) || has(h.sleepP));
+  const moodTxt = (MOODS.find(([v]) => v === h.mood) || [, ""])[1];
+  const ci = ciBlock(k);
   const advH = adv.map((a) => `<div class="adv"><b>${esc(a.t)}</b><p>${esc(a.d)}</p><div class="advb"><button type="button" class="btn pri" data-act="adv-ok" data-k="${k}" data-id="${a.id}">${esc(a.act)}</button><button type="button" class="btn" data-act="adv-no" data-k="${k}" data-id="${a.id}">Lo voy a hacer igual</button></div></div>`).join("");
   const urgent = notes.some((n) => /^(Choque|No cupo)/.test(n));
   const notesH = notes.length ? `<details class="jdet"${urgent ? " open" : ""}><summary>${urgent ? "Revise: " : ""}Jarvis acomodó ${notes.length === 1 ? "1 cosa" : notes.length + " cosas"} este día</summary><ul class="jnotes">${notes.map((n) => `<li>${esc(n)}</li>`).join("")}</ul></details>` : "";

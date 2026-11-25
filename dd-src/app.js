@@ -1044,7 +1044,7 @@ document.addEventListener("change", (ev) => {
     const k = ev.target.dataset.k || S.date, raw = String(ev.target.value || "").replace(",", ".").trim(), v = parseFloat(raw);
     S.svUntil = Date.now() + 500; setTimeout(flushSet, 550);
     if (cf === "slH" || cf === "slM") {           // horas y minutos por separado → sleepH en horas con decimales
-      const hh = String(($("slH") || {}).value || "").trim(), mm = String(($("slM") || {}).value || "").trim();
+      const box = ev.target.closest(".hm"), hh = String((box.querySelector("[data-cnum=slH]") || {}).value || "").trim(), mm = String((box.querySelector("[data-cnum=slM]") || {}).value || "").trim();
       const H = hh === "" ? null : parseInt(hh, 10), M = mm === "" ? 0 : parseInt(mm, 10);
       S.ciEdit = true;
       if (H == null && mm === "") hSet(k, { sleepH: null });

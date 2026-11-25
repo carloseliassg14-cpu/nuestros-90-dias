@@ -503,3 +503,8 @@ body:has(.restbar.show) .wrap{padding-bottom:calc(var(--tabh) + 120px + env(safe
 .icard .btn{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .ci .hm{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .ci .cin .hint{font-size:12px;color:var(--soft)}
+.ready{border-radius:14px;padding:10px 12px;display:grid;gap:3px;margin:8px 0}
+.ready p{margin:0;font-size:14px}
+.ready.green{background:color-mix(in srgb,var(--good) 16%,var(--bg))}
+.ready.yellow{background:color-mix(in srgb,var(--warn) 18%,var(--bg))}
+.ready.red{background:color-mix(in srgb,var(--bad) 14%,var(--bg))}

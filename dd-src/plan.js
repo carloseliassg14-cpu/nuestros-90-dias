@@ -1621,4 +1621,55 @@ function advOnly(k) {
   const adv = advice(k);
   return adv.length ? `<section class="jcard" aria-label="Jarvis"><div class="jh"><span class="jdot" aria-hidden="true">J</span><b>Jarvis</b></div>${adv.map((a) => `<div class="adv"><b>${esc(a.t)}</b><p>${esc(a.d)}</p><div class="advb"><button type="button" class="btn pri" data-act="adv-ok" data-k="${k}" data-id="${a.id}">${esc(a.act)}</button><button type="button" class="btn" data-act="adv-no" data-k="${k}" data-id="${a.id}">Lo voy a hacer igual</button></div></div>`).join("")}</section>` : "";
 }
+
+/* ---------- ✦ Preguntarle a Jarvis: abre el proyecto Jarvis en Claude con la pregunta y los datos de hoy ---------- */
+const JV_PROJECT = "https://claude.ai/project/01a13986-8094-7580-92d5-6755e2847bd4";
+const JV_SUG = {
+  food: ["¿Qué ceno con lo que ya comí hoy?", "Comí algo fuera del plan, ¿cómo ajusto el resto del día?", "¿Qué merienda me conviene antes del gym?"],
+  train: ["¿Cómo hago bien este ejercicio?", "Me molesta algo al entrenar, ¿qué cambio?", "¿Subo peso hoy o mantengo?"],
+  day: ["¿Qué hago ahora?", "¿Cómo acomodo mejor mi día de hoy?", "Dormí mal, ¿cómo ajusto el día?"],
+  week: ["¿Cómo acomodo mi semana?"],
+  money: ["¿Cómo voy con mis gastos este mes?", "¿Este gasto fue necesario?"]
+};
+const TAB_NAME = { day: "Mi día", week: "Semana", money: "Dinero", food: "Comida", train: "Entreno" };
+function jvContext() {
+  const k = S.tab === "food" || S.tab === "train" ? S.hDate : S.date || todayKey(), h = hOf(k), L = [];
+  const now = new Date(), hhmm = fmtTime(now.getHours() * 60 + now.getMinutes());
+  L.push(`Pregunta desde la app "Hannah & Carlos · 90", pestaña ${TAB_NAME[S.tab] || S.tab}, ${niceDate(k)} (son las ${hhmm}).`);
+  const am = [h.mood ? "ánimo: " + ((MOODS.find(([v]) => v === h.mood) || [, h.mood])[1]).toLowerCase() : "", has(h.rec) ? `recuperación WHOOP ${h.rec} %` : "", has(h.sleepH) ? `durmió ${fmtSleep(+h.sleepH)}` : "", has(h.sleepP) ? `sueño WHOOP ${h.sleepP} %` : ""].filter(Boolean);
+  if (am.length) L.push("Cómo amaneció: " + am.join(", ") + ".");
+  if (S.tab === "food" || S.tab === "day") {
+    const sc = daySched(k), t = eatTotals(k);
+    L.push(`Ventana de comida: ${fmtTime(sc.open)} a ${fmtTime(sc.closeT)}. Gym: ${sc.gym ? fmtTime(sc.gym.s) : "hoy no"}.`);
+    const ate = eatOf(k).map((e) => `${MEAL_NAME[e.m]}: ${e.txt}${has(e.p) ? ` (P ${e.p} g, C ${e.c || 0} g, G ${e.f || 0} g)` : " (sin números)"}`);
+    L.push(ate.length ? `Lo que comí hoy: ${ate.join("; ")}. Total anotado: ${Math.round(t.kcal)} kcal, proteína ${Math.round(t.p)} g, carbo ${Math.round(t.c)} g, grasa ${Math.round(t.f)} g.` : "Todavía no anoté comidas hoy.");
+  }
+  if (S.tab === "train" || S.tab === "day") {
+    const d = sessDay(k), p = dayProg(k), r = k === todayKey() ? readiness(k) : null;
+    L.push(`Entreno de hoy: ${d.t} (${p.pct} % hecho, duración estimada ${fmtDur(round5(p.est))}).${r ? " Semáforo: " + r.t + "." : ""}`);
+    const sets = Object.entries(h.sets || {}).map(([ex, S2]) => `${ex}: ${(S2 || []).filter((x) => x && (has(x.w) || has(x.r))).map((x) => `${has(x.w) ? x.w : "—"}${(h.exu || {})[ex] || h.wu || "kg"}×${has(x.r) ? x.r : "—"}`).join(", ")}`).filter((x) => !/: $/.test(x));
+    if (sets.length) L.push("Series de hoy: " + sets.join(" · ") + ".");
+    const alt = Object.entries(h.alt || {}).map(([a, b]) => `${b} en lugar de ${a}`); if (alt.length) L.push("Cambios: " + alt.join(", ") + ".");
+    const sw = Object.values(h.swap || {}); if (sw.length) L.push("Otra actividad hoy: " + sw.join(", ") + ".");
+  }
+  return L.join("\n");
+}
+function openJarvis() {
+  const sug = JV_SUG[S.tab] || JV_SUG.day;
+  openSheet(`<h3>✦ Preguntarle a Jarvis</h3><p class="hint">Escriba su pregunta. Al tocar el botón se abre su proyecto Jarvis en Claude con la pregunta y sus datos de hoy ya copiados: solo pegue y envíe.</p>
+    <div class="chips" style="margin-bottom:10px">${sug.map((q) => `<button type="button" class="chip" data-act="jv-sug" data-v="${esc(q)}">${esc(q)}</button>`).join("")}</div>
+    <div class="f"><textarea id="jvQ" class="fi" rows="3" maxlength="800" placeholder="Ej.: ¿Qué ceno si hoy entrené piernas?"></textarea></div>
+    <details class="hdet"><summary>Datos que se le mandan a Jarvis</summary><pre class="jvctx">${esc(jvContext())}</pre></details>
+    <div class="acts"><button type="button" class="btn" data-act="close">Cancelar</button><button type="button" class="btn pri" data-act="jv-go">Abrir Jarvis</button></div>`, { type: "jv" });
+}
+function goJarvis() {
+  const q = (($("jvQ") || {}).value || "").trim();
+  if (!q) { toast("Escriba su pregunta"); return; }
+  const txt = `Jarvis, ${q}\n\n${jvContext()}`;
+  const done = () => { closeSheet(); toast("Copiado. En Claude, mantenga presionado el cuadro de texto, pegue y envíe."); };
+  const open = () => { const w = window.open(JV_PROJECT, "_blank"); if (w) { try { w.opener = null; } catch (e) {} } else { const a = document.createElement("a"); a.href = JV_PROJECT; a.target = "_blank"; a.rel = "noopener"; document.body.appendChild(a); a.click(); a.remove(); } };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(() => { open(); done(); }, () => { open(); toast("No se pudo copiar: escriba la pregunta en Claude."); closeSheet(); });
+  else { open(); closeSheet(); }
+}
+
 if (/[?&]jvtest=1/.test(location.search)) window.__jv = { applyCalDay, applyOp };

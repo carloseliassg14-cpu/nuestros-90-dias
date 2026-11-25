@@ -254,6 +254,9 @@ const IC = {
 function renderChrome() {
   const t = T();
   document.body.className = "p-" + S.person;
+  let fab = $("jvfab");
+  if (!fab) { fab = document.createElement("button"); fab.id = "jvfab"; fab.type = "button"; fab.className = "jvfab"; fab.dataset.act = "jv-open"; fab.setAttribute("aria-label", "Preguntarle a Jarvis"); fab.innerHTML = "<span>✦</span><b>Jarvis</b>"; document.body.appendChild(fab); }
+  fab.hidden = S.person !== "carlos";
   document.documentElement.lang = t.loc.slice(0, 2);
   document.querySelectorAll(".who button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.p === S.person)));
   $("who").setAttribute("aria-label", t.who);
@@ -964,6 +967,9 @@ document.addEventListener("click", (ev) => {
     case "h-tick": { hToggle(S.hDate, el.dataset.key); render(); if (navigator.vibrate) try { navigator.vibrate(15); } catch (e) {} break; }
     case "h-slot": { hSet(S.hDate, { slot: el.dataset.v }); applyToDay(S.hDate); render(); const g = daySched(S.hDate).gym; toast(g ? `Día armado: gym de ${fmtTime(g.s)} a ${fmtTime(g.e)}` : t.saved); break; }
     case "s-open": openSessSheet(); break;
+    case "jv-open": openJarvis(); break;
+    case "jv-sug": { const t = $("jvQ"); if (t) { t.value = el.dataset.v; t.focus(); } break; }
+    case "jv-go": goJarvis(); break;
     case "set-ok": S.svUntil = 0; S.dirty = false; setOk(S.hDate, el.dataset.ex, +el.dataset.i, +el.dataset.n, el.dataset.id); render(); break;
     case "exu": setExUnit(S.hDate, el.dataset.ex, el.dataset.v); render(); break;
     case "wu": { lsSet("dd.wu", el.dataset.v); hSet(S.hDate, { wu: el.dataset.v }); render(); break; }

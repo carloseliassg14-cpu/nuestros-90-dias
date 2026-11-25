@@ -1566,20 +1566,22 @@ function applyAdvice(k, id) {
   const adv = Object.assign({}, hOf(k).adv || {}, { [id]: "ok" });
   hSet(k, { adv });
 }
+const fmtSleep = (x) => { const H = Math.floor(x + 1e-6), M = Math.round((x - H) * 60); return M ? `${H} h ${M} min` : `${H} h`; };
 function jarvisCard(k) {
   if (S.person !== "carlos" || S.base !== null) return "";
   const h = hOf(k), isToday = k === todayKey(), notes = h.notes || [], adv = advice(k);
   const last = +((D.cfg.carlos || {}).lastCal || 0);
-  const filled = !!(h.mood || has(h.rec) || has(h.sleepH));
+  const filled = !!(h.mood || has(h.rec) || has(h.sleepH) || has(h.sleepP));
   const moodTxt = (MOODS.find(([v]) => v === h.mood) || [, ""])[1];
   let ci = "";
   if (isToday && filled && !S.ciEdit) {
-    ci = `<div class="cisum"><span>Amaneció: ${esc([moodTxt.toLowerCase(), has(h.rec) ? h.rec + " % de recuperación" : "", has(h.sleepH) ? fmtNum(+h.sleepH) + " h de sueño" : ""].filter(Boolean).join(" · "))}</span><button type="button" class="btn" data-act="ci-edit">Cambiar</button></div>`;
+    ci = `<div class="cisum"><span>Amaneció: ${esc([moodTxt.toLowerCase(), has(h.rec) ? h.rec + " % de recuperación" : "", has(h.sleepH) ? fmtSleep(+h.sleepH) + " de sueño" : "", has(h.sleepP) ? h.sleepP + " % de sueño WHOOP" : ""].filter(Boolean).join(" · "))}</span><button type="button" class="btn" data-act="ci-edit">Cambiar</button></div>`;
   } else if (isToday) {
     ci = `<div class="ci"><b class="ciq">¿Cómo amaneció? Jarvis ajusta el día con esto.</b>
       <div class="chips">${MOODS.map(([v, l]) => `<button type="button" class="chip" data-act="ci-mood" data-k="${k}" data-v="${v}" aria-pressed="${h.mood === v}">${esc(l)}</button>`).join("")}</div>
       <div class="two"><label class="cin"><span>Recuperación WHOOP</span><span class="numin"><input type="number" inputmode="numeric" min="0" max="100" class="fi" data-cnum="rec" data-k="${k}" value="${has(h.rec) ? esc(h.rec) : ""}" aria-label="Recuperación WHOOP en %"><span>%</span></span></label>
-      <label class="cin"><span>Horas de sueño</span><span class="numin"><input type="number" inputmode="decimal" step="0.1" min="0" max="14" class="fi" data-cnum="sleepH" data-k="${k}" value="${has(h.sleepH) ? esc(h.sleepH) : ""}" aria-label="Horas de sueño"><span>h</span></span></label></div>
+      <label class="cin"><span>Sueño WHOOP</span><span class="numin"><input type="number" inputmode="numeric" min="0" max="100" class="fi" data-cnum="sleepP" data-k="${k}" value="${has(h.sleepP) ? esc(h.sleepP) : ""}" aria-label="Rendimiento del sueño WHOOP en %"><span>%</span></span></label></div>
+      <div class="cin"><span>Horas que durmió</span><div class="hm"><span class="numin"><input type="number" inputmode="numeric" min="0" max="14" step="1" class="fi" id="slH" data-cnum="slH" data-k="${k}" value="${has(h.sleepH) ? Math.floor(+h.sleepH + 1e-6) : ""}" aria-label="Horas de sueño"><span>h</span></span><span class="numin"><input type="number" inputmode="numeric" min="0" max="59" step="1" class="fi" id="slM" data-cnum="slM" data-k="${k}" value="${has(h.sleepH) ? Math.round((+h.sleepH - Math.floor(+h.sleepH + 1e-6)) * 60) : ""}" aria-label="Minutos de sueño"><span>min</span></span></div><small class="hint">Como lo dice WHOOP: por ejemplo 7 h 25 min.</small></div>
       ${filled ? `<div><button type="button" class="btn" data-act="ci-edit">Listo</button></div>` : ""}</div>`;
   }
   const advH = adv.map((a) => `<div class="adv"><b>${esc(a.t)}</b><p>${esc(a.d)}</p><div class="advb"><button type="button" class="btn pri" data-act="adv-ok" data-k="${k}" data-id="${a.id}">${esc(a.act)}</button><button type="button" class="btn" data-act="adv-no" data-k="${k}" data-id="${a.id}">Lo voy a hacer igual</button></div></div>`).join("");

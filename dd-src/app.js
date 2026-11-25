@@ -1042,12 +1042,22 @@ document.addEventListener("change", (ev) => {
   const cf = ev.target.dataset && ev.target.dataset.cnum;
   if (cf) {
     const k = ev.target.dataset.k || S.date, raw = String(ev.target.value || "").replace(",", ".").trim(), v = parseFloat(raw);
-    const max = cf === "rec" ? 100 : 14;
+    S.svUntil = Date.now() + 500; setTimeout(flushSet, 550);
+    if (cf === "slH" || cf === "slM") {           // horas y minutos por separado → sleepH en horas con decimales
+      const hh = String(($("slH") || {}).value || "").trim(), mm = String(($("slM") || {}).value || "").trim();
+      const H = hh === "" ? null : parseInt(hh, 10), M = mm === "" ? 0 : parseInt(mm, 10);
+      S.ciEdit = true;
+      if (H == null && mm === "") hSet(k, { sleepH: null });
+      else if (isFinite(H != null ? H : 0) && (H == null || (H >= 0 && H <= 14)) && isFinite(M) && M >= 0 && M <= 59) hSet(k, { sleepH: Math.round(((H || 0) + M / 60) * 100) / 100 });
+      else { toast(T().writeErr); return; }
+      return;
+    }
+    const max = cf === "rec" || cf === "sleepP" ? 100 : 14;
     S.ciEdit = true;
     if (raw === "") hSet(k, { [cf]: null });
-    else if (isFinite(v) && v >= 0 && v <= max) hSet(k, { [cf]: Math.round(v * 10) / 10 });
+    else if (isFinite(v) && v >= 0 && v <= max) hSet(k, { [cf]: cf === "sleepP" || cf === "rec" ? Math.round(v) : Math.round(v * 10) / 10 });
     else { toast(T().writeErr); return; }
-    render(); return;
+    S.dirty = true; return;
   }
   const sv = ev.target.dataset && ev.target.dataset.sv;
   if (sv) {
@@ -1065,7 +1075,7 @@ document.addEventListener("change", (ev) => {
   else { toast(T().writeErr); return; }
   render();
 });
-const typingSet = () => Date.now() < (S.svUntil || 0) || !!(document.activeElement && document.activeElement.dataset && document.activeElement.dataset.sv);
+const typingSet = () => { const d = document.activeElement && document.activeElement.dataset; return Date.now() < (S.svUntil || 0) || !!(d && (d.sv || d.cnum || d.hnum)); };
 const flushSet = () => { if (S.dirty && !typingSet()) { S.dirty = false; if (!$("sheet").classList.contains("open")) render(); } };
 document.addEventListener("focusout", () => { setTimeout(flushSet, 80); setTimeout(flushSet, 600); });
 document.addEventListener("input", (ev) => { if (ev.target.id === "bS" || ev.target.id === "bE") checkBlock(); });
